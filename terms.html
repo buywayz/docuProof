@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Terms of Service — docuProof</title>
+
+  <!-- Icons / PWA -->
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="icon" href="/icon-192.png" sizes="192x192">
+  <link rel="icon" href="/icon-512.png" sizes="512x512">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="theme-color" content="#0b0d0f">
+
+  <style>
+    :root{
+      --bg:#0b0d0f; --card:#121418; --muted:#9aa3af; --text:#e6e7eb;
+      --accent:#56f08a; --ring:#2a2f36; --input:#1a1f24;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;overflow-x:hidden}
+
+    /* Shared header (logo) */
+    .site-header{width:100%;border-bottom:1px solid #1b1c20;background:#0b0d0f}
+    .site-header .inner{max-width:920px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:12px}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand img{display:block}
+    .brand-name{color:#e6e7eb;font-weight:700;letter-spacing:.02em}
+    .brand-tagline{font-size:13px;color:#9aa3af;margin-top:2px;font-weight:400}
+
+/* Hero block to match index look */
+.hero{margin:42px 0 24px}
+.hero-title{
+  font-size:clamp(36px,6vw,60px);
+  line-height:1.05;
+  margin:0 0 10px;
+  color:#e6e7eb;
+  font-weight:800;
+}
+.hero-lead{
+  color:#c6c8ce;
+  font-size:18px;
+  margin:0 0 28px;
+}
+    .wrap{max-width:920px;margin:36px auto 48px;padding:0 20px}
+    header.page{margin:8px 0 18px}
+    h1{font-size:34px;margin:10px 0 6px}
+    .tag{color:var(--muted);font-weight:600;letter-spacing:.02em}
+    .card{background:var(--card);border:1px solid var(--ring);border-radius:14px;padding:22px;margin:16px 0}
+    h2{font-size:20px;margin:0 0 10px}
+    p,li{color:#d3d6db}
+    a{color:var(--accent);text-decoration:none}
+
+    footer{margin-top:40px;text-align:center;color:#9aa3af;font-size:14px;border-top:1px solid #1b1c20;padding:20px 20px 28px}
+    footer a{color:#56f08a;text-decoration:none}
+    .microcopy{margin-top:6px;color:#666;font-size:12px}
+  </style>
+</head>
+<body>
+
+  <!-- Header with logo (no resizing) -->
+  <header class="site-header">
+  <div class="inner">
+    <div class="brand">
+      <img src="/docuproof-logo.png" alt="docuProof logo" loading="eager" style="display:block;height:32px">
+      <div>
+        <div class="brand-name">docuProof</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+  <div class="wrap">
+<section class="hero">
+  <h1 class="hero-title">Proof you can point to.</h1>
+  <p class="hero-lead">Preserve the truth of what you create — because memories fade, but proof doesn’t.</p>
+</section>
+    <header class="page">
+      <div class="tag">docuProof™ — Proof you can point to.</div>
+      <h1>Terms of Service</h1>
+      <div class="tag">Effective: 2025-10-13</div>
+    </header>
+
+    <div class="card">
+      <p>These Terms govern your access to and use of the docuProof service. docuProof™ is operated by <strong>BuyWayz LLC</strong>, a Wyoming company, doing business as <strong>docuProof.io</strong> (“<strong>docuProof</strong>,” “we,” “us,” or “our”). By using docuProof, you agree to these Terms.</p>
+      <p><strong>Summary (not a substitute for the full Terms):</strong> we create cryptographic proof-of-existence records for your files by anchoring a one-way hash you submit; we do not handle your file contents; and we are <strong>not</strong> a notary or certification authority.</p>
+    </div>
+
+    <div class="card">
+      <h2>1) Service description</h2>
+      <ul>
+        <li><strong>Non-custodial:</strong> The SHA-256 hash is computed in your browser; we do not receive your file contents.</li>
+        <li><strong>Proof record:</strong> We store the hash and associated metadata you provide, and we generate a public verification URL.</li>
+        <li><strong>No legal notarization:</strong> docuProof provides mathematical evidence of existence and integrity; it is not notarization and may not substitute for legally required formalities.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>2) Accounts & eligibility</h2>
+      <ul>
+        <li>You must be at least 16 years old and capable of forming a binding contract.</li>
+        <li>You are responsible for the accuracy of information you provide and for safeguarding your verification links.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>3) Payments, pricing, and refunds</h2>
+      <ul>
+        <li><strong>Payments via Stripe:</strong> We use Stripe to process payments. You authorize us to charge your selected payment method for one-time proofs or subscriptions.</li>
+        <li><strong>Subscriptions:</strong> If you purchase a subscription, it renews automatically until canceled. You can cancel at any time, effective at the end of the current billing period.</li>
+        <li><strong>Refunds:</strong> All one-time proof sales are final once a proof is anchored. If a charge was made in error and no proof was created, contact <a href="mailto:support@docuproof.io">support@docuproof.io</a>.</li>
+        <li><strong>Taxes:</strong> Prices may exclude applicable taxes; you are responsible for any taxes due.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>4) Acceptable use</h2>
+      <ul>
+        <li>Do not use docuProof to infringe others’ rights, store or promote illegal content, or violate applicable law.</li>
+        <li>Do not attempt to interfere with or abuse our infrastructure, APIs, or security controls.</li>
+        <li>You are responsible for the content and legality of materials for which you create proofs.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>5) Intellectual property</h2>
+      <ul>
+        <li><strong>Your rights:</strong> You retain all rights in your documents. Submitting a hash does not transfer ownership.</li>
+        <li><strong>Our rights:</strong> The docuProof service, software, and branding are owned by BuyWayz LLC or its licensors and are protected by law.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>6) Availability & changes</h2>
+      <p>We may modify or discontinue features, adjust pricing, or perform maintenance. We will endeavor to avoid disruption, but availability is not guaranteed.</p>
+    </div>
+
+    <div class="card">
+      <h2>7) Disclaimers</h2>
+      <p>THE SERVICE IS PROVIDED “AS IS.” TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. We do not guarantee acceptance of proof by any court, agency, or counterparty; rules of evidence vary by jurisdiction and context.</p>
+    </div>
+
+    <div class="card">
+      <h2>8) Limitation of liability</h2>
+      <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL BUYWAYZ LLC (DBA DOCUPROOF.IO) BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES, OR FOR LOST PROFITS, LOSS OF DATA, OR BUSINESS INTERRUPTION. OUR TOTAL LIABILITY FOR ANY CLAIM RELATING TO THE SERVICE SHALL NOT EXCEED THE GREATER OF (A) THE AMOUNT YOU PAID TO DOCUPROOF IN THE 6 MONTHS PRECEDING THE CLAIM OR (B) USD $100.</p>
+    </div>
+
+    <div class="card">
+      <h2>9) Indemnity</h2>
+      <p>You agree to indemnify and hold harmless BuyWayz LLC (dba docuProof.io) from any claims, damages, liabilities, costs, and expenses arising out of or related to your use of the service, your proofs, or your violation of these Terms or applicable law.</p>
+    </div>
+
+    <div class="card">
+      <h2>10) Governing law & venue</h2>
+      <p>These Terms are governed by the laws of the State of Wyoming, U.S.A., without regard to conflict-of-laws principles. The exclusive venue for any dispute shall be the state or federal courts located in Wyoming, and you consent to personal jurisdiction there.</p>
+    </div>
+
+    <div class="card">
+      <h2>11) Changes to these Terms</h2>
+      <p>We may update these Terms as our service evolves. Material changes will be posted with a new Effective date. Your continued use constitutes acceptance of the revised Terms.</p>
+    </div>
+
+    <div class="card">
+      <h2>12) Contact</h2>
+      <p><strong>BuyWayz LLC (dba docuProof.io)</strong><br>Cheyenne, Wyoming, USA<br>Email: <a href="mailto:support@docuproof.io">support@docuproof.io</a></p>
+      <p class="tag"><em>docuProof provides proof-of-existence and integrity only; it is <strong>not</strong> a notary service.</em></p>
+    </div>
+
+    <footer>
+      © 2025 BuyWayz LLC (dba docuProof.io). All rights reserved. · <a href="/terms.html">Terms</a> · <a href="/privacy.html">Privacy</a>
+      <div class="microcopy">Not a notary — cryptographic proof only. No document contents are ever uploaded.</div>
+    </footer>
+  </div>
+</body>
+</html>

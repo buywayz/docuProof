@@ -1,0 +1,7 @@
+/                      /start.html                               200
+
+http://*               https://docuproof.io/:splat                301!
+https://www.docuproof.io/*    https://docuproof.io/:splat        301!
+
+/v/*                   /.netlify/functions/view_proof             200
+/api/submit-proof      /.netlify/functions/submit_proof           200

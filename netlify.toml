@@ -1,0 +1,111 @@
+# ===============================================
+# docuProof.io — Netlify Configuration
+# ===============================================
+
+[build]
+  publish = "."
+  environment = { NODE_VERSION = "20" }
+
+# ---------- Security headers ----------
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), usb=(), payment=()"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Allow Stripe + Postmark endpoints and self
+    Content-Security-Policy = """
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' https://js.stripe.com https://checkout.stripe.com;
+      connect-src 'self' https://api.postmarkapp.com https://api.stripe.com https://checkout.stripe.com https://js.stripe.com;
+      img-src 'self' data: blob:;
+      style-src 'self' 'unsafe-inline';
+      font-src 'self' data:;
+      frame-src https://js.stripe.com https://checkout.stripe.com https://hooks.stripe.com;
+      frame-ancestors 'none';
+      base-uri 'self';
+      form-action 'self' https://checkout.stripe.com
+    """
+
+# ---------- Functions bundling ----------
+[functions]
+
+  # Default for all functions
+  [functions."*"]
+  node_bundler = "esbuild"
+  external_node_modules = [
+    "@netlify/blobs",
+    "@netlify/runtime-utils"
+  ]
+  included_files = [
+    "docuproof-banner.png",
+    "netlify/functions/fonts/**",
+
+    # Ensure runtime utils + blobs are available
+    "node_modules/@netlify/blobs/**",
+    "node_modules/@netlify/runtime-utils/**",
+
+    # Required so dynamic import() can find helper
+    "netlify/functions/_blobs_helper.mjs"
+  ]
+
+# ---------- Scheduled functions ----------
+# Run the resolver every 10 minutes to check anchor status and confirmations
+[[scheduled]]
+  path = "/.netlify/functions/resolve_cron"
+  schedule = "*/10 * * * *"
+
+# ---------- Redirects ----------
+[[redirects]]
+  from = "/"
+  to = "/start.html"
+  status = 200
+
+[[redirects]]
+  from = "/app"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/index.html"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/v/*"
+  to = "/.netlify/functions/view_proof"
+  status = 200
+
+[[redirects]]
+  from = "/verify"
+  to = "/.netlify/functions/verify"
+  status = 200
+
+[[redirects]]
+  from = "/api/submit-proof"
+  to = "/.netlify/functions/submit_proof"
+  status = 200
+
+[[redirects]]
+  from = "/history"
+  to = "/.netlify/functions/history"
+  status = 200
+
+# Canonicalize hostnames
+[[redirects]]
+  from = "http://*"
+  to = "https://docuproof.io/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.docuproof.io/*"
+  to = "https://docuproof.io/:splat"
+  status = 301
+  force = true

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+<meta name="robots" content="noindex, nofollow">
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>docuProof — Payment Canceled</title>
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="icon" href="/docuproof-logo.png">
+  <link rel="shortcut icon" href="/docuproof-logo.png">
+  <link rel="apple-touch-icon" href="/docuproof-logo.png">
+  <meta name="theme-color" content="#0b0f14">
+  <style>
+    :root{
+      --bg:#0b0b0c; --card:#111214; --muted:#9aa3af; --text:#f8f9fb;
+      --accent:#16FF70; --line:#1b1c20;
+    }
+    body{
+      margin:0; background:var(--bg); color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      display:flex; justify-content:center; padding:40px 20px;
+    }
+    .container{
+      max-width:780px; background:var(--card); border:1px solid var(--line);
+      border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.35);
+      padding:40px 32px;
+    }
+    .logo{display:flex; align-items:center; gap:10px; margin-bottom:20px;}
+    .logo svg{width:32px; height:32px;}
+    h1{color:#ff6b6b; font-size:28px; margin:0 0 12px;}
+    p{color:#d0d0d0; line-height:1.55; margin:0 0 14px;}
+    .actions{display:flex; gap:12px; margin-top:16px; flex-wrap:wrap;}
+    .btn{
+      display:inline-block; padding:12px 16px; border-radius:10px; text-decoration:none;
+      font-weight:700; background:#2a2f36; color:#fff; border:1px solid var(--line);
+    }
+    .btn.primary{
+      background:var(--accent); color:#05170f; border:1px solid #0f5132;
+    }
+    .footer{
+      text-align:center;margin-top:32px;padding-top:18px;
+      border-top:1px solid var(--line);font-size:14px;color:var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Logo -->
+    <div class="logo" aria-label="docuProof">
+      <svg viewBox="0 0 64 64" role="img" aria-hidden="true">
+        <defs>
+          <linearGradient id="g" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" stop-color="#16FF70"/>
+            <stop offset="1" stop-color="#13dc60"/>
+          </linearGradient>
+        </defs>
+        <rect x="16" y="12" width="28" height="36" rx="4" fill="url(#g)"/>
+        <rect x="36" y="34" width="12" height="10" rx="2" fill="#05170f" opacity=".9"/>
+        <path d="M40 34 v-2 a4 4 0 0 1 8 0 v2" fill="none" stroke="#05170f" stroke-width="2"/>
+      </svg>
+      <strong>docuProof</strong>
+    </div>
+
+    <h1>❌ Payment canceled</h1>
+    <p>No charge was made. You can try again at any time.</p>
+    <p>If you intended to purchase a single proof or a subscription, return to the homepage to recompute your hash and restart checkout.</p>
+
+    <div class="actions">
+      <a class="btn primary" href="/start.html#pricing">Back to homepage</a>
+    </div>
+
+    <div class="footer">
+      © 2025 docuProof.io — All rights reserved.<br/>
+      docuProof.io is <em>not a notary service</em> and does not issue notarized documents.
+    </div>
+  </div>
+</body>
+</html>

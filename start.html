@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <!-- START SEO BLOCK (unchanged) -->
+  <title>docuProof — Timestamp any file on Bitcoin in &lt;60 seconds</title>
+  <meta name="description" content="Generate a cryptographic proof-of-existence for any file. $2.89 single proof, or subscribe for volume. Court-friendly certificate, Bitcoin-anchored.">
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://docuproof.io/start.html">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://docuproof.io/start.html">
+  <meta property="og:title" content="docuProof — Timestamp any file on Bitcoin in &lt;60 seconds">
+  <meta property="og:description" content="Generate a cryptographic proof-of-existence for any file. $2.89 single proof, Starter $7.50/mo, Pro $19/mo.">
+  <meta property="og:image" content="https://docuproof.io/assets/meta/og-start.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Twitter (X) -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="docuProof — Bitcoin-backed proof-of-existence">
+  <meta name="twitter:description" content="One-minute timestamping. Court-friendly certificate. $2.89 single proof.">
+  <meta name="twitter:image" content="https://docuproof.io/assets/meta/og-start.png">
+  <!-- END SEO BLOCK -->
+
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="icon" href="/docuproof-logo.png">               <!-- immediate favicon -->
+  <link rel="shortcut icon" href="/docuproof-logo.png">       <!-- legacy fallback -->
+  <link rel="apple-touch-icon" href="/docuproof-logo.png">    <!-- iOS home screen -->
+  <meta name="theme-color" content="#0B0F14">
+
+  <style>
+    :root{
+      --bg:#0b0f14;--ink:#eaeaea;--muted:#a7b0ba;--accent:#22C55E;
+      --card:#151b22;--border:#1e2630;--link:#9cc1ff;--danger:#ffb4b4;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+    a{color:var(--link)}
+    header,section,footer{padding:64px 20px;max-width:1100px;margin:auto}
+    header{text-align:center;padding-top:84px}
+    h1,h2{color:var(--accent);font-weight:700;margin-bottom:12px;line-height:1.2}
+    h3{margin-bottom:8px}
+    p{margin-bottom:18px;color:#c9d2db}
+    .btn{display:inline-block;padding:14px 26px;border-radius:10px;font-weight:700;text-decoration:none;border:1px solid transparent;transition:transform .08s ease, box-shadow .12s ease, opacity .12s ease}
+    .btn:active{transform:translateY(1px)}
+    .btn-primary{background:var(--accent);color:var(--bg)}
+    .btn-primary:hover{opacity:.9}
+    .btn-ghost{background:transparent;color:var(--ink);border-color:#2a3542}
+    .grid{display:grid;gap:24px}
+    .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+    .grid-3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+    .grid-4{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px}
+    .card.tight{padding:20px}
+    .center{text-align:center}
+    img.logo{height:64px;width:auto;margin-bottom:24px}
+    .muted{color:var(--muted)}
+    .small{font-size:13px}
+    .tiny{font-size:12px}
+
+    /* reveal effect (unchanged behavior) */
+    .reveal{opacity:0;transform:translateY(12px);transition:opacity .5s ease, transform .6s ease}
+    .reveal.in{opacity:1;transform:none}
+
+    /* FAQ accordion (unchanged) */
+    .faq-item{border:1px solid var(--border);border-radius:12px;background:var(--card);overflow:hidden}
+    .faq-q{display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;padding:16px 18px;font-weight:700}
+    .faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease;padding:0 18px}
+    .faq-item.open .faq-a{max-height:420px;padding:0 18px 18px}
+    .chev{transition:transform .25s ease}
+    .faq-item.open .chev{transform:rotate(180deg)}
+
+    /* Pricing (unchanged) */
+    .price{font-size:32px;font-weight:800;color:var(--accent)}
+    .compare{display:flex;gap:8px;align-items:baseline}
+    .per{font-size:14px;color:#c9d2db;margin-left:6px}
+    .cta-col{display:flex;flex-direction:column;gap:10px}
+
+    footer{text-align:center;font-size:14px;color:var(--muted);padding-bottom:64px}
+    .notice{border-left:4px solid var(--accent);background:#0e141a;border-radius:8px;padding:14px 16px;margin-top:10px}
+
+    /* NEW: CTA fade-in micro-animation with accessibility guard */
+    @keyframes fadeInBtt {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .btn-appear { opacity: 0; animation: fadeInBtt .6s ease-in-out forwards; }
+    .btn-appear:nth-child(1){ animation-delay:.02s; }
+    .btn-appear:nth-child(2){ animation-delay:.09s; }
+
+    /* Accessibility: honor reduced motion everywhere */
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { transition: none !important; opacity: 1 !important; transform: none !important; }
+      .faq-a { transition: none !important; }
+      .chev { transition: none !important; }
+      .btn-appear { animation: none !important; opacity: 1 !important; transform: none !important; }
+      html { scroll-behavior: auto; }
+    }
+  </style>
+
+  <!-- No-JS fallback so reveal sections are visible -->
+  <noscript>
+    <style>
+      .reveal { opacity: 1 !important; transform: none !important; }
+    </style>
+  </noscript>
+</head>
+<body>
+
+<header class="reveal">
+  <img src="/docuproof-logo.png" alt="docuProof logo" class="logo">
+  <h1>Protect Your Documents Forever — Anchored on the Bitcoin Blockchain</h1>
+  <p>From family records to business contracts, docuProof gives you the power to preserve proof against fire, theft, or dispute. In less than a minute, you’re secured for life.</p>
+  <p class="muted">Paper burns. Theft happens. Servers crash. The Bitcoin blockchain never forgets.</p>
+  <p class="center" style="margin-top:18px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+    <!-- Only change: add btn-appear class to enable gentle fade-in -->
+    <a href="/app" class="btn btn-primary btn-appear">Generate Proof</a>
+    <a href="#pricing" class="btn btn-ghost btn-appear">View Plans</a>
+  </p>
+</header>
+
+<section class="reveal">
+  <h2>Why docuProof Exists</h2>
+  <p>docuProof creates a secure digital fingerprint of your file—stored permanently on Bitcoin’s public ledger. Your document itself never leaves your device. Simple, safe, and done in under a minute.</p>
+</section>
+
+<section class="reveal">
+  <h2>Who Uses docuProof</h2>
+  <div class="grid grid-4">
+    <div class="card"><h3>Freelancers</h3><p>Timestamp work-for-hire contracts or creative drafts before sending to clients.</p></div>
+    <div class="card"><h3>Creatives</h3><p>Prove originality of songs, manuscripts, or artwork without revealing content.</p></div>
+    <div class="card"><h3>Academics & Researchers</h3><p>Protect lab results, datasets, or thesis drafts for academic priority.</p></div>
+    <div class="card"><h3>Lawyers & Businesses</h3><p>Immutable proof for contracts, NDAs, directives, and compliance records.</p></div>
+  </div>
+</section>
+
+<!-- How it works: 4 across on desktop, 2x2 on tablets -->
+<section class="reveal">
+  <h2>How It Works</h2>
+  <div class="grid grid-4">
+    <div class="card tight"><h3>1. Select Your Document</h3><p>Your file never leaves your device.</p></div>
+    <div class="card tight"><h3>2. Create a Digital Fingerprint</h3><p>We generate a unique SHA-256 code like digital DNA.</p></div>
+    <div class="card tight"><h3>3. Anchor on the Blockchain</h3><p>The fingerprint is permanently logged in Bitcoin’s immutable record.</p></div>
+    <div class="card tight"><h3>4. Pay & Get Proof</h3><p>Complete payment and receive your verifiable certificate instantly.</p></div>
+  </div>
+</section>
+
+<section class="reveal">
+  <h2>Why Choose docuProof</h2>
+  <div class="grid grid-3">
+    <div class="card"><h3>Instant Proof</h3><p>Timestamp files in seconds—no lawyers or waiting. Immediate certificate of existence.</p></div>
+    <div class="card"><h3>Tamper-Proof & Independent</h3><p>Your file’s fingerprint is anchored on Bitcoin. Anyone can verify it anytime—no trust required.</p></div>
+    <div class="card"><h3>Affordable Protection</h3><p>Professional-grade document security for just a few dollars per file.</p></div>
+  </div>
+</section>
+
+<section class="reveal" id="pricing">
+  <h2>Simple Pricing</h2>
+  <div class="grid grid-3">
+    <!-- Single Proof -->
+    <div class="card cta-col">
+      <h3>Single Proof</h3>
+      <div class="compare">
+        <div class="price">$2.89</div><div class="per">per proof</div>
+      </div>
+      <p class="muted small">One document, one permanent blockchain anchor, instant certificate.</p>
+      <p><a href="/app" class="btn btn-primary">Generate Proof</a></p>
+    </div>
+
+    <!-- Starter Plan -->
+    <div class="card cta-col">
+      <h3>Starter Plan</h3>
+      <p class="muted small">Up to 30 proofs / month</p>
+      <div class="compare"><div class="price">$7.50</div><div class="per">/ mo</div></div>
+      <p class="muted small">or <strong>$76</strong> / year</p>
+      <p><a class="btn btn-ghost" href="/.netlify/functions/create_plan_session?plan=starter_monthly">Start Monthly</a></p>
+      <p><a class="btn btn-ghost" href="/.netlify/functions/create_plan_session?plan=starter_annual">Start Annual</a></p>
+    </div>
+
+    <!-- Pro Plan -->
+    <div class="card cta-col">
+      <h3>Pro Plan</h3>
+      <p class="muted small">Up to 150 proofs / month</p>
+      <div class="compare"><div class="price">$19</div><div class="per">/ mo</div></div>
+      <p class="muted small">or <strong>$193</strong> / year</p>
+      <p><a class="btn btn-ghost" href="/.netlify/functions/create_plan_session?plan=pro_monthly">Go Pro Monthly</a></p>
+      <p><a class="btn btn-ghost" href="/.netlify/functions/create_plan_session?plan=pro_annual">Go Pro Annual</a></p>
+    </div>
+  </div>
+  <p class="tiny muted">Monthly plans billed monthly. Annual plans billed upfront. Proof allocations reset monthly. Unused proofs don’t roll over.
+</section>
+
+<section class="reveal">
+  <h2>FAQ</h2>
+  <div class="grid">
+    <div class="faq-item">
+      <div class="faq-q">
+        <span>Is this a legal notary?</span>
+        <span class="chev">⌄</span>
+      </div>
+      <div class="faq-a">
+        <p>No. docuProof provides a blockchain timestamp (proof of existence), not a notarial act. It proves a file existed, unchanged, at a specific time.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">
+        <span>Does my document get uploaded or stored?</span>
+        <span class="chev">⌄</span>
+      </div>
+      <div class="faq-a">
+        <p>No. Hashing happens locally in your browser; only the SHA-256 fingerprint is sent for anchoring. We never collect or store your document.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">
+        <span>How long does anchoring take?</span>
+        <span class="chev">⌄</span>
+      </div>
+      <div class="faq-a">
+        <p>Fingerprints are batched and written to Bitcoin. Your proof receipt and ID are available immediately; blockchain confirmations may take time depending on network conditions. Your certificate explains how to check status and confirmations.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">
+        <span>What should I save after I create a timestamp?</span>
+        <span class="chev">⌄</span>
+      </div>
+      <div class="faq-a">
+        <p>Keep your original file (e.g., <code>contract.pdf</code>) and its proof bundle (e.g., <code>contract.pdf.ots</code> plus an optional <code>sha256.txt</code>). Store them together so future verification is trivial.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">
+        <span>Can I timestamp plain text or notes?</span>
+        <span class="chev">⌄</span>
+      </div>
+      <div class="faq-a">
+        <p>Yes. You can timestamp files or raw text. For text, we hash your input on-device and anchor that fingerprint in the same way.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">
+        <span>Which blockchain do you use?</span>
+        <span class="chev">⌄</span>
+      </div>
+      <div class="faq-a">
+        <p>docuProof anchors to the Bitcoin blockchain for maximum security and verifiability. We prioritize permanence and censorship-resistance over speed-only networks.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">
+        <span>What happens if I typed the wrong file or need a refund?</span>
+        <span class="chev">⌄</span>
+      </div>
+      <div class="faq-a">
+        <p>If you made a purchase error, contact us at <a href="mailto:support@docuproof.io">support@docuproof.io</a> within 7 days. We’ll review and help where possible. Note: anchoring transactions cannot be reversed once confirmed on-chain.</p>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">
+        <span>What if Bitcoin fees spike?</span>
+        <span class="chev">⌄</span>
+      </div>
+      <div class="faq-a">
+        <p>We batch proofs to keep costs predictable. In rare fee spikes, anchoring may take longer, but your Proof ID and certificate remain valid and verifiable.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="reveal">
+  <h2>Compliance & Important Notes</h2>
+  <div class="notice">
+    <p class="small">
+      docuProof™ provides cryptographic proof of existence via Bitcoin anchoring. It does not constitute legal advice or a notarial service. Users are responsible for maintaining access to their original documents and any proof files provided. Certificates are informational records reflecting hash & timestamp data. Availability of external networks (e.g., Bitcoin) may affect anchoring time; integrity of proof is independent of docuProof’s continued operation.
+    </p>
+    <p class="small" style="margin-top:8px">
+      Questions? <a href="mailto:support@docuproof.io">Contact us at support@docuproof.io</a>.
+    </p>
+  </div>
+</section>
+
+<section class="reveal center">
+  <h2>Ready When You Are</h2>
+  <p>Secure your work in under 60 seconds with a permanent, independent proof.</p>
+  <p style="margin-top:16px"><a href="/app" class="btn btn-primary">Generate Proof</a></p>
+  <p style="margin-top:12px">
+    <a href="#pricing" class="btn btn-ghost">Return to Pricing</a>
+  </p>
+</section>
+
+<footer class="reveal center">
+  © <span id="year"></span> docuProof.io — Proof of Existence on the Bitcoin Blockchain
+  <br><a href="/.netlify/functions/verify_page">Verify a Proof</a> · <a href="/app">Generate Proof</a> · <a href="/contact.html">Contact</a>
+</footer>
+
+<script>
+  // Year
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // Scroll reveal (IntersectionObserver)
+  const io = new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // FAQ accordions
+  document.querySelectorAll('.faq-item').forEach(item=>{
+    item.querySelector('.faq-q').addEventListener('click', ()=>{
+      document.querySelectorAll('.faq-item').forEach(i=>{ if(i!==item) i.classList.remove('open'); });
+      item.classList.toggle('open');
+    });
+  });
+</script>
+</body>
+</html>

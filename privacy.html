@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Privacy Policy — docuProof</title>
+
+  <!-- Icons / PWA -->
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="icon" href="/icon-192.png" sizes="192x192">
+  <link rel="icon" href="/icon-512.png" sizes="512x512">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="theme-color" content="#0b0d0f">
+
+  <style>
+    :root{
+      --bg:#0b0d0f; --card:#121418; --muted:#9aa3af; --text:#e6e7eb;
+      --accent:#56f08a; --ring:#2a2f36; --input:#1a1f24;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;overflow-x:hidden}
+
+    /* Shared header (logo) */
+    .site-header{width:100%;border-bottom:1px solid #1b1c20;background:#0b0d0f}
+    .site-header .inner{max-width:920px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:12px}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand img{display:block}
+    .brand-name{color:#e6e7eb;font-weight:700;letter-spacing:.02em}
+    .brand-tagline{font-size:13px;color:#9aa3af;margin-top:2px;font-weight:400}
+
+/* Hero block to match index look */
+.hero{margin:42px 0 24px}
+.hero-title{
+  font-size:clamp(36px,6vw,60px);
+  line-height:1.05;
+  margin:0 0 10px;
+  color:#e6e7eb;
+  font-weight:800;
+}
+.hero-lead{
+  color:#c6c8ce;
+  font-size:18px;
+  margin:0 0 28px;
+}
+    .wrap{max-width:920px;margin:36px auto 48px;padding:0 20px}
+    header.page{margin:8px 0 18px}
+    h1{font-size:34px;margin:10px 0 6px}
+    .tag{color:var(--muted);font-weight:600;letter-spacing:.02em}
+    .card{background:var(--card);border:1px solid var(--ring);border-radius:14px;padding:22px;margin:16px 0}
+    h2{font-size:20px;margin:0 0 10px}
+    p,li{color:#d3d6db}
+    a{color:var(--accent);text-decoration:none}
+
+    footer{margin-top:40px;text-align:center;color:#9aa3af;font-size:14px;border-top:1px solid #1b1c20;padding:20px 20px 28px}
+    footer a{color:#56f08a;text-decoration:none}
+    .microcopy{margin-top:6px;color:#666;font-size:12px}
+  </style>
+</head>
+<body>
+
+  <!-- Header with logo (no resizing) -->
+<header class="site-header">
+  <div class="inner">
+    <div class="brand">
+      <img src="/docuproof-logo.png" alt="docuProof logo" loading="eager" style="display:block;height:32px">
+      <div>
+        <div class="brand-name">docuProof</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+  <div class="wrap">
+<section class="hero">
+  <h1 class="hero-title">Proof you can point to.</h1>
+  <p class="hero-lead">Preserve the truth of what you create — because memories fade, but proof doesn’t.</p>
+</section>
+    <header class="page">
+      <div class="tag">docuProof™ — Proof you can point to.</div>
+      <h1>Privacy Policy</h1>
+      <div class="tag">Effective: 2025-10-13</div>
+    </header>
+
+    <div class="card">
+      <p><strong>Who we are.</strong> docuProof™ is operated by <strong>BuyWayz LLC</strong>, a Wyoming company, doing business as <strong>docuProof.io</strong> (“<strong>docuProof</strong>,” “we,” “us,” or “our”).</p>
+      <p><strong>What we do.</strong> We provide a non-custodial proof-of-existence service. You compute a cryptographic fingerprint (SHA-256 hash) of your file locally in your browser; we anchor that hash and return a permanent verification link. <em>We are not a notary or a legal certification service.</em></p>
+    </div>
+
+    <div class="card">
+      <h2>1) Data we do <em>not</em> collect</h2>
+      <ul>
+        <li><strong>No file contents.</strong> Your document never leaves your device. We do not upload, scan, or store your files.</li>
+        <li><strong>No third-party ad pixels.</strong> We don’t run invasive tracking beacons.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>2) Data we process to deliver the service</h2>
+      <ul>
+        <li><strong>Document hash (SHA-256):</strong> submitted by you to create a proof record. This is a one-way fingerprint and cannot reconstruct your file.</li>
+        <li><strong>Basic proof metadata:</strong> proof ID, timestamps, optional filename/display name you provide, and a public verification URL.</li>
+        <li><strong>Payment data via Stripe:</strong> We use Stripe for one-time purchases and subscriptions. Stripe is a separate controller for payment data; we don’t store full card numbers. See <a href="https://stripe.com/privacy" target="_blank" rel="noopener">stripe.com/privacy</a>.</li>
+        <li><strong>Operational logs:</strong> limited, short-lived logs for security and uptime (e.g., function invocation, error traces). No file contents.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>2a) Email delivery</h2>
+      <p>We use an email service provider (such as Postmark) to send transactional messages including receipts, proof delivery notices, and verification links. This involves processing your email address, the message body, and minimal delivery metadata such as timestamps and message IDs. During Postmark domain approval, delivery may be limited to addresses under the same verified domain.</p>
+    </div>
+
+    <div class="card">
+      <h2>3) Public nature of proofs</h2>
+      <p>When you create a proof, the verification page URL and proof fields you provide (e.g., display name) may be publicly accessible by anyone with the link. Do not include confidential or personal data in fields you intend to make public.</p>
+    </div>
+
+    <div class="card">
+      <h2>4) Legal bases & purposes</h2>
+      <ul>
+        <li><strong>Contract:</strong> to provide the timestamping and verification service you request.</li>
+        <li><strong>Legitimate interests:</strong> to secure, maintain, and improve the service; to prevent abuse and fraud.</li>
+        <li><strong>Compliance:</strong> to meet obligations under applicable law (e.g., tax/financial record retention related to payments).</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>5) Retention</h2>
+      <ul>
+        <li><strong>Proof records:</strong> retained to preserve verifiability of your proofs.</li>
+        <li><strong>Payment records:</strong> retained per legal/tax requirements.</li>
+        <li><strong>Operational logs:</strong> retained for a limited time and rotated.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>6) Your choices</h2>
+      <ul>
+        <li><strong>Minimize inputs:</strong> Provide only what you want to appear on a public proof page.</li>
+        <li><strong>Questions:</strong> Contact <a href="mailto:support@docuproof.io">support@docuproof.io</a>.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>7) Children’s privacy</h2>
+      <p>docuProof is not intended for children under 16. If you believe a minor has submitted personal data, contact us and we will address it promptly.</p>
+    </div>
+
+    <div class="card">
+      <h2>8) International users</h2>
+      <p>We operate from the United States (Wyoming). By using docuProof, you understand your data may be processed in the U.S. We apply the practices described here regardless of your location.</p>
+    </div>
+
+    <div class="card">
+      <h2>9) Security</h2>
+      <p>We apply industry-standard controls to our systems and never ingest your file contents. No online service can guarantee perfect security; please use strong device security and avoid embedding sensitive information in public proof fields.</p>
+    </div>
+
+    <div class="card">
+      <h2>10) Changes</h2>
+      <p>We may update this policy as our service evolves. Material changes will be posted here with a new “Effective” date. Continued use constitutes acceptance of the revised policy.</p>
+    </div>
+
+    <div class="card">
+      <h2>11) Contact</h2>
+      <p><strong>BuyWayz LLC (dba docuProof.io)</strong><br>Cheyenne, Wyoming, USA<br>
+Email: <a href="mailto:support@docuproof.io">support@docuproof.io</a></p>
+    </div>
+
+    <footer>
+      © 2025 BuyWayz LLC (dba docuProof.io). All rights reserved. · <a href="/terms.html">Terms</a> · <a href="/privacy.html">Privacy</a>
+      <div class="microcopy">Not a notary — cryptographic proof only. No document contents are ever uploaded.</div>
+    </footer>
+  </div>
+</body>
+</html>

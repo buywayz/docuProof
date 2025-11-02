@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>404 — Page Not Found | docuProof</title>
+  <meta name="description" content="The page you’re looking for doesn’t exist. Return home to docuProof — Proof you can point to." />
+  <meta name="theme-color" content="#0b0b0c" />
+
+  <!-- Icons / PWA -->
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="icon" href="/icon-192.png" sizes="192x192" />
+  <link rel="icon" href="/icon-512.png" sizes="512x512" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+  <style>
+    :root{
+      --bg:#0b0b0c; --card:#111214; --ring:#1b1c20; --text:#f8f9fb;
+      --muted:#d0d0d0; --accent:#16FF70; --ink:#06140b;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{
+      background:var(--bg); color:var(--text);
+      font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      display:flex; justify-content:center; padding:40px 20px; min-height:100vh;
+    }
+    .container{
+      max-width:720px; background:var(--card); border:1px solid var(--ring);
+      border-radius:14px; box-shadow:0 10px 30px rgba(0,0,0,.35);
+      padding:40px 32px; text-align:center; align-self:center;
+    }
+    .logo{display:flex; align-items:center; gap:10px; margin-bottom:18px; justify-content:center;}
+    .logo svg{width:32px; height:32px;}
+    .brand{font-weight:700; letter-spacing:.02em}
+    h1{color:var(--accent); font-size:28px; margin:0 0 10px;}
+    p{color:var(--muted); line-height:1.55; margin:0 0 14px;}
+    code{background:#0f1114; border:1px solid var(--ring); padding:2px 6px; border-radius:6px; color:#b9bcc2;}
+    a.btn{
+      display:inline-block; margin-top:10px; padding:10px 16px; border-radius:10px;
+      background:var(--accent); color:var(--ink); text-decoration:none; font-weight:700;
+    }
+
+    .report-link{
+      display:block;
+      margin-top:18px;
+      font-size:14px;
+      color:#9cc1ff;
+      text-decoration:none;
+    }
+    .report-link:hover{text-decoration:underline}
+
+    /* Diagnostics overlay (⌘K / Ctrl+K) */
+    .diag{
+      position:fixed; inset:0; background:rgba(0,0,0,.6); display:none;
+      align-items:center; justify-content:center; z-index:9999; padding:20px;
+    }
+    .diag.open{display:flex}
+    .diag-card{
+      width:min(720px, 96vw); background:#0f1114; color:#e7e9ee;
+      border:1px solid #23252b; border-radius:14px; padding:18px 18px 16px;
+      font:14px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      box-shadow:0 12px 36px rgba(0,0,0,.55);
+    }
+    .diag-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px}
+    .diag-head h3{margin:0; font:600 14px/1 ui-sans-serif,system-ui}
+    .diag pre{white-space:pre-wrap; word-break:break-word; margin:0}
+    .diag .hint{opacity:.7; margin-top:8px}
+    .diag button{
+      appearance:none; border:1px solid #2b2e36; background:#14171c; color:#e7e9ee;
+      padding:6px 10px; border-radius:8px; cursor:pointer; font-weight:600;
+    }
+    .diag button:hover{background:#161a21}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <defs>
+          <linearGradient id="g" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" stop-color="#16FF70"/>
+            <stop offset="1" stop-color="#13dc60"/>
+          </linearGradient>
+        </defs>
+        <rect x="16" y="12" width="28" height="36" rx="4" fill="url(#g)"/>
+        <rect x="36" y="34" width="12" height="10" rx="2" fill="#05170f" opacity=".9"/>
+        <path d="M40 34 v-2 a4 4 0 0 1 8 0 v2" fill="none" stroke="#05170f" stroke-width="2"/>
+      </svg>
+      <strong class="brand">docuProof</strong>
+    </div>
+
+    <h1>Page not found</h1>
+    <p>Looks like you followed a broken link or typed a URL that doesn’t exist.</p>
+    <p>Have a proof ID? Try visiting <code>/v/&lt;your-id&gt;</code> directly.</p>
+
+    <a class="btn" href="/start.html">Back to Home</a>
+    <a id="reportLink" class="report-link" href="#">Report broken link</a>
+  </div>
+
+  <!-- Hidden diagnostics overlay -->
+  <div class="diag" id="diag">
+    <div class="diag-card">
+      <div class="diag-head">
+        <h3>docuProof · 404 Diagnostics</h3>
+        <button id="closeDiag" type="button">Close (Esc)</button>
+      </div>
+      <pre id="diagOut">Collecting headers…</pre>
+      <div class="hint">Press ⌘K (Mac) or Ctrl+K (Windows/Linux) to toggle diagnostics overlay.</div>
+    </div>
+  </div>
+
+  <script>
+    // Keybinding: ⌘K / Ctrl+K toggles diagnostics panel
+    const diag = document.getElementById('diag');
+    const out  = document.getElementById('diagOut');
+    const btn  = document.getElementById('closeDiag');
+
+    function openDiag(){ diag.classList.add('open'); }
+    function closeDiag(){ diag.classList.remove('open'); }
+
+    document.addEventListener('keydown', (e)=>{
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC')>=0;
+      const combo = (isMac && e.metaKey && e.key.toLowerCase()==='k') || (!isMac && e.ctrlKey && e.key.toLowerCase()==='k');
+      if (combo){ e.preventDefault(); openDiag(); }
+      if (e.key === 'Escape') closeDiag();
+    });
+    btn.addEventListener('click', closeDiag);
+    diag.addEventListener('click', (e)=>{ if(e.target===diag) closeDiag(); });
+
+    // Collect live response headers by refetching this page (same-origin)
+    (async ()=>{
+      try{
+        const res = await fetch(location.href, { method:'GET', cache:'no-store' });
+        const hdr = (k)=>res.headers.get(k) || '—';
+        const lines = [
+          `URL: ${location.pathname || '/'}`,
+          `Date: ${hdr('date')}`,
+          `ETag: ${hdr('etag')}`,
+          `Last-Modified: ${hdr('last-modified') || document.lastModified || '—'}`,
+          `X-NF-Request-ID: ${hdr('x-nf-request-id')}`,
+          `CF-Ray / Edge: ${hdr('x-amz-cf-pop') || hdr('server-timing') || '—'}`,
+          `Content-Type: ${hdr('content-type')}`,
+          `CSP: ${hdr('content-security-policy') ? 'present' : '—'}`,
+          `Referrer-Policy: ${hdr('referrer-policy') || '—'}`,
+          `HSTS: ${hdr('strict-transport-security') ? 'present' : '—'}`,
+          `X-Frame-Options: ${hdr('x-frame-options') || '—'}`,
+          `X-Content-Type-Options: ${hdr('x-content-type-options') || '—'}`,
+          `Permissions-Policy: ${hdr('permissions-policy') ? 'present' : '—'}`
+        ];
+        out.textContent = lines.join('\n');
+      }catch(err){
+        out.textContent = `Failed to read headers: ${err && err.message ? err.message : String(err)}`;
+      }
+    })();
+
+    // Dynamic mailto link for "Report broken link"
+    const reportLink = document.getElementById('reportLink');
+    const page = encodeURIComponent(location.href);
+    const ref = encodeURIComponent(document.referrer || 'none');
+    const agent = encodeURIComponent(navigator.userAgent);
+    const subject = encodeURIComponent(`Broken link report on docuProof`);
+    const body = encodeURIComponent(
+      `Hi docuProof Team,\n\nI found a broken link:\n\nURL: ${page}\nReferrer: ${ref}\nBrowser: ${agent}\n\nPlease look into it.`
+    );
+    reportLink.href = `mailto:support@docuproof.io?subject=${subject}&body=${body}`;
+  </script>
+</body>
+</html>

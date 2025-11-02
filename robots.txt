@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Keep internal endpoints out of the search index
+Disallow: /.netlify/
+Disallow: /.netlify/functions/
+Disallow: /api/
+Disallow: /success.html
+Disallow: /cancel.html
+Disallow: /v/
+
+# Sitemap location
+Sitemap: https://docuproof.io/sitemap.xml

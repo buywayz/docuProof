@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <script>
+    // If / serves this file, send visitors to the marketing landing page.
+    if (location.pathname === "/") location.replace("/start.html");
+  </script>
+  <noscript><meta http-equiv="refresh" content="0; url=/start.html"></noscript>
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- START SEO BLOCK (unchanged) -->
+  <link rel="canonical" href="https://docuproof.io/index.html">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://docuproof.io/index.html">
+  <meta property="og:title" content="Generate a Bitcoin-anchored Proof">
+  <meta property="og:description" content="Hash locally, anchor immutably. Your file never leaves your device.">
+  <meta property="og:image" content="https://docuproof.io/assets/meta/og-app.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Generate a Bitcoin-anchored Proof">
+  <meta name="twitter:description" content="One-minute proof-of-existence for any file.">
+  <meta name="twitter:image" content="https://docuproof.io/assets/meta/og-app.png">
+  <!-- END SEO BLOCK -->
+
+  <title>docuProof – Proof you can point to.</title>
+  <meta name="description" content="Preserve the truth of what you create — because memories fade, but proof doesn’t. Create a SHA-256 hash locally, pay once or subscribe, and get a permanent verification link anchored to the Bitcoin blockchain." />
+
+  <!-- Icons & PWA -->
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="icon" href="/docuproof-logo.png">
+  <link rel="shortcut icon" href="/docuproof-logo.png">
+  <link rel="apple-touch-icon" href="/docuproof-logo.png">
+  <meta name="theme-color" content="#0b0d0f">
+  <meta name="apple-mobile-web-app-title" content="docuProof">
+
+  <!-- Perf hints for Stripe -->
+  <link rel="preconnect" href="https://checkout.stripe.com" crossorigin>
+  <link rel="dns-prefetch" href="https://checkout.stripe.com">
+
+  <style>
+    :root{
+      --bg:#0b0d0f; --card:#121418; --muted:#9aa3af; --text:#e6e7eb;
+      --accent:#56f08a; --accent-2:#22c55e; --input:#1a1f24; --ring:#2a2f36;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+
+    /* Header */
+    .site-header{border-bottom:1px solid #1b1c20;background:#0b0d0f}
+    .site-header .inner{max-width:1100px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:10px;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .brand img{display:block;height:32px}
+    .brand-name{font-weight:700;letter-spacing:.02em;color:#e6e7eb}
+    .top-nav a{margin-left:16px;color:#cfd3da;text-decoration:none}
+    .top-nav a:hover{text-decoration:underline}
+
+    .wrap{max-width:920px;margin:48px auto;padding:0 20px;text-align:left}
+    h1{font-size:clamp(36px,6vw,60px);line-height:1.05;margin:0 0 14px;text-align:left}
+    .accent{color:var(--accent)}
+    p.lead{color:#c6c8ce;font-size:18px;margin:12px 0 28px;text-align:left}
+    .grid{display:grid;gap:22px;grid-template-columns:1fr 420px}
+    @media(max-width:980px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid var(--ring);border-radius:14px;padding:22px}
+    .subtle{color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:600;font-size:12px;margin:0 0 12px}
+    label{display:block;color:#cfd3da;margin:14px 0 8px;font-size:14px}
+    input,select,button,.mono{
+      width:100%;border-radius:12px;border:1px solid var(--ring);background:var(--input);color:var(--text);
+      padding:12px 14px;font-size:16px;outline:none;
+    }
+    input:focus,select:focus{box-shadow:0 0 0 3px #2a2f3640}
+    .row{display:flex;gap:10px;align-items:center}
+    .btn{background:var(--accent);color:#0b0d0f;font-weight:800;cursor:pointer;border:none;transition:transform .08s ease, box-shadow .12s ease, opacity .12s ease}
+    .btn:active{transform:translateY(1px)}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .copy-btn{width:auto;padding:10px 14px;background:var(--accent-2);color:#08150b;border:none;cursor:pointer;border-radius:12px;font-weight:700}
+    .ok{color:#83f3b2}
+    .hash{color:var(--accent);font-family:ui-monospace,Menlo,Consolas,monospace;white-space:nowrap;overflow-x:auto}
+    .help{color:#9aa3af;font-size:13px;margin-top:8px}
+    .aside-help{display:none}
+    footer{margin-top:60px;text-align:center;color:#9aa3af;font-size:14px;border-top:1px solid #1b1c20;padding-top:20px;}
+    .verify-banner{background:#0f1316;border:1px solid var(--ring);border-radius:14px;padding:18px 18px;display:flex;gap:12px;align-items:center;margin:16px 0 28px}
+    .verify-banner h3{margin:0;color:var(--accent);font-size:20px}
+    .verify-input { flex: 1; min-width: 320px; max-width: 380px; }
+    .verify-btn{width:auto;padding:10px 16px}
+    .microcopy{margin-top:6px;color:#666;font-size:12px}
+
+    /* A11y-friendly visually-hidden utility for the real file input */
+    .sr-only {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
+    /* Custom file button */
+    .file-btn { width: auto; padding: 10px 14px; }
+    /* Filename box compact */
+    #filenameEcho { flex: 1; min-width: 220px; }
+
+    /* ===== New: motion-safety + micro-animation (matches start.html) ===== */
+    .reveal{opacity:0;transform:translateY(12px);transition:opacity .5s ease, transform .6s ease}
+    .reveal.in{opacity:1;transform:none}
+    @keyframes fadeInBtt {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .btn-appear { opacity: 0; animation: fadeInBtt .6s ease-in-out forwards; }
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { transition:none !important; opacity:1 !important; transform:none !important; }
+      .btn-appear { animation:none !important; opacity:1 !important; transform:none !important; }
+      html { scroll-behavior: auto; }
+    }
+  </style>
+
+  <!-- No-JS fallback so reveal sections are visible -->
+  <noscript>
+    <style>.reveal{opacity:1 !important;transform:none !important;}</style>
+  </noscript>
+</head>
+<body>
+
+  <!-- Standardized header -->
+  <header class="site-header">
+    <div class="inner">
+      <a href="/" class="brand" aria-label="docuProof home">
+        <img src="/docuproof-logo.png" alt="docuProof logo" loading="eager">
+        <span class="brand-name">docuProof</span>
+      </a>
+      <nav class="top-nav" aria-label="Primary">
+        <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Terms</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <h1 class="reveal">Proof you can point to.</h1>
+    <p class="lead reveal">
+      Preserve the truth of what you create — because memories fade, but proof doesn’t.
+    </p>
+
+    <div class="verify-banner reveal">
+      <h3>Quick Verify</h3>
+      <div class="row" style="align-items: center; gap: 12px;">
+        <input id="quickIdTop" class="mono verify-input" placeholder="e.g. cs_live_… or w1oXFVBj0iQ" />
+        <button id="verifyTopBtn" class="btn verify-btn btn-appear">Verify</button>
+      </div>
+      <div class="help">
+        Already have a proof? Paste your Proof ID (<code>cs_…</code>) or 10-character Quick Verify ID to open its verification page.
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card reveal">
+        <p class="subtle">1) Create hash locally</p>
+        <label for="file">Drop a file to compute its SHA-256 hash in your browser. Nothing leaves your device.</label>
+        <div class="row">
+          <!-- Visually-hidden real input; label acts as the button -->
+          <input id="file" type="file" class="sr-only" />
+          <label for="file" class="btn file-btn">Choose File</label>
+          <input id="filenameEcho" class="mono" placeholder="filename" disabled />
+        </div>
+
+        <label for="hashOut">Computed hash</label>
+        <div class="row">
+          <input id="hashOut" class="hash" readonly />
+          <button id="copyBtn" class="copy-btn">Copy</button>
+        </div>
+        <div class="help">This is the fingerprint we’ll save with your proof. Copy for your records (optional).</div>
+      </div>
+
+      <div class="card reveal">
+        <p class="subtle">2) Buy & save proof</p>
+        <p class="help">Checkout via Stripe (single, Starter, or Pro). On success we save your hash and generate your public verification URL.</p>
+
+        <label for="plan">Select plan</label>
+        <select id="plan">
+          <option value="one-time">One-time (Single Proof)</option>
+          <option value="starter">Starter</option>
+          <option value="pro">Pro</option>
+        </select>
+
+        <div id="billingWrap">
+          <label for="billing">Billing cycle</label>
+          <select id="billing">
+            <option value="monthly">Monthly</option>
+            <option value="annual">Annual</option>
+          </select>
+        </div>
+
+        <label for="email">Email (required for your receipt)</label>
+        <input id="email" type="email" placeholder="you@example.com" required />
+
+        <div class="row">
+          <div style="flex:1">
+            <label for="fname">Filename (optional)</label>
+            <input id="fname" type="text" placeholder="example.pdf" />
+          </div>
+          <div style="flex:1">
+            <label for="dname">Display name (optional)</label>
+            <input id="dname" type="text" placeholder="Your name or org" />
+          </div>
+        </div>
+
+        <button id="buyBtn" class="btn btn-appear" style="margin-top:10px;">Buy now</button>
+        <div id="msg" class="help" style="min-height:22px"></div>
+      </div>
+    </div>
+
+    <footer class="reveal">
+      © 2025 docuProof.io — All rights reserved. ·
+      <a href="/terms.html">Terms</a> · <a href="/privacy.html">Privacy</a>
+      <div class="microcopy">Not a notary — cryptographic proof only. No document contents are ever uploaded.</div>
+    </footer>
+  </div>
+
+<script>
+  // IntersectionObserver to reveal elements (matches start.html pattern)
+  (function(){
+    const els = document.querySelectorAll('.reveal');
+    if(!('IntersectionObserver' in window)) { els.forEach(el=>el.classList.add('in')); return; }
+    const io = new IntersectionObserver(entries=>{
+      for(const e of entries){
+        if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+      }
+    }, { threshold: 0.08 });
+    els.forEach(el=>io.observe(el));
+  })();
+
+  const $ = (id)=>document.getElementById(id);
+  const file = $('file'), echo = $('filenameEcho'), out = $('hashOut'), copyBtn = $('copyBtn');
+  const quickIdTop = $('quickIdTop'), verifyTopBtn = $('verifyTopBtn');
+  const planSel = $('plan'), billSel = $('billing'), billWrap = $('billingWrap');
+  const email = $('email'), fname=$('fname'), dname=$('dname'), buyBtn=$('buyBtn'), msg=$('msg');
+
+  function syncBilling() {
+    const isOne = planSel.value === 'one-time';
+    billWrap.style.display = isOne ? 'none' : 'block';
+  }
+  planSel.addEventListener('change', syncBilling); syncBilling();
+
+  async function sha256Hex(file) {
+    const buf = await file.arrayBuffer();
+    const digest = await crypto.subtle.digest('SHA-256', buf);
+    return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  file.addEventListener('change', async (e)=>{
+    const f = e.target.files?.[0];
+    if(!f) return;
+    echo.value = f.name || '';
+    out.value = 'Computing…';
+    try{
+      const h = await sha256Hex(f);
+      out.value = h;
+    }catch(err){
+      out.value = '';
+      alert('Failed to compute hash');
+    }
+  });
+
+  copyBtn.addEventListener('click', async ()=>{
+    if(!out.value) return;
+    try{
+      await navigator.clipboard.writeText(out.value);
+      copyBtn.textContent='Copied!';
+      setTimeout(()=>copyBtn.textContent='Copy',900);
+    }catch{}
+  });
+
+  verifyTopBtn.addEventListener('click', ()=>{
+    const id = (quickIdTop.value || '').trim();
+    if(!id) return;
+    window.location.href = `/v/${encodeURIComponent(id)}`;
+  });
+
+  // Email validation + checkout
+  buyBtn.addEventListener('click', async ()=>{
+    msg.textContent = '';
+
+    const emailVal = (email.value || '').trim();
+    if (!emailVal || !emailVal.includes('@')) {
+      msg.textContent = 'Please enter a valid email address.';
+      email.focus();
+      return;
+    }
+
+    buyBtn.disabled = true; buyBtn.textContent = 'Redirecting…';
+    try {
+      const payload = {
+        email: emailVal,
+        hash:  (out.value || '').trim(),
+        filename: (fname.value || '').trim(),
+        displayName: (dname.value || '').trim(),
+        plan: planSel.value,
+        billing: planSel.value==='one-time' ? 'none' : billSel.value
+      };
+      const res = await fetch('/.netlify/functions/create_checkout_session', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data?.error || 'Failed to start checkout');
+
+      // Remember the session id defensively
+      if (data?.id) {
+        try { localStorage.setItem('last_session_id', data.id); } catch {}
+      }
+      window.location.href = data.url;
+
+    } catch (err) {
+      msg.textContent = err.message || 'Sorry, something went wrong starting checkout.';
+      buyBtn.disabled = false; buyBtn.textContent = 'Buy now';
+    }
+  });
+</script>
+</body>
+</html>

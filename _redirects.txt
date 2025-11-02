@@ -1,0 +1,3 @@
+http://*                      https://docuproof.io/:splat   301!
+https://www.docuproof.io/*   https://docuproof.io/:splat   301!
+/*                            /index.html                    200
