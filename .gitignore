@@ -1,2 +1,9 @@
 # Local Netlify folder
 .netlify
+
+# Ignore vendor archives
+*.tar.gz
+*.zip
+*.pkg
+*.dmg
+
