@@ -1,4 +1,4 @@
-const { ServerClient } = require("@postmark/client");
+const postmark = require("postmark");
 
 /**
  * Send an email via Postmark
@@ -23,7 +23,7 @@ exports.sendEmail = async function sendEmail({
     throw new Error("Missing POSTMARK_SERVER_TOKEN or POSTMARK_FROM");
   }
 
-  const client = new ServerClient(token);
+  const client = new postmark.ServerClient(token);
 
   return client.sendEmail({
     From: from,
