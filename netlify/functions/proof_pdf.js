@@ -1,9 +1,6 @@
 // netlify/functions/proof_pdf.js
-// Branded PDF “Proof you can point to.” certificate
-// - Clean modern layout with subtle #16FF70 accents
-// - Logo in header (assets/favicons/favicon-192x192.png) or banner fallback (docuproof-banner.png)
-// - Concise, bold green section headers; Helvetica / Helvetica-Bold
-// - Deterministic Quick Verify ID derived from the long proof id
+// On-brand, fixed-layout PDF using pdf-lib. Dark page background, white content card,
+// consistent spacing, and safe word-wrapping (no overlaps).
 
 const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
 const crypto = require('crypto');
@@ -13,12 +10,11 @@ const path = require('path');
 exports.handler = async (event) => {
   try {
     const qs = event.queryStringParameters || {};
-    const longId      = String(qs.id || '').trim();        // e.g., cs_live_...
-    const hash        = String(qs.hash || '').trim();      // optional
-    const filename    = String(qs.filename || '').trim();  // optional
-    const displayName = String(qs.displayName || '').trim(); // optional
+    const proofId     = (qs.id || '').trim();          // required
+    const filename    = (qs.filename || '').trim();    // optional
+    const displayName = (qs.displayName || '').trim(); // optional
 
-    if (!longId) {
+    if (!proofId) {
       return {
         statusCode: 400,
         headers: { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' },
@@ -26,62 +22,88 @@ exports.handler = async (event) => {
       };
     }
 
-    // === Stable Quick Verify ID (10 chars, URL-safe) ===
-    const digest  = crypto.createHash('sha256').update(longId).digest();
+    // Deterministic 10-char quick verify id from proofId
+    const digest = crypto.createHash('sha256').update(proofId).digest();
     const quickId = Buffer.from(digest).toString('base64url').slice(0, 10);
 
-    // Base site origin for verify URL
-    const base =
-      process.env.URL ||
-      process.env.DEPLOY_URL ||
-      (event.headers && event.headers.host && `https://${event.headers.host}`) ||
-      'https://docuproof.io';
-
-    const verifyUrl = `${base}/.netlify/functions/verify_page?id=${encodeURIComponent(longId)}`;
-
-    // === Page & typography ===
-    const PAGE_W = 740;
-    const PAGE_H = 980;
-    const margin = 56;
-    const headerH = 72; // taller header for logo
-    const contentW = PAGE_W - margin * 2;
-
+    // Page + palette
+    const PAGE_W = 842;  // A4 landscape-ish width for more room (but we’ll keep portrait feel)
+    const PAGE_H = 595;
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
     const { width, height } = page.getSize();
 
+    // Colors (brand)
+    const green  = rgb(0x16/255, 0xff/255, 0x70/255);                // #16FF70
+    const black  = rgb(0.04, 0.05, 0.06);                            // page bg
+    const white  = rgb(1,1,1);
+    const gray9  = rgb(0.09,0.10,0.12);
+    const gray40 = rgb(0.40,0.43,0.47);
+    const gray55 = rgb(0.55,0.58,0.62);
+    const gray80 = rgb(0.80,0.82,0.86);
+
     const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold    = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    // Palette
-    const brand     = rgb(0x16/255, 0xff/255, 0x70/255); // #16FF70
-    const black     = rgb(0, 0, 0);
-    const grayDark  = rgb(0.10, 0.10, 0.10);
-    const grayBody  = rgb(0.30, 0.30, 0.30);
-    const grayLight = rgb(0.55, 0.55, 0.55);
+    // --- Background ---
+    page.drawRectangle({ x: 0, y: 0, width, height, color: black });
+
+    // --- Header bar ---
+    const HEADER_H = 48;
+    page.drawRectangle({ x: 0, y: height-HEADER_H, width, height: HEADER_H, color: gray9 });
+
+    // Logo (optional) + title
+    let titleX = 24;
+    try {
+      const logoPath = path.resolve(__dirname, '../../assets/favicons/favicon-192x192.png');
+      if (fs.existsSync(logoPath)) {
+        const logoBytes = fs.readFileSync(logoPath);
+        const logoImg = await pdfDoc.embedPng(logoBytes);
+        const L = 28;
+        page.drawImage(logoImg, { x: 20, y: height-HEADER_H + (HEADER_H-L)/2, width: L, height: L });
+        titleX = 20 + L + 10;
+      }
+    } catch (_) {}
+
+    page.drawText('docuProof.io — Proof you can point to.', {
+      x: titleX, y: height - HEADER_H + 14, size: 16, font: fontBold, color: green
+    });
+
+    // --- Content Card ---
+    const CARD_W = width - 96;
+    const CARD_H = height - (HEADER_H + 64);
+    const CARD_X = (width - CARD_W) / 2;
+    const CARD_Y = 32;
+    page.drawRectangle({
+      x: CARD_X, y: CARD_Y, width: CARD_W, height: CARD_H,
+      color: white, borderWidth: 0, opacity: 1
+    });
+
+    // Content padding
+    const PAD = 32;
+    const contentX = CARD_X + PAD;
+    const contentW = CARD_W - PAD*2;
+    let y = CARD_Y + CARD_H - PAD;
 
     // Helpers
-    let y = height - margin;
-    const drawText = (text, x, y, size, font, color, opts={}) =>
-      page.drawText(String(text), { x, y, size, font, color, maxWidth: contentW, ...opts });
-
-    const measure = (font, size, text) => font.widthOfTextAtSize(String(text), size);
-
-    const wrapIntoLines = (text, font, size, maxWidth) => {
+    const draw = (text, size, color=gray40, font=fontRegular) => {
+      page.drawText(String(text), { x: contentX, y, size, font, color, maxWidth: contentW });
+    };
+    const measure = (text, size, font=fontRegular) => font.heightAtSize(size);
+    const wrapLines = (text, size, font=fontRegular, maxW=contentW) => {
       const words = String(text).split(/\s+/);
       const lines = [];
       let line = '';
       for (const w of words) {
         const t = line ? line + ' ' + w : w;
-        if (measure(font, size, t) <= maxWidth) {
-          line = t;
-        } else {
+        if (font.widthOfTextAtSize(t, size) <= maxW) line = t;
+        else {
           if (line) lines.push(line);
-          if (measure(font, size, w) > maxWidth) {
-            // Hyphenate long tokens
+          // handle ultra-long token
+          if (font.widthOfTextAtSize(w, size) > maxW) {
             let chunk = '';
             for (const ch of w) {
-              if (measure(font, size, chunk + ch) <= maxWidth) chunk += ch;
+              if (font.widthOfTextAtSize(chunk + ch, size) <= maxW) chunk += ch;
               else { lines.push(chunk); chunk = ch; }
             }
             line = chunk;
@@ -93,129 +115,79 @@ exports.handler = async (event) => {
       if (line) lines.push(line);
       return lines;
     };
+    const drawBlock = (label, value, opts={}) => {
+      const labelSize = opts.labelSize || 10;
+      const valueSize = opts.valueSize || 12;
+      const gap       = opts.gap || 6;
+      const vColor    = opts.vColor || gray40;
+      const lColor    = opts.lColor || gray55;
 
-    const drawWrappedBlock = (label, value, labelSize = 10, valueSize = 12) => {
-      y -= 18; drawText(label, margin, y, labelSize, fontBold, brand);
-      const val = value ? String(value) : '—';
-      const lines = wrapIntoLines(val, fontRegular, valueSize, contentW);
-      for (const ln of lines) {
-        y -= 14; drawText(ln, margin, y, valueSize, fontRegular, grayDark);
+      y -= labelSize + 2;
+      page.drawText(String(label), { x: contentX, y, size: labelSize, font: fontRegular, color: lColor });
+
+      const lines = wrapLines(value ?? '—', valueSize, fontRegular, contentW);
+      y -= (gap + valueSize);
+      for (let i=0;i<lines.length;i++) {
+        page.drawText(lines[i], { x: contentX, y, size: valueSize, font: fontRegular, color: vColor, maxWidth: contentW });
+        if (i < lines.length-1) y -= valueSize + 4;
       }
-      y -= 4;
+      y -= 10; // section spacing
     };
 
-    // === Header with logo (or banner) ===
-    const contentX = margin;
-    let usedBanner = false;
+    // Title
+    y -= 8;
+    page.drawText('Proof you can point to.', { x: contentX, y, size: 26, font: fontBold, color: black });
+    y -= 30;
 
-    // Try wide banner first (optional), then logo bar
-    try {
-      const bannerPath = path.resolve(process.cwd(), 'docuproof-banner.png');
-      if (fs.existsSync(bannerPath)) {
-        const bannerBytes = fs.readFileSync(bannerPath);
-        const bannerImg = await pdfDoc.embedPng(bannerBytes);
-        const scale = contentW / bannerImg.width;
-        const drawW = contentW;
-        const drawH = bannerImg.height * scale;
-        page.drawImage(bannerImg, {
-          x: contentX, y: height - margin - drawH, width: drawW, height: drawH,
-        });
-        y = height - margin - drawH - 18;
-        usedBanner = true;
-      }
-    } catch (_) { /* ignore */ }
-
-    if (!usedBanner) {
-      // Black bar header + logo + tagline
-      page.drawRectangle({ x: 0, y: height - headerH, width, height: headerH, color: black });
-
-      let logoDrawn = false;
-      try {
-        const logoPath = path.resolve(__dirname, '../../assets/favicons/favicon-192x192.png');
-        if (fs.existsSync(logoPath)) {
-          const logoBytes = fs.readFileSync(logoPath);
-          const logoImg = await pdfDoc.embedPng(logoBytes);
-          const L = 36; // logo size
-          const ly = height - headerH + (headerH - L) / 2;
-          page.drawImage(logoImg, { x: contentX, y: ly, width: L, height: L });
-          drawText('docuProof.io — Proof you can point to.', contentX + L + 12, ly + 10, 14, fontBold, brand);
-          logoDrawn = true;
-        }
-      } catch (_) { /* ignore */ }
-
-      if (!logoDrawn) {
-        // Fallback: text-only header
-        drawText('docuProof.io — Proof you can point to.', contentX, height - headerH + (headerH - 14) / 2 + 6, 14, fontBold, brand);
-      }
-
-      y = height - headerH - margin - 6;
+    // Subtext
+    const intro = 'This certificate confirms your document was cryptographically hashed and queued for permanent timestamping on Bitcoin.';
+    for (const ln of wrapLines(intro, 12)) {
+      page.drawText(ln, { x: contentX, y, size: 12, font: fontRegular, color: gray55 }); y -= 16;
     }
-
-    // === Title ===
-    y -= 18;
-    drawText('Proof you can point to.', contentX, y, 24, fontBold, grayDark);
     y -= 8;
 
-    // === Intro (short + confident) ===
-    y -= 18;
-    for (const ln of wrapIntoLines(
-      'This certificate confirms your document was cryptographically hashed and queued for permanent timestamping on Bitcoin.',
-      fontRegular, 12, contentW
-    )) {
-      drawText(ln, contentX, y, 12, fontRegular, grayBody);
-      y -= 14;
-    }
+    // Green section head
+    page.drawText('Proof Summary', { x: contentX, y, size: 13, font: fontBold, color: green }); y -= 18;
 
-    // === Proof summary ===
-    y -= 8;
-    drawText('Proof Summary', contentX, y, 12, fontBold, brand);
     const createdAt = new Date().toISOString();
-    drawWrappedBlock('Proof ID', longId);
-    drawWrappedBlock('Quick Verify ID', quickId);
-    drawWrappedBlock('Created (UTC)', createdAt);
-    if (filename)    drawWrappedBlock('File Name', filename);
-    if (displayName) drawWrappedBlock('Display Name', displayName);
-    if (hash)        drawWrappedBlock('SHA-256 Hash', hash);
+    drawBlock('Proof ID', proofId);
+    drawBlock('Quick Verify ID', quickId);
+    drawBlock('Created (UTC)', createdAt);
+    if (filename)    drawBlock('File Name', filename);
+    if (displayName) drawBlock('Display Name', displayName);
 
-    // === Verification ===
-    y -= 6;
-    drawText('Verification', contentX, y, 12, fontBold, brand);
-    drawWrappedBlock('Public Verify URL', verifyUrl);
-    y -= 6;
-    for (const ln of wrapIntoLines(
+    // Verification section
+    page.drawText('Verification', { x: contentX, y, size: 13, font: fontBold, color: green }); y -= 18;
+    const verifyUrl = `https://docuproof.io/.netlify/functions/verify_page?id=${encodeURIComponent(proofId)}`;
+    drawBlock('Public Verify URL', verifyUrl);
+
+    // Short callouts
+    const callouts = [
       'Anyone can verify this proof at any time. Use the Verify URL or the Quick Verify ID above.',
-      fontRegular, 10, contentW
-    )) {
-      drawText(ln, contentX, y, 10, fontRegular, grayBody);
-      y -= 12;
-    }
-
-    // === Fine print ===
-    y -= 10;
-    drawText('About docuProof', contentX, y, 12, fontBold, brand);
-    for (const ln of wrapIntoLines(
-      'docuProof anchors proofs to Bitcoin for tamper-evident timestamping. docuProof is not a notary and does not provide legal attestation.',
-      fontRegular, 10, contentW
-    )) {
-      drawText(ln, contentX, y, 10, fontRegular, grayLight);
-      y -= 12;
+      'docuProof batches proofs to Bitcoin for tamper-evident timestamping. docuProof is not a notary and does not provide legal attestation.'
+    ];
+    for (const para of callouts) {
+      for (const ln of wrapLines(para, 10)) {
+        page.drawText(ln, { x: contentX, y, size: 10, font: fontRegular, color: gray55 }); y -= 14;
+      }
+      y -= 6;
     }
 
     // Footer
-    y -= 10;
-    drawText('© 2025 docuProof.io — All rights reserved.', contentX, y, 10, fontRegular, grayLight);
+    const footer = '© 2025 docuProof.io — All rights reserved.';
+    page.drawText(footer, { x: contentX, y, size: 10, font: fontRegular, color: gray80 });
 
-    const pdfBytes = await pdfDoc.save();
+    const bytes = await pdfDoc.save();
     return {
       statusCode: 200,
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${filename || 'DocuProof-Certificate'}.pdf"`,
+        'Content-Disposition': `attachment; filename="docuProof_${quickId}.pdf"`,
         'Access-Control-Allow-Origin': '*',
         'Cache-Control': 'no-store',
       },
       isBase64Encoded: true,
-      body: Buffer.from(pdfBytes).toString('base64'),
+      body: Buffer.from(bytes).toString('base64'),
     };
   } catch (err) {
     console.error('[proof_pdf] error:', err);
