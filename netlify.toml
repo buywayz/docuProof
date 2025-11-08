@@ -45,6 +45,7 @@
   ]
   included_files = [
     "docuproof-banner.png",
+    "assets/favicons/favicon-192x192.png",   # ensure logo is bundled for proof_pdf.js
     "netlify/functions/fonts/**",
 
     # Ensure runtime utils + blobs are available
