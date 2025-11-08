@@ -1,5 +1,5 @@
 # ===============================================
-# docuProof.io — Netlify Configuration
+# docuProof.io — Netlify Configuration (Final)
 # ===============================================
 
 [build]
@@ -19,7 +19,6 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    # Allow Stripe + Postmark endpoints and self
     Content-Security-Policy = """
       default-src 'self';
       script-src 'self' 'unsafe-inline' https://js.stripe.com https://checkout.stripe.com;
@@ -35,8 +34,6 @@
 
 # ---------- Functions bundling ----------
 [functions]
-
-  # Default for all functions
   [functions."*"]
   node_bundler = "esbuild"
   external_node_modules = [
@@ -45,19 +42,14 @@
   ]
   included_files = [
     "docuproof-banner.png",
-    "assets/favicons/favicon-192x192.png",   # ensure logo is bundled for proof_pdf.js
     "netlify/functions/fonts/**",
-
-    # Ensure runtime utils + blobs are available
+    "netlify/functions/assets/**",
     "node_modules/@netlify/blobs/**",
     "node_modules/@netlify/runtime-utils/**",
-
-    # Required so dynamic import() can find helper
     "netlify/functions/_blobs_helper.mjs"
   ]
 
 # ---------- Scheduled functions ----------
-# Run the resolver every 10 minutes to check anchor status and confirmations
 [[scheduled]]
   path = "/.netlify/functions/resolve_cron"
   schedule = "*/10 * * * *"
@@ -98,7 +90,7 @@
   to = "/.netlify/functions/history"
   status = 200
 
-# Canonicalize hostnames
+# ---------- Canonical hostnames ----------
 [[redirects]]
   from = "http://*"
   to = "https://docuproof.io/:splat"
