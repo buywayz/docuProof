@@ -1,182 +1,228 @@
 // netlify/functions/proof_pdf.js
-// Branded PDF "Proof Certificate" (headline: "Proof you can point to.")
-// Pulls live status from /.netlify/functions/verify?id=<proofId>
+// Branded PDF “Proof you can point to.” certificate
+// - Clean modern layout with subtle #16FF70 accents
+// - Logo in header (assets/favicons/favicon-192x192.png) or banner fallback (docuproof-banner.png)
+// - Concise, bold green section headers; Helvetica / Helvetica-Bold
+// - Deterministic Quick Verify ID derived from the long proof id
 
-const { PDFDocument, StandardFonts, rgb } = require("pdf-lib");
-
-function siteOrigin(event) {
-  const url =
-    process.env.URL ||
-    (event.headers && event.headers.host && `https://${event.headers.host}`) ||
-    "";
-  return url.replace(/\/$/, "");
-}
-
-// Tiny helpers
-const drawText = (page, text, x, y, size, font, color) =>
-  page.drawText(String(text), { x, y, size, font, color });
-
-function drawRow(page, opts) {
-  const {
-    x, y, label, value,
-    labelColor = rgb(0.60, 0.64, 0.68),
-    valueColor = rgb(0.90, 0.91, 0.92),
-    labelSize = 10, valueSize = 12,
-    font, wrapWidth = 440, lineGap = 4,
-  } = opts;
-
-  drawText(page, label, x, y, labelSize, font, labelColor);
-
-  const words = String(value ?? "—").split(/\s+/);
-  let line = "";
-  let yy = y - (labelSize + 2);
-  const measure = (s) => font.widthOfTextAtSize(s, valueSize);
-  const max = wrapWidth;
-
-  for (const w of words) {
-    const test = line ? line + " " + w : w;
-    if (measure(test) > max) {
-      drawText(page, line, x, yy, valueSize, font, valueColor);
-      yy -= (valueSize + lineGap);
-      line = w;
-    } else {
-      line = test;
-    }
-  }
-  if (line) {
-    drawText(page, line, x, yy, valueSize, font, valueColor);
-    yy -= (valueSize + lineGap);
-  }
-  return yy;
-}
+const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 exports.handler = async (event) => {
   try {
-    const params = new URLSearchParams(event.queryStringParameters || {});
-    const proofId = (params.get("id") || "").trim();
-    if (!proofId) return { statusCode: 400, body: "Missing id" };
+    const qs = event.queryStringParameters || {};
+    const longId      = String(qs.id || '').trim();        // e.g., cs_live_...
+    const hash        = String(qs.hash || '').trim();      // optional
+    const filename    = String(qs.filename || '').trim();  // optional
+    const displayName = String(qs.displayName || '').trim(); // optional
 
-    const origin = siteOrigin(event);
-    const verifyUrl = `${origin}/.netlify/functions/verify_page?id=${encodeURIComponent(proofId)}`;
-
-    // Pull verification data (best-effort)
-    let v = null;
-    try {
-      const r = await fetch(`${origin}/.netlify/functions/verify?id=${encodeURIComponent(proofId)}`);
-      if (r.ok) v = await r.json();
-    } catch (_) {}
-
-    const state = v?.state ? String(v.state).toUpperCase() : "UNKNOWN";
-    const txid = v?.txid || null;
-    const confirmations = (typeof v?.confirmations === "number") ? v.confirmations : null;
-    const hash = v?.hash || null;
-    const ts = v?.timestamp || v?.anchoredAt || v?.submittedAt || new Date().toISOString();
-
-    // Colors (dark theme)
-    const bg = rgb(0.043, 0.051, 0.059);        // #0b0d0f
-    const panel = rgb(0.071, 0.086, 0.105);     // #12161b
-    const line = rgb(0.102, 0.122, 0.141);      // #1a1f24
-    const accent = rgb(0.086, 1.0, 0.439);      // #16FF70
-    const text = rgb(0.902, 0.905, 0.922);      // #E6E7EB
-    const muted = rgb(0.604, 0.643, 0.678);     // #9aa4ad
-
-    const pdf = await PDFDocument.create();
-    const page = pdf.addPage([612, 792]); // Letter
-    const font = await pdf.embedFont(StandardFonts.Helvetica);
-    const fontBold = await pdf.embedFont(StandardFonts.HelveticaBold);
-
-    // Background
-    page.drawRectangle({ x: 0, y: 0, width: 612, height: 792, color: bg });
-
-    // Header
-    page.drawRectangle({ x: 40, y: 720, width: 532, height: 40, color: panel, borderColor: line, borderWidth: 1 });
-    drawText(page, "docuProof.io — Proof Certificate", 56, 734, 14, fontBold, text);
-    drawText(page, new Date(ts).toLocaleString(), 56, 718, 10, font, muted);
-
-    // Title (THIS is the new headline)
-    drawText(page, "Proof you can point to.", 40, 680, 22, fontBold, accent);
-
-    // Summary
-    page.drawRectangle({ x: 40, y: 560, width: 532, height: 96, color: panel, borderColor: line, borderWidth: 1, borderRadius: 6 });
-    drawText(page, "Proof ID", 56, 634, 10, font, muted);
-    drawText(page, proofId, 56, 618, 14, fontBold, text);
-
-    drawText(page, "Status", 320, 634, 10, font, muted);
-    const stateLabel =
-      state === "ANCHORED" ? "Anchored on Bitcoin" :
-      (state === "ANCHORING" || state === "SUBMITTED") ? "Anchoring in progress" :
-      state === "NOT_FOUND" ? "Not found" : state;
-    drawText(page, stateLabel, 320, 618, 14, fontBold, text);
-
-    // Explanation
-    const explTop = 520;
-    page.drawRectangle({ x: 40, y: explTop - 116, width: 532, height: 116, color: panel, borderColor: line, borderWidth: 1, borderRadius: 6 });
-    let y = explTop;
-    drawText(page, "What this certificate means", 56, y + 88, 12, fontBold, text);
-
-    y = drawRow(page, {
-      x: 56, y: y + 68, label: "Summary",
-      value:
-        "This certificate confirms your document was cryptographically hashed and timestamped with docuProof.io. " +
-        "We batch proofs and anchor them to the Bitcoin blockchain for permanence.",
-      font, wrapWidth: 500, labelColor: muted, valueColor: text
-    });
-
-    y = drawRow(page, {
-      x: 56, y: y - 4, label: "Verify anytime",
-      value: `${verifyUrl}`,
-      font, wrapWidth: 500, labelColor: muted, valueColor: text
-    });
-
-    const timing = state === "ANCHORED"
-      ? "This proof is anchored and verifiable on-chain."
-      : "If you just completed your purchase, anchoring typically completes within 10–60 minutes.";
-    y = drawRow(page, {
-      x: 56, y: y - 4, label: "Anchoring",
-      value: timing,
-      font, wrapWidth: 500, labelColor: muted, valueColor: text
-    });
-
-    // Details
-    const detTop = 360;
-    page.drawRectangle({ x: 40, y: detTop - 210, width: 532, height: 210, color: panel, borderColor: line, borderWidth: 1, borderRadius: 6 });
-    drawText(page, "Details", 56, detTop - 24, 12, fontBold, text);
-
-    let detY = detTop - 46;
-    detY = drawRow(page, { x: 56, y: detY, label: "Status", value: stateLabel, font, wrapWidth: 500, labelColor: muted, valueColor: text });
-
-    if (hash) {
-      detY = drawRow(page, {
-        x: 56, y: detY - 4, label: "Document hash (truncated)",
-        value: (hash.length > 64 ? hash.slice(0, 64) + "…" : hash),
-        font, wrapWidth: 500, labelColor: muted, valueColor: text
-      });
+    if (!longId) {
+      return {
+        statusCode: 400,
+        headers: { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' },
+        body: 'Missing required query parameter: id',
+      };
     }
 
-    if (txid) {
-      detY = drawRow(page, { x: 56, y: detY - 4, label: "Bitcoin TxID", value: txid, font, wrapWidth: 500, labelColor: muted, valueColor: text });
-      if (typeof confirmations === "number") {
-        detY = drawRow(page, { x: 56, y: detY - 4, label: "Confirmations", value: String(confirmations), font, wrapWidth: 500, labelColor: muted, valueColor: text });
+    // === Stable Quick Verify ID (10 chars, URL-safe) ===
+    const digest  = crypto.createHash('sha256').update(longId).digest();
+    const quickId = Buffer.from(digest).toString('base64url').slice(0, 10);
+
+    // Base site origin for verify URL
+    const base =
+      process.env.URL ||
+      process.env.DEPLOY_URL ||
+      (event.headers && event.headers.host && `https://${event.headers.host}`) ||
+      'https://docuproof.io';
+
+    const verifyUrl = `${base}/.netlify/functions/verify_page?id=${encodeURIComponent(longId)}`;
+
+    // === Page & typography ===
+    const PAGE_W = 740;
+    const PAGE_H = 980;
+    const margin = 56;
+    const headerH = 72; // taller header for logo
+    const contentW = PAGE_W - margin * 2;
+
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
+    const { width, height } = page.getSize();
+
+    const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const fontBold    = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+    // Palette
+    const brand     = rgb(0x16/255, 0xff/255, 0x70/255); // #16FF70
+    const black     = rgb(0, 0, 0);
+    const grayDark  = rgb(0.10, 0.10, 0.10);
+    const grayBody  = rgb(0.30, 0.30, 0.30);
+    const grayLight = rgb(0.55, 0.55, 0.55);
+
+    // Helpers
+    let y = height - margin;
+    const drawText = (text, x, y, size, font, color, opts={}) =>
+      page.drawText(String(text), { x, y, size, font, color, maxWidth: contentW, ...opts });
+
+    const measure = (font, size, text) => font.widthOfTextAtSize(String(text), size);
+
+    const wrapIntoLines = (text, font, size, maxWidth) => {
+      const words = String(text).split(/\s+/);
+      const lines = [];
+      let line = '';
+      for (const w of words) {
+        const t = line ? line + ' ' + w : w;
+        if (measure(font, size, t) <= maxWidth) {
+          line = t;
+        } else {
+          if (line) lines.push(line);
+          if (measure(font, size, w) > maxWidth) {
+            // Hyphenate long tokens
+            let chunk = '';
+            for (const ch of w) {
+              if (measure(font, size, chunk + ch) <= maxWidth) chunk += ch;
+              else { lines.push(chunk); chunk = ch; }
+            }
+            line = chunk;
+          } else {
+            line = w;
+          }
+        }
       }
+      if (line) lines.push(line);
+      return lines;
+    };
+
+    const drawWrappedBlock = (label, value, labelSize = 10, valueSize = 12) => {
+      y -= 18; drawText(label, margin, y, labelSize, fontBold, brand);
+      const val = value ? String(value) : '—';
+      const lines = wrapIntoLines(val, fontRegular, valueSize, contentW);
+      for (const ln of lines) {
+        y -= 14; drawText(ln, margin, y, valueSize, fontRegular, grayDark);
+      }
+      y -= 4;
+    };
+
+    // === Header with logo (or banner) ===
+    const contentX = margin;
+    let usedBanner = false;
+
+    // Try wide banner first (optional), then logo bar
+    try {
+      const bannerPath = path.resolve(process.cwd(), 'docuproof-banner.png');
+      if (fs.existsSync(bannerPath)) {
+        const bannerBytes = fs.readFileSync(bannerPath);
+        const bannerImg = await pdfDoc.embedPng(bannerBytes);
+        const scale = contentW / bannerImg.width;
+        const drawW = contentW;
+        const drawH = bannerImg.height * scale;
+        page.drawImage(bannerImg, {
+          x: contentX, y: height - margin - drawH, width: drawW, height: drawH,
+        });
+        y = height - margin - drawH - 18;
+        usedBanner = true;
+      }
+    } catch (_) { /* ignore */ }
+
+    if (!usedBanner) {
+      // Black bar header + logo + tagline
+      page.drawRectangle({ x: 0, y: height - headerH, width, height: headerH, color: black });
+
+      let logoDrawn = false;
+      try {
+        const logoPath = path.resolve(__dirname, '../../assets/favicons/favicon-192x192.png');
+        if (fs.existsSync(logoPath)) {
+          const logoBytes = fs.readFileSync(logoPath);
+          const logoImg = await pdfDoc.embedPng(logoBytes);
+          const L = 36; // logo size
+          const ly = height - headerH + (headerH - L) / 2;
+          page.drawImage(logoImg, { x: contentX, y: ly, width: L, height: L });
+          drawText('docuProof.io — Proof you can point to.', contentX + L + 12, ly + 10, 14, fontBold, brand);
+          logoDrawn = true;
+        }
+      } catch (_) { /* ignore */ }
+
+      if (!logoDrawn) {
+        // Fallback: text-only header
+        drawText('docuProof.io — Proof you can point to.', contentX, height - headerH + (headerH - 14) / 2 + 6, 14, fontBold, brand);
+      }
+
+      y = height - headerH - margin - 6;
+    }
+
+    // === Title ===
+    y -= 18;
+    drawText('Proof you can point to.', contentX, y, 24, fontBold, grayDark);
+    y -= 8;
+
+    // === Intro (short + confident) ===
+    y -= 18;
+    for (const ln of wrapIntoLines(
+      'This certificate confirms your document was cryptographically hashed and queued for permanent timestamping on Bitcoin.',
+      fontRegular, 12, contentW
+    )) {
+      drawText(ln, contentX, y, 12, fontRegular, grayBody);
+      y -= 14;
+    }
+
+    // === Proof summary ===
+    y -= 8;
+    drawText('Proof Summary', contentX, y, 12, fontBold, brand);
+    const createdAt = new Date().toISOString();
+    drawWrappedBlock('Proof ID', longId);
+    drawWrappedBlock('Quick Verify ID', quickId);
+    drawWrappedBlock('Created (UTC)', createdAt);
+    if (filename)    drawWrappedBlock('File Name', filename);
+    if (displayName) drawWrappedBlock('Display Name', displayName);
+    if (hash)        drawWrappedBlock('SHA-256 Hash', hash);
+
+    // === Verification ===
+    y -= 6;
+    drawText('Verification', contentX, y, 12, fontBold, brand);
+    drawWrappedBlock('Public Verify URL', verifyUrl);
+    y -= 6;
+    for (const ln of wrapIntoLines(
+      'Anyone can verify this proof at any time. Use the Verify URL or the Quick Verify ID above.',
+      fontRegular, 10, contentW
+    )) {
+      drawText(ln, contentX, y, 10, fontRegular, grayBody);
+      y -= 12;
+    }
+
+    // === Fine print ===
+    y -= 10;
+    drawText('About docuProof', contentX, y, 12, fontBold, brand);
+    for (const ln of wrapIntoLines(
+      'docuProof anchors proofs to Bitcoin for tamper-evident timestamping. docuProof is not a notary and does not provide legal attestation.',
+      fontRegular, 10, contentW
+    )) {
+      drawText(ln, contentX, y, 10, fontRegular, grayLight);
+      y -= 12;
     }
 
     // Footer
-    drawText(page, "docuProof.io — Blockchain Proof of Existence Service", 40, 36, 10, font, muted);
-    drawText(page, origin, 40, 22, 10, font, rgb(0.54, 0.70, 1.0));
+    y -= 10;
+    drawText('© 2025 docuProof.io — All rights reserved.', contentX, y, 10, fontRegular, grayLight);
 
-    const bytes = await pdf.save();
+    const pdfBytes = await pdfDoc.save();
     return {
       statusCode: 200,
       headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `inline; filename="${proofId}-certificate.pdf"`,
-        "Cache-Control": "no-store",
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${filename || 'DocuProof-Certificate'}.pdf"`,
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-store',
       },
-      body: Buffer.from(bytes).toString("base64"),
       isBase64Encoded: true,
+      body: Buffer.from(pdfBytes).toString('base64'),
     };
   } catch (err) {
-    console.error("proof_pdf error:", err);
-    return { statusCode: 500, body: "Internal Server Error" };
+    console.error('[proof_pdf] error:', err);
+    return {
+      statusCode: 500,
+      headers: { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' },
+      body: 'Internal Server Error',
+    };
   }
 };
