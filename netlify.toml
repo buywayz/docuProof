@@ -4,6 +4,7 @@
 
 [build]
   publish = "."
+  functions = "netlify/functions"
   environment = { NODE_VERSION = "20" }
 
 # ---------- Security headers ----------
