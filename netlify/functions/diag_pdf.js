@@ -3,66 +3,86 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
-function safeStat(p) {
-  try { return fs.statSync(p); } catch { return null; }
-}
-function sha256File(p) {
+const ROOTS = ["/var/task"];
+
+const NAME_HINTS = [
+  "proof_pdf",                          // expected logical name
+  ".netlify/functions/proof_pdf",       // new bundler layout
+];
+
+const CONTENT_HINTS = [
+  "Proof you can point to.",
+  "Quick Verify ID",
+  "docuProof.io",
+];
+
+function sha256(p) {
   try { return crypto.createHash("sha256").update(fs.readFileSync(p)).digest("hex"); }
   catch { return null; }
 }
-function headText(p, n = 240) {
+
+function head(p, n = 280) {
   try { return fs.readFileSync(p).slice(0, n).toString("utf8").replace(/\r/g, ""); }
   catch (e) { return `read error: ${e.message}`; }
 }
-function list(dir, depth = 1) {
-  const out = [];
+
+function safeStat(p) { try { return fs.statSync(p); } catch { return null; } }
+
+function* walk(dir, depth = 5) {
+  if (depth < 0) return;
+  let ents;
+  try { ents = fs.readdirSync(dir, { withFileTypes: true }); }
+  catch { return; }
+  for (const d of ents) {
+    const full = path.join(dir, d.name);
+    yield full;
+    if (d.isDirectory()) yield* walk(full, depth - 1);
+  }
+}
+
+function looksLikeTarget(p) {
+  const lower = p.toLowerCase();
+  if (NAME_HINTS.some(h => lower.includes(h))) return true;
+  // fast path: only test JS/MJS/CJS bundles for content
+  if (!/\.(m?js|cjs)$/.test(lower)) return false;
   try {
-    for (const name of fs.readdirSync(dir)) {
-      const full = path.join(dir, name);
-      const st = safeStat(full);
-      if (!st) continue;
-      out.push({ name, full, size: st.size, isDir: st.isDirectory() });
-      if (depth > 0 && st.isDirectory()) out.push(...list(full, depth - 1));
-    }
-  } catch {}
-  return out;
+    const buf = fs.readFileSync(p);
+    const s = buf.slice(0, Math.min(buf.length, 4096)).toString("utf8");
+    return CONTENT_HINTS.some(h => s.includes(h));
+  } catch { return false; }
 }
 
 exports.handler = async () => {
-  // Typical candidates Netlify uses for bundled functions:
-  const roots = [
-    "/var/task/netlify/functions",
-    "/var/task",
-    "/var/task/dist",
-    "/var/task/functions",
-  ];
-
-  const candidates = [];
-  for (const root of roots) {
-    for (const base of [
-      "proof_pdf.js",
-      "proof_pdf/index.js",
-      "proof_pdf.mjs",
-      "proof_pdf/index.mjs",
-    ]) {
-      candidates.push(path.join(root, base));
+  const hits = [];
+  for (const root of ROOTS) {
+    for (const p of walk(root, 6)) {
+      const st = safeStat(p);
+      if (!st || !st.isFile()) continue;
+      if (!/\.(m?js|cjs)$/.test(p)) continue;        // only code bundles
+      if (!looksLikeTarget(p)) continue;
+      hits.push({
+        path: p,
+        size: st.size,
+        mtime: st.mtime?.toISOString?.() || String(st.mtime),
+        sha256: sha256(p),
+        text_head_280: head(p, 280),
+      });
     }
   }
 
-  const hits = candidates
-    .map(p => ({ path: p, stat: safeStat(p) }))
-    .filter(x => x.stat && x.stat.isFile())
-    .map(x => ({
-      path: x.path,
-      size: x.stat.size,
-      mtime: x.stat.mtime?.toISOString?.() || String(x.stat.mtime),
-      sha256: sha256File(x.path),
-      text_head_240: headText(x.path),
-    }));
-
-  // Also list the top-level directories so we can see how Netlify laid it out
-  const listings = {};
-  for (const r of roots) listings[r] = list(r, 1);
+  // also expose a short listing of likely folders for manual inspection
+  const peekDirs = [
+    "/var/task/.netlify/functions",
+    "/var/task/.netlify/functions-internal",
+    "/var/task/netlify/functions",
+    "/var/task",
+  ];
+  const peeks = {};
+  for (const d of peekDirs) {
+    try {
+      peeks[d] = fs.readdirSync(d).slice(0, 60);
+    } catch { peeks[d] = "(unreadable)"; }
+  }
 
   return {
     statusCode: 200,
@@ -70,9 +90,13 @@ exports.handler = async () => {
     body: JSON.stringify({
       ok: true,
       commit_ref: process.env.COMMIT_REF || null,
-      roots,
-      found: hits,
-      listings,
+      hits,
+      peekDirs,
+      env: {
+        AWS_LAMBDA_FUNCTION_NAME: process.env.AWS_LAMBDA_FUNCTION_NAME || null,
+        LAMBDA_TASK_ROOT: process.env.LAMBDA_TASK_ROOT || null,
+        _HANDLER: process.env._HANDLER || null,
+      },
     }, null, 2),
   };
 };
