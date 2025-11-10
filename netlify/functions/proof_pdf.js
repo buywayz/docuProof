@@ -1,5 +1,5 @@
 // netlify/functions/proof_pdf.js
-// v4.3: ASCII-only; Netlify-safe params; vector QR; PNG logo with alpha.
+// v4.3.1: force transparent logo_nobg.png; larger neon vector QR.
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const QRCode = require('qrcode');
 const fs = require('fs');
@@ -13,15 +13,14 @@ const HEADERS_NO_CACHE = {
 
 exports.handler = async (event) => {
   const trace = {
-    version: 'proof_pdf v4.3 ascii + vector-qr',
-    qr: 0,          // 1 ok, 0 skipped, -1 fail
-    logo: 0,        // 1 ok, 0 missing, -1 fail
+    version: 'proof_pdf v4.3.1 nobg-only + big-neon-qr',
+    qr: 0,
+    logo: 0,
     logo_src: 'none',
     err: '',
   };
 
   try {
-    // Query params (Netlify-safe)
     const qp = (event && event.queryStringParameters) ? event.queryStringParameters : {};
     const id          = qp.id || 'unknown';
     const filename    = (qp.filename || 'Proof.pdf').replace(/"/g, '');
@@ -31,7 +30,6 @@ exports.handler = async (event) => {
       ? qp.verifyUrl
       : 'https://docuproof.io/verify?id=' + encodeURIComponent(id);
 
-    // PDF skeleton (keep existing aesthetic)
     const pdfDoc = await PDFDocument.create();
     const pageWidth = 1200, pageHeight = 630;
     const page = pdfDoc.addPage([pageWidth, pageHeight]);
@@ -44,11 +42,11 @@ exports.handler = async (event) => {
     const neon     = rgb(0x16/255, 0xFF/255, 0x70/255);
     const white    = rgb(0xE6/255, 0xE7/255, 0xEB/255);
 
-    // Background and frame
+    // Background + frame
     page.drawRectangle({ x: 0, y: 0, width: pageWidth, height: pageHeight, color: charcoal });
     page.drawRectangle({ x: 60, y: 60, width: pageWidth - 120, height: pageHeight - 120, borderColor: graphite, borderWidth: 1, opacity: 0.6 });
 
-    // Title and subtitle (centered)
+    // Title + subtitle
     const title = 'Proof you can point to.';
     const titleSize = 64;
     const titleWidth = helvBold.widthOfTextAtSize(title, titleSize);
@@ -59,17 +57,11 @@ exports.handler = async (event) => {
     const subWidth = helvBold.widthOfTextAtSize(subtitle, subSize);
     page.drawText(subtitle, { x: (pageWidth - subWidth) / 2, y: 630 - 335, size: subSize, font: helvBold, color: white });
 
-    // Logo: prefer transparent PNG from bundled assets
-    let logoBytes = null;
-    const tryPaths = [
-      path.join(__dirname, 'assets', 'logo_nobg.png'),
-      path.join(__dirname, 'assets', 'logo.png'),
-    ];
-    for (const p of tryPaths) {
-      try { if (fs.existsSync(p)) { logoBytes = fs.readFileSync(p); trace.logo_src = path.basename(p); break; } } catch {}
-    }
-    if (logoBytes) {
+    // ----- LOGO: require transparent asset only -----
+    const nobgPath = path.join(__dirname, 'assets', 'logo_nobg.png');
+    if (fs.existsSync(nobgPath)) {
       try {
+        const logoBytes = fs.readFileSync(nobgPath);
         const logoImg = await pdfDoc.embedPng(logoBytes); // preserves alpha
         const logoW = 200;
         const scale = logoW / logoImg.width;
@@ -79,9 +71,12 @@ exports.handler = async (event) => {
         const logoY = pageHeight - margin - logoH - 8;
         page.drawImage(logoImg, { x: logoX, y: logoY, width: logoW, height: logoH });
         trace.logo = 1;
-      } catch { trace.logo = -1; }
+        trace.logo_src = 'logo_nobg.png';
+      } catch {
+        trace.logo = -1; trace.logo_src = 'logo_nobg.png(embed-failed)';
+      }
     } else {
-      trace.logo = 0;
+      trace.logo = 0; trace.logo_src = 'MISSING: logo_nobg.png';
     }
 
     // Proof summary
@@ -94,12 +89,13 @@ exports.handler = async (event) => {
     label('Quick ID', y);       value(quickId || '—', y);y -= lineH;
     label('Verify URL', y);     value(verifyUrl, y);     y -= lineH;
 
-    // Vector QR (no images)
+    // ----- QR: vector modules, larger size, neon modules -----
     try {
       const qr = QRCode.create(verifyUrl, { errorCorrectionLevel: 'M' });
       const modules = qr.modules;
       const size = modules.size;
-      const qrSizePx = 120;
+
+      const qrSizePx = 180;       // bigger
       const margin = 60;
       const qrX = pageWidth - margin - qrSizePx;
       const qrY = margin;
@@ -110,10 +106,10 @@ exports.handler = async (event) => {
           if (modules.get(c, r)) {
             page.drawRectangle({
               x: qrX + c * cell,
-              y: qrY + (size - 1 - r) * cell, // invert Y for PDF coords
+              y: qrY + (size - 1 - r) * cell, // flip Y for PDF coords
               width: Math.ceil(cell),
               height: Math.ceil(cell),
-              color: white, // visible on charcoal
+              color: neon, // brand neon for high contrast
             });
           }
         }
@@ -126,8 +122,7 @@ exports.handler = async (event) => {
       x: 100, y: 100, size: 12, font: helv, color: white, opacity: 0.8,
     });
 
-    // Serialize
-    const pdfBytes = await pdfDoc.save();
+    const pdfBytes = await PDFDocument.save(pdfDoc);
 
     return {
       statusCode: 200,
@@ -150,7 +145,7 @@ exports.handler = async (event) => {
       headers: {
         ...HEADERS_NO_CACHE,
         'Content-Type': 'application/json',
-        'X-DocuProof-Version': 'proof_pdf v4.3 (exception)',
+        'X-DocuProof-Version': 'proof_pdf v4.3.1 (exception)',
         'X-DocuProof-Error': trace.err.slice(0, 200),
       },
       body: JSON.stringify({ error: 'PDF generation failed' }),
