@@ -18,11 +18,11 @@ exports.handler = async (event) => {
     // Canvas
     const W = 1200, H = 800;
 
-    // Brand palette
+    // Brand palette (matches the version you liked)
     const neon  = rgb(0x16/255, 0xFF/255, 0x70/255);   // #16FF70
-    const bg    = rgb(0.05, 0.06, 0.07);
-    const head  = rgb(0.06, 0.07, 0.08);
-    const panel = rgb(0.10, 0.11, 0.12);
+    const bg    = rgb(0.05, 0.06, 0.07);              // primary background
+    const head  = rgb(0.06, 0.07, 0.08);              // header bar
+    const panel = rgb(0.10, 0.11, 0.12);              // inner panel (subtle)
     const txt   = rgb(0.90, 0.92, 0.94);
     const sub   = rgb(0.70, 0.74, 0.78);
 
@@ -37,14 +37,20 @@ exports.handler = async (event) => {
     const HEADER_H = 84;
     page.drawRectangle({ x: 0, y: H - HEADER_H, width: W, height: HEADER_H, color: head });
 
-    // Transparent logo (no outline box)
+    // Transparent logo (no outline box). Prefer a transparent asset if available.
     try {
-      const logoPath = path.join(__dirname, "assets", "logo.png");
-      if (fs.existsSync(logoPath)) {
-        const logoBytes = fs.readFileSync(logoPath);
-        const logoImg = await pdf.embedPng(logoBytes);
-        const L = 56;
-        const logoH = 48;
+      const logoCandidates = [
+        path.join(__dirname, "assets", "logo_nobg.png"),
+        path.join(__dirname, "assets", "logo.png"),
+      ];
+      let logoBytes = null;
+      for (const p of logoCandidates) {
+        if (fs.existsSync(p)) { logoBytes = fs.readFileSync(p); break; }
+      }
+      if (logoBytes) {
+        const logoImg = await pdf.embedPng(logoBytes); // preserves PNG alpha; no border drawn
+        const L = 56;            // left pad
+        const logoH = 48;        // keep your size
         const aspect = logoImg.width / logoImg.height;
         const logoW = logoH * aspect;
         page.drawImage(logoImg, {
@@ -54,16 +60,16 @@ exports.handler = async (event) => {
       }
     } catch { /* ignore logo issues */ }
 
-    // Header text
+    // Header title
     page.drawText("docuProof.io — Proof you can point to.", {
-      x: 56 + 56,
+      x: 56 + 56, // logo space + gutter
       y: H - 54,
       size: 28,
       font: helvBold,
       color: neon,
     });
 
-    // Panel
+    // Panel (as in your screenshot)
     const PX = 52, PY = 64;
     const panelX = PX, panelY = PY;
     const panelW = W - PX*2, panelH = H - HEADER_H - PY*2 + 8;
@@ -72,7 +78,7 @@ exports.handler = async (event) => {
       color: panel, opacity: 0.85, borderWidth: 0.7, borderColor: rgb(0.18,0.20,0.22)
     });
 
-    // Title + subtitle
+    // Title inside panel
     let x = panelX + 28;
     let y = panelY + panelH - 48;
 
@@ -80,35 +86,46 @@ exports.handler = async (event) => {
       x, y, size: 36, font: helvBold, color: txt
     });
     y -= 26;
+
+    // Subtitle / certificate line
     page.drawText(
       "This certificate confirms your document was cryptographically hashed and queued for permanent timestamping on Bitcoin.",
       { x, y: y - 26, size: 14, font: helv, color: sub }
     );
-    y -= 54;
+    y -= 26 + 28;
+
+    // Section heading
     page.drawText("Proof Summary", { x, y, size: 20, font: helvBold, color: neon });
     y -= 18;
 
+    // Helper to draw label + value + helper text (your “good” spacing)
     const LINE_GAP = 22;
     const HELP_GAP = 14;
     function field(label, value, helpText) {
       y -= 22;
       page.drawText(label, { x, y, size: 14, font: helvBold, color: neon });
-      page.drawText(String(value || "—"), { x: x + 120, y, size: 14, font: helv, color: txt });
+
+      page.drawText(String(value || "—"), {
+        x: x + 120, y, size: 14, font: helv, color: txt
+      });
+
       if (helpText) {
         y -= HELP_GAP;
-        page.drawText(helpText, { x: x + 120, y, size: 12, font: helv, color: sub });
+        page.drawText(helpText, {
+          x: x + 120, y, size: 12, font: helv, color: sub
+        });
       }
       y -= (LINE_GAP - HELP_GAP);
     }
 
-    // Fields
+    // Fields (unchanged)
     field("Proof ID", proofId, "Your permanent reference for this proof. Keep it with your records.");
     field("Quick Verify ID", quickId, "10-character code you can paste at docuProof.io/verify for fast lookups.");
     field("Created (UTC)", new Date().toISOString().replace(/\.\d{3}Z$/, "Z"));
     field("File Name", fileName);
     field("Display Name", displayName);
 
-    // Verification section
+    // Verification section (unchanged)
     y -= 6;
     page.drawText("Verification", { x, y, size: 14, font: helvBold, color: neon });
     y -= 22;
@@ -120,7 +137,7 @@ exports.handler = async (event) => {
       { x: x + 120, y, size: 12, font: helv, color: sub }
     );
 
-    // Footer
+    // Footer (unchanged)
     const footY = panelY + 20;
     page.drawText(
       "docuProof batches proofs to Bitcoin for tamper-evident timestamping. docuProof is not a notary and does not provide legal attestation.",
@@ -130,7 +147,7 @@ exports.handler = async (event) => {
       x: panelX + 8, y: footY - 12, size: 12, font: helv, color: sub
     });
 
-    // --- Compact QR bottom-right (about 120 px) ---
+    // --- Compact QR bottom-right (~120 px). ONLY change added, no layout edits elsewhere. ---
     let __qrDrawn = false;
     try {
       const verifyUrlFinal =
@@ -145,26 +162,19 @@ exports.handler = async (event) => {
           errorCorrectionLevel: "M",
           margin: 0,
           scale: 6,
-          color: { dark: "#000000", light: "#FFFFFF00" }
+          color: { dark: "#000000", light: "#FFFFFF00" } // transparent background
         });
-
         const qrBytes = Buffer.from(qrDataUrl.split(",")[1], "base64");
         const qrImg   = await pdf.embedPng(qrBytes);
 
-        const qrSide = 120;
+        const qrSide = 120;                 // compact
         const qrX = panelX + panelW - qrSide - 18;
         const qrY = panelY + 18;
-
-        // soft plate behind QR for print clarity
-        page.drawRectangle({
-          x: qrX - 6, y: qrY - 6, width: qrSide + 12, height: qrSide + 12,
-          color: rgb(0.12, 0.13, 0.14), opacity: 0.85
-        });
-
         page.drawImage(qrImg, { x: qrX, y: qrY, width: qrSide, height: qrSide });
+
         __qrDrawn = true;
       }
-    } catch { /* ignore QR failures */ }
+    } catch { /* never break the cert on QR errors */ }
 
     // Output
     const pdfBytes = await pdf.save();
@@ -176,7 +186,7 @@ exports.handler = async (event) => {
         "Content-Type": "application/pdf",
         "Content-Disposition": `inline; filename="${fname}"`,
         "Cache-Control": "no-cache",
-        "X-DocuProof-QR": __qrDrawn ? "1" : "0"
+        "X-DocuProof-QR": __qrDrawn ? "1" : "0"   // debug signal
       },
       body: Buffer.from(pdfBytes).toString("base64"),
       isBase64Encoded: true
