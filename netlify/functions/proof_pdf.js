@@ -1,5 +1,5 @@
 // netlify/functions/proof_pdf.js
-// v4.3.2: fix pdfDoc.save(); force transparent logo_nobg.png; larger neon vector QR.
+// v4.3.3: minimal, ASCII-safe, vector QR + transparent PNG logo; Netlify-safe params.
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const QRCode = require('qrcode');
 const fs = require('fs');
@@ -13,7 +13,7 @@ const HEADERS_NO_CACHE = {
 
 exports.handler = async (event) => {
   const trace = {
-    version: 'proof_pdf v4.3.2 nobg-only + big-neon-qr',
+    version: 'proof_pdf v4.3.3 ascii-clean',
     qr: 0,
     logo: 0,
     logo_src: 'none',
@@ -31,7 +31,8 @@ exports.handler = async (event) => {
       : 'https://docuproof.io/verify?id=' + encodeURIComponent(id);
 
     const pdfDoc = await PDFDocument.create();
-    const pageWidth = 1200, pageHeight = 630;
+    const pageWidth = 1200;
+    const pageHeight = 630;
     const page = pdfDoc.addPage([pageWidth, pageHeight]);
 
     const helv = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -73,10 +74,12 @@ exports.handler = async (event) => {
         trace.logo = 1;
         trace.logo_src = 'logo_nobg.png';
       } catch {
-        trace.logo = -1; trace.logo_src = 'logo_nobg.png(embed-failed)';
+        trace.logo = -1;
+        trace.logo_src = 'logo_nobg.png(embed-failed)';
       }
     } else {
-      trace.logo = 0; trace.logo_src = 'MISSING: logo_nobg.png';
+      trace.logo = 0;
+      trace.logo_src = 'MISSING: logo_nobg.png';
     }
 
     // Proof summary
@@ -89,12 +92,11 @@ exports.handler = async (event) => {
     label('Quick ID', y);       value(quickId || '—', y);y -= lineH;
     label('Verify URL', y);     value(verifyUrl, y);     y -= lineH;
 
-    // QR: vector modules (neon), larger size
+    // Vector QR (neon), larger for visibility
     try {
       const qr = QRCode.create(verifyUrl, { errorCorrectionLevel: 'M' });
       const modules = qr.modules;
       const size = modules.size;
-
       const qrSizePx = 180;
       const margin = 60;
       const qrX = pageWidth - margin - qrSizePx;
@@ -105,4 +107,52 @@ exports.handler = async (event) => {
         for (let c = 0; c < size; c++) {
           if (modules.get(c, r)) {
             page.drawRectangle({
-              x: qrX
+              x: qrX + c * cell,
+              y: qrY + (size - 1 - r) * cell,
+              width: Math.ceil(cell),
+              height: Math.ceil(cell),
+              color: neon,
+            });
+          }
+        }
+      }
+      trace.qr = 1;
+    } catch {
+      trace.qr = -1;
+    }
+
+    // Footer
+    page.drawText('Scan the QR or visit the Verify URL to view anchor status and confirmations.', {
+      x: 100, y: 100, size: 12, font: helv, color: white, opacity: 0.8,
+    });
+
+    const pdfBytes = await pdfDoc.save();
+
+    return {
+      statusCode: 200,
+      isBase64Encoded: true,
+      headers: {
+        ...HEADERS_NO_CACHE,
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `inline; filename="${filename}"`,
+        'X-DocuProof-Version': trace.version,
+        'X-DocuProof-QR': String(trace.qr),
+        'X-DocuProof-Logo': String(trace.logo),
+        'X-DocuProof-Logo-Src': trace.logo_src,
+      },
+      body: Buffer.from(pdfBytes).toString('base64'),
+    };
+  } catch (err) {
+    const msg = (err && err.message) ? err.message : String(err || '');
+    return {
+      statusCode: 500,
+      headers: {
+        ...HEADERS_NO_CACHE,
+        'Content-Type': 'application/json',
+        'X-DocuProof-Version': 'proof_pdf v4.3.3 (exception)',
+        'X-DocuProof-Error': msg.slice(0, 200),
+      },
+      body: JSON.stringify({ error: 'PDF generation failed' }),
+    };
+  }
+};
