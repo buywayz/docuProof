@@ -1,105 +1,45 @@
-# ===============================================
-# docuProof.io — Netlify Configuration (Final)
-# ===============================================
+#############################################
+# docuProof.io — Netlify configuration
+# FULL OVERWRITE
+#############################################
 
 [build]
-  publish = "."
+  # Your static site root (keep as "." unless you use /public or /site)
+  publish   = "."
   functions = "netlify/functions"
-  environment = { NODE_VERSION = "20" }
 
-# ---------- Security headers ----------
-[[headers]]
-  for = "/*"
-  [headers.values]
-    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    X-Content-Type-Options = "nosniff"
-    X-Frame-Options = "DENY"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=(), usb=(), payment=()"
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    Content-Security-Policy = """
-      default-src 'self';
-      script-src 'self' 'unsafe-inline' https://js.stripe.com https://checkout.stripe.com;
-      connect-src 'self' https://api.postmarkapp.com https://api.stripe.com https://checkout.stripe.com https://js.stripe.com;
-      img-src 'self' data: blob:;
-      style-src 'self' 'unsafe-inline';
-      font-src 'self' data:;
-      frame-src https://js.stripe.com https://checkout.stripe.com https://hooks.stripe.com;
-      frame-ancestors 'none';
-      base-uri 'self';
-      form-action 'self' https://checkout.stripe.com
-    """
-
-# ---------- Functions bundling ----------
 [functions]
-  [functions."*"]
+  # Use esbuild for small, fast bundles
   node_bundler = "esbuild"
-  external_node_modules = [
-    "@netlify/blobs",
-    "@netlify/runtime-utils"
-  ]
+
+  # Make sure runtime can see the logo + fonts
   included_files = [
-    "docuproof-banner.png",
-    "netlify/functions/fonts/**",
-    "netlify/functions/assets/**",
-    "node_modules/@netlify/blobs/**",
-    "node_modules/@netlify/runtime-utils/**",
-    "netlify/functions/_blobs_helper.mjs"
+    "netlify/functions/assets/**",   # e.g. netlify/functions/assets/logo.png
+    "netlify/functions/fonts/**"     # e.g. netlify/functions/fonts/SFNS.ttf (optional)
   ]
 
-# ---------- Scheduled functions ----------
-[[scheduled]]
-  path = "/.netlify/functions/resolve_cron"
-  schedule = "*/10 * * * *"
+#############################################
+# Function routing
+#############################################
 
-# ---------- Redirects ----------
+# --- CRITICAL SWAP ---
+# Force all calls hitting the legacy endpoint to use the new implementation
 [[redirects]]
-  from = "/"
-  to = "/start.html"
+  from   = "/.netlify/functions/proof_pdf"
+  to     = "/.netlify/functions/proof_pdf_new"
   status = 200
+  force  = true
+  # pass through query params used by the PDF (optional but tidy)
+  conditions = { Query = ["id", "filename", "displayName", "quick", "verifyUrl"] }
 
-[[redirects]]
-  from = "/app"
-  to = "/index.html"
-  status = 200
+#############################################
+# Helpful headers
+#############################################
 
-[[redirects]]
-  from = "/index.html"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/v/*"
-  to = "/.netlify/functions/view_proof"
-  status = 200
-
-[[redirects]]
-  from = "/verify"
-  to = "/.netlify/functions/verify"
-  status = 200
-
-[[redirects]]
-  from = "/api/submit-proof"
-  to = "/.netlify/functions/submit_proof"
-  status = 200
-
-[[redirects]]
-  from = "/history"
-  to = "/.netlify/functions/history"
-  status = 200
-
-# ---------- Canonical hostnames ----------
-[[redirects]]
-  from = "http://*"
-  to = "https://docuproof.io/:splat"
-  status = 301
-  force = true
-
-[[redirects]]
-  from = "https://www.docuproof.io/*"
-  to = "https://docuproof.io/:splat"
-  status = 301
-  force = true
+# Ensure functions are never cached by browsers/CDN while you iterate
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma        = "no-cache"
+    Expires       = "0"
