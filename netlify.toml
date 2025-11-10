@@ -13,13 +13,6 @@
     "netlify/functions/fonts/**"
   ]
 
-# Force legacy endpoint to the new implementation
-[[redirects]]
-  from   = "/.netlify/functions/proof_pdf"
-  to     = "/.netlify/functions/proof_pdf_new"
-  status = 200
-  force  = true
-
 # Never cache function responses while iterating
 [[headers]]
   for = "/.netlify/functions/*"
