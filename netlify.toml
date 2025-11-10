@@ -1,10 +1,11 @@
-#############################################
-# docuProof.io — Netlify configuration (VALID)
-#############################################
+# netlify.toml (full replacement)
 
 [build]
   publish   = "."
   functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "18"
 
 [functions]
   node_bundler   = "esbuild"
@@ -13,7 +14,6 @@
     "netlify/functions/fonts/**"
   ]
 
-# Never cache function responses while iterating
 [[headers]]
   for = "/.netlify/functions/*"
   [headers.values]
