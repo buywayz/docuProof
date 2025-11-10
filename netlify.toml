@@ -1,42 +1,26 @@
 #############################################
-# docuProof.io — Netlify configuration
-# FULL OVERWRITE
+# docuProof.io — Netlify configuration (VALID)
 #############################################
 
 [build]
-  # Your static site root (keep as "." unless you use /public or /site)
   publish   = "."
   functions = "netlify/functions"
 
 [functions]
-  # Use esbuild for small, fast bundles
-  node_bundler = "esbuild"
-
-  # Make sure runtime can see the logo + fonts
+  node_bundler   = "esbuild"
   included_files = [
-    "netlify/functions/assets/**",   # e.g. netlify/functions/assets/logo.png
-    "netlify/functions/fonts/**"     # e.g. netlify/functions/fonts/SFNS.ttf (optional)
+    "netlify/functions/assets/**",
+    "netlify/functions/fonts/**"
   ]
 
-#############################################
-# Function routing
-#############################################
-
-# --- CRITICAL SWAP ---
-# Force all calls hitting the legacy endpoint to use the new implementation
+# Force legacy endpoint to the new implementation
 [[redirects]]
   from   = "/.netlify/functions/proof_pdf"
   to     = "/.netlify/functions/proof_pdf_new"
   status = 200
   force  = true
-  # pass through query params used by the PDF (optional but tidy)
-  conditions = { Query = ["id", "filename", "displayName", "quick", "verifyUrl"] }
 
-#############################################
-# Helpful headers
-#############################################
-
-# Ensure functions are never cached by browsers/CDN while you iterate
+# Never cache function responses while iterating
 [[headers]]
   for = "/.netlify/functions/*"
   [headers.values]
