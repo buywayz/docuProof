@@ -19,5 +19,8 @@
     "postmark": "^4.0.5",
     "qrcode": "^1.5.4",
     "stripe": "^18.5.0"
+  },
+  "devDependencies": {
+    "sharp": "^0.34.5"
   }
 }
