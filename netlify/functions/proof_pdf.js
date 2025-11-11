@@ -34,15 +34,16 @@ exports.handler = async (event) => {
     // ---- Theme (unchanged) ----
     const BG="#0b0d0f", MAIN="#E6E7EB", SOFT="#9aa3ab", ACCENT="#16FF70", DIVIDER="#1a1f24";
 
-    // ***** 3/4 → ~full-size bump (+25%) *****
-    const TITLE_SZ = 20;     // was 16
-    const LABEL_SZ = 10;     // was 8
-    const VALUE_SZ = 10;     // was 8
-    const HELP_SZ  = 8.75;   // was 7
+    // Final balanced typography (−12% from previous)
+    const TITLE_SZ = 17.5;   // was 20
+    const LABEL_SZ = 8.8;    // was 10
+    const VALUE_SZ = 8.8;    // was 10
+    const HELP_SZ  = 7.8;    // was 8.75
 
-    const VALUE_X  = 150;    // keep column start
-    const QR_BLOCK = 130;    // keep smaller QR
+    const VALUE_X  = 150;    // column start (keep)
+    const QR_BLOCK = 130;    // QR size (keep)
     const FRAME    = 12;
+
 
     const doc = new PDFDocument({ size: "LETTER", margin: 36, pdfVersion: "1.3" });
     const chunks=[]; doc.on("data", c=>chunks.push(c));
