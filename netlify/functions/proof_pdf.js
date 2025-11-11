@@ -26,21 +26,18 @@ const PAGE = {
   radius: 14,
 };
 
-// Typography (≈ 10–12% smaller vs the last “too large” iteration)
-const TITLE_SZ = 16.0;   // was ~17–18
-const LABEL_SZ = 8.0;    // was ~8.8–9.0
-const VALUE_SZ = 8.0;    // was ~8.8–9.0
-const HELP_SZ  = 7.2;    // was ~7.8
+const TITLE_SZ = 15.0;   // overall headline
+const LABEL_SZ = 7.8;    // green labels
+const VALUE_SZ = 7.8;    // white values
+const HELP_SZ  = 7.0;    // gray helper text
 
-// Column geometry
 const COLS = {
-  // left column anchors inside the panel; VALUE_X widened +10px so text doesn’t collide with the QR block
-  LABEL_X:  34,
-  VALUE_X:  160,       // was 150
-  COL_Y:    120,
-  ROW_H:    44,        // vertical rhythm between rows
-  QR_EDGE:  240,       // QR size (kept smaller so it won’t crowd text)
-  QR_PAD:   16,        // green frame thickness around the QR
+  LABEL_X: 36,
+  VALUE_X: 184,  // move right to widen label gutter
+  TOP_Y:   120,
+  ROW_PAD: 12,   // more/less vertical space per row
+  QR_EDGE: 210,  // QR side length
+  QR_PAD:  16,
 };
 
 // ----------------------------------------------------------------------------------------
