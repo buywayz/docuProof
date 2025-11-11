@@ -29,25 +29,22 @@ exports.handler = async (event) => {
       color: { dark: "#000000", light: "#16FF70" }
     });
 
-    // ---------- Theme & sizing ----------
+    // ---- Theme & sizing (tighter, cleaner) ----
     const BG        = "#0b0d0f";
     const MAIN      = "#E6E7EB";
     const SOFT      = "#9aa3ab";
     const ACCENT    = "#16FF70";
     const DIVIDER   = "#1a1f24";
 
-    const TITLE_SZ  = 24;
-    const LABEL_SZ  = 11;
-    const VALUE_SZ  = 11;
-    const HELP_SZ   = 9;
+    const TITLE_SZ  = 22;
+    const LABEL_SZ  = 10;
+    const VALUE_SZ  = 10;
+    const HELP_SZ   = 8.5;
 
-    const LABEL_WIDTH = 120; // label column before values
-    const VALUE_X     = 136; // start of values (more room than before)
+    const VALUE_X     = 150; // start of values (wider gap to avoid wrapping)
+    const QR_BLOCK    = 160; // smaller QR -> more room for left column
+    const FRAME       = 12;
 
-    const QR_BLOCK = 180;    // smaller QR
-    const FRAME    = 12;
-
-    // ---------- PDF ----------
     const doc = new PDFDocument({ size: "LETTER", margin: 36, pdfVersion: "1.3" });
     const chunks = [];
     doc.on("data", c => chunks.push(c));
@@ -60,13 +57,13 @@ exports.handler = async (event) => {
     // Header
     const leftX = 54, rightX = doc.page.width - 54, headerY = 54;
     let hX = leftX;
-    if (logoPath) { doc.image(logoPath, hX, headerY-18, { height: 22 }); hX += 30; } // bigger logo
+    if (logoPath) { doc.image(logoPath, hX, headerY-18, { height: 22 }); hX += 30; }
     doc.font("Helvetica-Bold").fontSize(17).fillColor(ACCENT)
        .text("docuProof.io", hX, headerY-12, { continued:true });
     doc.fillColor(MAIN).text(" — Proof you can point to.", { continued:false });
     doc.moveTo(leftX, headerY+12).lineTo(rightX, headerY+12).strokeColor(DIVIDER).lineWidth(1).stroke();
 
-    // Card container
+    // Card
     const cardX = leftX, cardY = headerY + 28;
     const cardW = doc.page.width - leftX - 54;
     const cardH = 520;
@@ -78,14 +75,14 @@ exports.handler = async (event) => {
     let y = cardY + pad;
     doc.fillColor(MAIN).font("Helvetica-Bold").fontSize(TITLE_SZ)
        .text("Proof you can point to.", cardX+pad, y);
-    y += 28;
+    y += 26;
 
-    doc.fillColor(SOFT).font("Helvetica").fontSize(10)
+    doc.fillColor(SOFT).font("Helvetica").fontSize(9.5)
        .text(
          "This certificate confirms your document was cryptographically hashed and queued for permanent timestamping on Bitcoin.",
-         cardX+pad, y, { width: cardW - pad*2, lineGap: 1.2 }
+         cardX+pad, y, { width: cardW - pad*2, lineGap: 1.3 }
        );
-    y += 24;
+    y += 22;
 
     // Two columns
     const COL_GAP = 28;
@@ -95,8 +92,8 @@ exports.handler = async (event) => {
     let ly = y + 8;
 
     // Section heading
-    doc.fillColor(ACCENT).font("Helvetica-Bold").fontSize(15).text("Proof Summary", lx, ly - 10);
-    ly += 8;
+    doc.fillColor(ACCENT).font("Helvetica-Bold").fontSize(14.5).text("Proof Summary", lx, ly - 10);
+    ly += 6;
 
     const divider = (yy) => {
       doc.strokeColor(DIVIDER).lineWidth(1)
@@ -104,26 +101,35 @@ exports.handler = async (event) => {
     };
 
     const row = (label, value, help) => {
+      // draw divider before each row
       divider(ly + 2);
-      const labelFont = () => doc.fillColor(ACCENT).font("Helvetica-Bold").fontSize(LABEL_SZ);
-      const valueFont = () => doc.fillColor(MAIN).font("Helvetica-Bold").fontSize(VALUE_SZ);
-      const helpFont  = () => doc.fillColor(SOFT).font("Helvetica").fontSize(HELP_SZ);
 
-      // label & value (compute height to avoid collisions)
-      labelFont().text(label, lx, ly + 6);
-      const valueHeight = doc.heightOfString(value, { width: colW - (VALUE_X - lx), lineGap: 1 });
-      valueFont().text(value, lx + VALUE_X, ly + 6, { width: colW - (VALUE_X - lx), lineGap: 1 });
+      const labelOpts = { width: VALUE_X - lx - 10, lineGap: 1.2 };
+      const valueOpts = { width: colW - (VALUE_X - lx), lineGap: 1.4 };
 
-      const lineH = Math.max(doc.currentLineHeight(), valueHeight);
-      ly += 6 + lineH;
+      // measure heights
+      doc.font("Helvetica-Bold").fontSize(LABEL_SZ);
+      const labelH = doc.heightOfString(label, labelOpts);
 
+      doc.font("Helvetica-Bold").fontSize(VALUE_SZ);
+      const valueH = doc.heightOfString(value, valueOpts);
+
+      // render label/value
+      doc.fillColor(ACCENT).font("Helvetica-Bold").fontSize(LABEL_SZ).text(label, lx, ly + 6, labelOpts);
+      doc.fillColor(MAIN).font("Helvetica-Bold").fontSize(VALUE_SZ).text(value, lx + VALUE_X, ly + 6, valueOpts);
+
+      let rowBottom = ly + 6 + Math.max(labelH, valueH);
+
+      // help text
       if (help) {
-        const h = doc.heightOfString(help, { width: colW, lineGap: 1.1 });
-        helpFont().text(help, lx, ly, { width: colW, lineGap: 1.1 });
-        ly += h + 10; // more breathing room
-      } else {
-        ly += 10;
+        const helpOpts = { width: colW, lineGap: 1.3 };
+        doc.fillColor(SOFT).font("Helvetica").fontSize(HELP_SZ).text(help, lx, rowBottom + 2, helpOpts);
+        const helpH = doc.heightOfString(help, helpOpts);
+        rowBottom += 2 + helpH;
       }
+
+      // extra breathing room
+      ly = rowBottom + 10;
     };
 
     row("Proof ID",        proofId,     "Your permanent reference for this proof. Keep it with your records.");
@@ -159,7 +165,7 @@ exports.handler = async (event) => {
         "Content-Disposition": `inline; filename="${filename.replace(/"/g, "")}"`,
         "Cache-Control": "no-store,no-cache,must-revalidate",
         "Content-Length": String(buffer.length),
-        "x-docuproof-version": "proof_pdf v5.3.2 (smaller text, less crowding, smaller QR, bigger header logo)"
+        "x-docuproof-version": "proof_pdf v5.3.3 (more spacing, smaller fonts, wider values, QR 160)"
       },
       body: buffer.toString("base64"),
       isBase64Encoded: true
