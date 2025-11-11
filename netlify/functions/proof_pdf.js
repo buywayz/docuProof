@@ -1,5 +1,5 @@
 // netlify/functions/proof_pdf.js
-// v4.4.0: ASCII-clean. Logo fallback + PNG-embedded QR (neon on transparent).
+// v4.4.1 — dual-path asset lookup, trace headers, bigger QR, transparent PNG support
 const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
 const QRCode = require("qrcode");
 const fs = require("fs");
@@ -11,29 +11,48 @@ const HEADERS_NO_CACHE = {
   Expires: "0",
 };
 
+function firstExisting(paths) {
+  for (const p of paths) {
+    try { if (fs.existsSync(p)) return p; } catch {}
+  }
+  return null;
+}
+
+async function embedPngIfExists(pdfDoc, p) {
+  if (!p) return null;
+  try {
+    const bytes = fs.readFileSync(p);
+    return await pdfDoc.embedPng(bytes);
+  } catch {
+    return null;
+  }
+}
+
 exports.handler = async (event) => {
   const trace = {
-    version: "proof_pdf v4.4.0 png-qr + logo-fallback",
+    version: "proof_pdf v4.4.1 dual-path-logo + bigger-qr",
     qr: 0,
-    qr_method: "png",
     logo: 0,
     logo_src: "none",
+    path_try: [],
+    path_hit: "none",
     err: "",
   };
 
   try {
-    const qp = (event && event.queryStringParameters) ? event.queryStringParameters : {};
-    const id          = qp.id || "unknown";
-    const filename    = (qp.filename || "Proof.pdf").replace(/"/g, "");
-    const displayName = qp.displayName || "Document Proof";
-    const quickId     = qp.quickId || "";
-    const verifyUrl   = (qp.verifyUrl && qp.verifyUrl.trim())
-      ? qp.verifyUrl
+    const q = (event && event.queryStringParameters) || {};
+    const id          = q.id || "unknown";
+    const filename    = (q.filename || "Proof.pdf").replace(/"/g, "");
+    const displayName = q.displayName || "Document Proof";
+    const quickId     = q.quickId || "";
+    const verifyUrl   = (q.verifyUrl && q.verifyUrl.trim())
+      ? q.verifyUrl
       : "https://docuproof.io/verify?id=" + encodeURIComponent(id);
 
+    // Prepare PDF
     const pdfDoc = await PDFDocument.create();
-    const pageWidth = 1200, pageHeight = 630;
-    const page = pdfDoc.addPage([pageWidth, pageHeight]);
+    const W = 1200, H = 630;
+    const page = pdfDoc.addPage([W, H]);
 
     const helv = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const helvBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -43,81 +62,83 @@ exports.handler = async (event) => {
     const neon     = rgb(0x16/255, 0xFF/255, 0x70/255);
     const white    = rgb(0xE6/255, 0xE7/255, 0xEB/255);
 
-    page.drawRectangle({ x: 0, y: 0, width: pageWidth, height: pageHeight, color: charcoal });
-    page.drawRectangle({ x: 60, y: 60, width: pageWidth - 120, height: pageHeight - 120, borderColor: graphite, borderWidth: 1, opacity: 0.6 });
+    page.drawRectangle({ x: 0, y: 0, width: W, height: H, color: charcoal });
+    page.drawRectangle({ x: 60, y: 60, width: W - 120, height: H - 120, borderColor: graphite, borderWidth: 1, opacity: 0.6 });
 
     const title = "Proof you can point to.";
-    const titleSize = 64;
-    const titleWidth = helvBold.widthOfTextAtSize(title, titleSize);
-    page.drawText(title, { x: (pageWidth - titleWidth) / 2, y: pageHeight - 370, size: titleSize, font: helvBold, color: neon });
+    const tSize = 64;
+    const tWidth = helvBold.widthOfTextAtSize(title, tSize);
+    page.drawText(title, { x: (W - tWidth) / 2, y: H - 370, size: tSize, font: helvBold, color: neon });
 
     const subtitle = "Because memory is fallible - timestamps aren't.";
-    const subSize = 40;
-    const subWidth = helvBold.widthOfTextAtSize(subtitle, subSize);
-    page.drawText(subtitle, { x: (pageWidth - subWidth) / 2, y: pageHeight - 405, size: subSize, font: helvBold, color: white });
+    const sSize = 40;
+    const sWidth = helvBold.widthOfTextAtSize(subtitle, sSize);
+    page.drawText(subtitle, { x: (W - sWidth) / 2, y: H - 405, size: sSize, font: helvBold, color: white });
 
-    // Logo (prefer transparent, fallback to opaque)
-    const tryEmbedLogo = async (p) => {
-      if (!fs.existsSync(p)) return null;
-      const bytes = fs.readFileSync(p);
-      try { return await pdfDoc.embedPng(bytes); } catch { return null; }
-    };
+    // ── Logo (dual-path lookup: /assets/* or /netlify/functions/assets/*) ──
+    const candidates_nobg = [
+      path.join(__dirname, "assets", "logo_nobg.png"),
+      path.join(__dirname, "netlify", "functions", "assets", "logo_nobg.png"),
+    ];
+    const candidates_png = [
+      path.join(__dirname, "assets", "logo.png"),
+      path.join(__dirname, "netlify", "functions", "assets", "logo.png"),
+    ];
+    trace.path_try = [...candidates_nobg, ...candidates_png];
 
-    let logoPath = path.join(__dirname, "assets", "logo_nobg.png");
-    let logoImg = await tryEmbedLogo(logoPath);
+    let logoPath = firstExisting(candidates_nobg);
+    let logoImg = await embedPngIfExists(pdfDoc, logoPath);
     if (!logoImg) {
-      logoPath = path.join(__dirname, "assets", "logo.png");
-      if (fs.existsSync(logoPath)) {
-        const bytes = fs.readFileSync(logoPath);
-        try { logoImg = await pdfDoc.embedPng(bytes); } catch { logoImg = null; }
-        if (logoImg) trace.logo_src = "logo.png";
-      }
+      logoPath = firstExisting(candidates_png);
+      logoImg = await embedPngIfExists(pdfDoc, logoPath);
+      if (logoImg) trace.logo_src = path.basename(logoPath) || "logo.png";
     } else {
       trace.logo_src = "logo_nobg.png";
     }
+    trace.path_hit = logoPath || "none";
 
     if (logoImg) {
-      const logoW = 200;
-      const scale = logoW / logoImg.width;
-      const logoH = logoImg.height * scale;
+      const targetW = 200;
+      const scale = targetW / logoImg.width;
+      const targetH = logoImg.height * scale;
       const margin = 60;
-      const logoX = margin + 8;
-      const logoY = pageHeight - margin - logoH - 8;
-      page.drawImage(logoImg, { x: logoX, y: logoY, width: logoW, height: logoH });
+      const x = margin + 8;
+      const y = H - margin - targetH - 8;
+      page.drawImage(logoImg, { x, y, width: targetW, height: targetH });
       trace.logo = 1;
     }
 
-    // Summary
-    const left = 100; let y = 250; const lineH = 26;
+    // ── Summary block ──
+    const left = 100; let y = 250; const lh = 26;
     const label = (t, yy) => page.drawText(t, { x: left, y: yy, size: 14, font: helv, color: white, opacity: 0.7 });
     const value = (t, yy) => page.drawText(t, { x: left + 180, y: yy, size: 16, font: helvBold, color: white });
-    label("Display Name", y);   value(displayName, y);   y -= lineH;
-    label("Document ID", y);    value(id, y);            y -= lineH;
-    label("Quick ID", y);       value(quickId || "—", y);y -= lineH;
-    label("Verify URL", y);     value(verifyUrl, y);     y -= lineH;
+    label("Display Name", y);   value(displayName, y);   y -= lh;
+    label("Document ID", y);    value(id, y);            y -= lh;
+    label("Quick ID", y);       value(quickId || "—", y);y -= lh;
+    label("Verify URL", y);     value(verifyUrl, y);     y -= lh;
 
-    // QR as PNG (visible neon, no margins)
+    // ── QR (bigger, raised) ──
     try {
       const dataUrl = await QRCode.toDataURL(verifyUrl, {
         errorCorrectionLevel: "M",
         margin: 0,
-        color: { dark: "#16FF70", light: "#00000000" }
+        color: { dark: "#16FF70", light: "#00000000" },
       });
       const b64 = dataUrl.split(",")[1];
       const qrPng = Buffer.from(b64, "base64");
       const qrImg = await pdfDoc.embedPng(qrPng);
 
-      const qrSize = 200;
+      const size = 220;    // larger
       const margin = 60;
-      const qrX = pageWidth - margin - qrSize;
-      const qrY = margin;
-
-      page.drawImage(qrImg, { x: qrX, y: qrY, width: qrSize, height: qrSize });
+      const x = W - margin - size;
+      const y = margin + 40; // lift off bottom
+      page.drawImage(qrImg, { x, y, width: size, height: size });
       trace.qr = 1;
     } catch {
       trace.qr = -1;
     }
 
+    // Footer helper
     page.drawText("Scan the QR or visit the Verify URL to view anchor status and confirmations.", {
       x: 100, y: 100, size: 12, font: helv, color: white, opacity: 0.8,
     });
@@ -134,6 +155,9 @@ exports.handler = async (event) => {
         "X-DocuProof-QR": String(trace.qr),
         "X-DocuProof-Logo": String(trace.logo),
         "X-DocuProof-Logo-Src": trace.logo_src,
+        // debug paths
+        "X-DocuProof-Logo-Path": trace.path_hit,
+        "X-DocuProof-Logo-Tried": trace.path_try.join(" | "),
       },
       body: Buffer.from(pdfBytes).toString("base64"),
     };
@@ -144,7 +168,7 @@ exports.handler = async (event) => {
       headers: {
         ...HEADERS_NO_CACHE,
         "Content-Type": "application/json",
-        "X-DocuProof-Version": "proof_pdf v4.4.0 (exception)",
+        "X-DocuProof-Version": "proof_pdf v4.4.1 (exception)",
         "X-DocuProof-Error": msg.slice(0, 200),
       },
       body: JSON.stringify({ error: "PDF generation failed" }),
