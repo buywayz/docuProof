@@ -1,245 +1,259 @@
 // netlify/functions/proof_pdf.js
-// v5.4 — dark full-bleed bg, compact type, helper copy, crisp QR on white tile
+// v6.0 (landscape layout to match reference screenshot + helper text)
 
 const fs = require("fs");
 const path = require("path");
 const PDFDocument = require("pdfkit");
 const QRCode = require("qrcode");
 
-// ---- utils ----
-const val = (o, k, d = "") => {
-  const v = (o || {})[k];
+const BRAND = {
+  green: "#16FF70",
+  bg: "#0b0d0f",
+  card: "#0b0d0f",
+  text: "#E6E7EB",
+  mut: "#9aa3ad",
+  rule: "#1f2630",
+};
+
+const readParam = (q, k, d = "") => {
+  const v = (q || {})[k];
   return typeof v === "string" && v.trim() ? v.trim() : d;
 };
-const pick = (...cands) => cands.find((p) => p && fs.existsSync(p)) || null;
 
-const headers = (fname) => ({
+const pick = (...p) => p.find((x) => x && fs.existsSync(x)) || null;
+
+const headers = (filename) => ({
   "Content-Type": "application/pdf",
-  "Content-Disposition": `inline; filename="${fname || "docuProof.pdf"}"`,
+  "Content-Disposition": `inline; filename="${filename || "Proof.pdf"}"`,
   "Cache-Control": "no-cache,no-store,must-revalidate",
 });
 
-const toBase64 = (doc) =>
-  new Promise((res, rej) => {
+const pdfToBase64 = (doc) =>
+  new Promise((resolve, reject) => {
     const bufs = [];
     doc.on("data", (c) => bufs.push(c));
-    doc.on("error", rej);
-    doc.on("end", () => res(Buffer.concat(bufs).toString("base64")));
+    doc.on("error", reject);
+    doc.on("end", () => resolve(Buffer.concat(bufs).toString("base64")));
     doc.end();
   });
 
-// high-contrast QR: black modules on **white** background
-async function qrPng(text, px) {
-  return QRCode.toBuffer(text, {
+async function makeQR(url, px) {
+  // Brand-green background, black modules (like your mock)
+  return QRCode.toBuffer(url, {
     errorCorrectionLevel: "M",
-    margin: 1,
+    margin: 2,
     width: px,
-    color: { dark: "#000000", light: "#FFFFFFFF" }, // white background
     type: "png",
+    color: {
+      dark: "#000000",
+      light: "#16FF70FF", // brand green background
+    },
   });
 }
 
 exports.handler = async (event) => {
   try {
     const q = event.queryStringParameters || {};
-    const proofId = val(q, "id", "unknown");
-    const filename = val(q, "filename", "Proof.pdf");
-    const displayName = val(q, "displayName", "—");
-    const verifyUrl = val(
+    const proofId = readParam(q, "id", "unknown");
+    const filename = readParam(q, "filename", "Launch-Test.pdf");
+    const displayName = readParam(q, "displayName", "Launch Sync Test");
+    const verifyUrl = readParam(
       q,
       "verifyUrl",
       `https://docuproof.io/verify?id=${encodeURIComponent(proofId)}`
     );
-    const quickId = val(q, "quickId", "").slice(0, 10);
+    const quickId = readParam(q, "quickId", "").slice(0, 10);
 
-    // assets
-    const assets = path.join(__dirname, "assets");
-    const logo = pick(
-      path.join(assets, "logo_nobg.png"),
-      path.join(assets, "logo.png")
+    // asset lookup
+    const assetsDir = path.join(__dirname, "assets");
+    const logoPath = pick(
+      path.join(assetsDir, "logo_nobg.png"),
+      path.join(assetsDir, "logo.png")
     );
 
-    // page + layout
-    const PAGE_W = 595.28; // A4
-    const PAGE_H = 841.89;
-    const M = 36; // outer margin
-
-    // type scale (compact)
-    const H1 = 26;
-    const H2 = 14;
-    const LBL = 10;
-    const TXT = 11;
-    const META = 9;
-
-    // sizes
-    const CARD_R = 10;
-    const LOGO_W = 160;
-    const QR_W = 148; // fits nicely and scans well
-    const innerW = PAGE_W - 2 * M;
-    const nowISO = new Date().toISOString();
-
+    // Letter landscape (matches your screenshot proportions well)
     const doc = new PDFDocument({
-      size: [PAGE_W, PAGE_H],
+      size: "LETTER",
+      layout: "landscape",
       margin: 0,
-      autoFirstPage: false,
       pdfVersion: "1.3",
+      autoFirstPage: false,
     });
 
-    // page
+    // dimensions (points)
+    // Letter landscape: 11in x 8.5in = 792 x 612 pt
+    const W = 792;
+    const H = 612;
+    const M = 28; // outer margin
+
+    // typography scale (compact)
+    const F_brand = 20;
+    const F_h1 = 34;
+    const F_sub = 12.5;
+    const F_label = 13.5;
+    const F_val = 14.5;
+    const F_helper = 11;
+
+    // columns (left info / right visuals)
+    const colGap = 24;
+    const rightW = 290; // space for logo+QR
+    const leftW = W - (M * 2 + colGap + rightW);
+
+    // start page
     doc.addPage();
 
-    // full-bleed dark background
-    doc.save().rect(0, 0, PAGE_W, PAGE_H).fill("#0b0d0f").restore();
+    // full-bleed background
+    doc.save().rect(0, 0, W, H).fill(BRAND.bg).restore();
 
-    // inner card
-    const cardX = M;
-    const cardY = M;
-    const cardW = innerW;
-    const cardH = PAGE_H - 2 * M;
+    // top brand line
+    const brandX = M;
+    const brandY = M;
+    doc
+      .fillColor(BRAND.green)
+      .font("Helvetica-Bold")
+      .fontSize(F_brand)
+      .text("docuProof.io — Proof you can point to.", brandX, brandY);
 
+    // divider
+    const divY = brandY + F_brand + 10;
     doc
       .save()
-      .roundedRect(cardX, cardY, cardW, cardH, CARD_R)
-      .fill("#111519")
+      .moveTo(M, divY)
+      .lineTo(W - M, divY)
+      .lineWidth(1)
+      .strokeColor(BRAND.rule)
+      .stroke()
       .restore();
 
-    // content insets
-    const inset = 22;
-    let x = cardX + inset;
-    let y = cardY + inset + 6;
+    // content baseline
+    const contentTop = divY + 20;
 
-    // title
-    doc.fillColor("#E6E7EB").font("Helvetica-Bold").fontSize(H1);
+    // LEFT COLUMN
+    let x = M;
+    let y = contentTop;
+
+    // H1 + subtitle
+    doc.fillColor(BRAND.text).font("Helvetica-Bold").fontSize(F_h1);
     doc.text("Proof you can point to.", x, y);
-    y += 34;
+    y += F_h1 + 6;
 
-    // section header
-    doc.fillColor("#16FF70").font("Helvetica-Bold").fontSize(H2);
+    doc.fillColor(BRAND.mut).font("Helvetica").fontSize(F_sub);
+    doc.text(
+      "This certificate confirms your document was cryptographically hashed and queued for permanent timestamping on Bitcoin.",
+      x,
+      y,
+      { width: leftW }
+    );
+    y += 28;
+
+    // Section header
+    doc.fillColor(BRAND.green).font("Helvetica-Bold").fontSize(F_val);
     doc.text("Proof Summary", x, y);
-    y += 10;
+    y += 12;
 
-    // two columns
-    const rightColW = 220;
-    const leftColW = cardW - rightColW - inset * 2 - 8; // spacing between
-    const leftX = x;
-    const rightX = cardX + cardW - inset - rightColW;
-
-    // left column fields
-    const rule = (yy) => {
+    // field helper
+    const rule = () => {
       doc
         .save()
-        .moveTo(leftX, yy)
-        .lineTo(leftX + leftColW, yy)
+        .moveTo(x, y + 6)
+        .lineTo(x + leftW, y + 6)
         .lineWidth(0.6)
-        .strokeColor("#1f2630")
+        .strokeColor(BRAND.rule)
         .stroke()
         .restore();
+      y += 14;
     };
     const field = (label, value) => {
-      doc.fillColor("#6E7681").font("Helvetica-Bold").fontSize(LBL).text(label, leftX, y, {
-        width: leftColW,
-      });
-      y += 12;
-      doc.fillColor("#E6E7EB").font("Helvetica").fontSize(TXT).text(value, leftX, y, {
-        width: leftColW,
-      });
-      y = doc.y + 8;
-      rule(y);
-      y += 8;
+      doc.fillColor(BRAND.green).font("Helvetica-Bold").fontSize(F_label);
+      doc.text(label, x, y, { continued: true });
+      doc.fillColor(BRAND.text).font("Helvetica").fontSize(F_val);
+      doc.text(`  ${value}`);
+      rule();
     };
 
     field("Proof ID", proofId);
     field("Quick Verify ID", quickId || "—");
-    field("Created (UTC)", nowISO);
+    field("Created (UTC)", new Date().toISOString());
     field("File Name", filename);
     field("Display Name", displayName);
 
-    // Verification block
-    doc.fillColor("#6E7681").font("Helvetica-Bold").fontSize(LBL);
-    doc.text("Verification", leftX, y, { width: leftColW });
-    y += 12;
-
-    doc.fillColor("#E6E7EB").font("Helvetica-Bold").fontSize(LBL);
-    doc.text("Public Verify URL", leftX, y);
-    y += 12;
+    // Public URL + helper text
+    doc.fillColor(BRAND.green).font("Helvetica-Bold").fontSize(F_label);
+    doc.text("Public Verify URL", x, y);
+    y += 16;
 
     doc
       .fillColor("#6ECF97")
       .font("Helvetica")
-      .fontSize(TXT)
-      .text(verifyUrl, leftX, y, {
-        width: leftColW,
-        link: verifyUrl,
-        underline: false,
-      });
+      .fontSize(F_val)
+      .text(verifyUrl, x, y, { width: leftW, link: verifyUrl });
     y = doc.y + 6;
 
-    // helper sentence (restored)
     doc
-      .fillColor("#9aa3ad")
+      .fillColor(BRAND.mut)
       .font("Helvetica")
-      .fontSize(META)
+      .fontSize(F_helper)
       .text(
         "Anyone can verify this proof at any time using this URL or the Quick Verify ID above.",
-        leftX,
+        x,
         y,
-        { width: leftColW }
+        { width: leftW }
       );
 
-    // right column: logo + QR (QR on white tile for contrast)
-    // logo
-    const logoY = cardY + inset + 10;
-    if (logo) {
+    // RIGHT COLUMN
+    const rx = M + leftW + colGap;
+    const ry = contentTop;
+
+    // logo (top-right)
+    if (logoPath) {
       try {
-        doc.image(logo, rightX + rightColW - LOGO_W, logoY, { width: LOGO_W });
+        doc.image(logoPath, rx + rightW - 210, ry - 8, { width: 210 });
       } catch {}
     }
 
-    // QR white tile
-    const qrTileW = QR_W + 16;
-    const qrTileX = rightX + (rightColW - qrTileW) / 2;
-    const qrTileY = logoY + LOGO_W * 0.55; // below logo
-    doc
-      .save()
-      .roundedRect(qrTileX, qrTileY, qrTileW, qrTileW, 8)
-      .fill("#ffffff")
-      .restore();
+    // QR (bottom-right)
+    const qrSize = 300; // visual size in px for PNG; drawn narrower to add margins
+    const qrPad = 18;
+    const qrBox = rightW; // available width
+    const qrDraw = qrBox - qrPad * 2; // draw size
 
+    const qrUrl = verifyUrl; // encode full verify URL
+    let qrBuf = null;
     try {
-      const qrBuf = await qrPng(verifyUrl, 900);
-      doc.image(qrBuf, qrTileX + 8, qrTileY + 8, { width: QR_W });
+      qrBuf = await makeQR(qrUrl, qrSize);
     } catch {}
 
-    // footer
-    const footY = cardY + cardH - inset - 22;
-    doc.fillColor("#9aa3ad").font("Helvetica").fontSize(META);
-    doc.text(
-      "docuProof batches proofs to Bitcoin for tamper-evident timestamping. docuProof is not a notary and does not provide legal attestation.",
-      cardX + inset,
-      footY,
-      { width: cardW - inset * 2 }
-    );
-    doc.text("© 2025 docuProof.io — All rights reserved.", cardX + inset, footY + 12);
+    const qrY = H - M - (qrDraw + qrPad * 2);
+    // draw brand-green tile to match screenshot
+    doc
+      .save()
+      .rect(rx, qrY, qrBox, qrDraw + qrPad * 2)
+      .fill(BRAND.green)
+      .restore();
+
+    if (qrBuf) {
+      doc.image(qrBuf, rx + qrPad, qrY + qrPad, { width: qrDraw, height: qrDraw });
+    }
 
     // finalize
-    const b64 = await toBase64(doc);
+    const b64 = await pdfToBase64(doc);
     return {
       statusCode: 200,
       headers: {
         ...headers(filename),
-        "x-docuproof-version": "proof_pdf v5.4",
+        "x-docuproof-version": "proof_pdf v6.0 (landscape, helper, brand QR)",
       },
       body: b64,
       isBase64Encoded: true,
     };
-  } catch (e) {
+  } catch (err) {
     return {
       statusCode: 500,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ok: false,
         error: "PDF build failed",
-        detail: e && (e.message || String(e)),
+        detail: err && (err.message || String(err)),
       }),
     };
   }
