@@ -1,318 +1,326 @@
 // netlify/functions/proof_pdf.js
-// Drop-in replacement — keeps current features, only adjusts typography/spacing.
-// Runtime: Node 18 / Netlify Functions (bundled with esbuild)
+//
+// FINAL LAYOUT: robust two-column engine with measured rows (no overlap),
+// transparent logo enforced, smaller QR, balanced typography.
+// Binary (base64) response so Acrobat/Preview open cleanly.
+//
+// Requires (already in your project):
+//   pdfkit
+//   qrcode
+//
+// Bundled with repo (you already committed these):
+//   netlify/functions/data/Helvetica*.afm
+//   netlify/functions/assets/logo_nobg.png
 
 const fs = require("fs");
 const path = require("path");
 const QRCode = require("qrcode");
 const PDFDocument = require("pdfkit");
 
-// ---------- Tunables (only changes vs prior build are the font sizes + VALUE_X) ----------
-const COLORS = {
+// ---------- Tunables (safe to nudge) ----------
+const PALETTE = {
   bg: "#0b0d0f",
-  panel: "#111418",
-  divider: "#1a1f24",
-  text: "#E6E7EB",
-  soft: "#98A2AD",
+  card: "#14181c",
+  white: "#E6E7EB",
+  gray: "#9aa3ab",
   green: "#16FF70",
-  qrBg: "#9BFFA9",
-  qrFg: "#000000",
+  greenDim: "#9dfcc9",
+  line: "#1a1f24",
 };
 
-const PAGE = {
-  size: "LETTER",      // 612 x 792 (portrait); we use landscape below
-  layout: "landscape",
-  margin: 28,
-  radius: 14,
+const MARGIN = 36;
+
+const TYPE = {
+  title: 15.0,
+  label: 8.0,
+  value: 8.0,
+  help: 7.2,
+  header: 10.5, // "docuProof.io — Proof you can point to."
 };
 
-const TITLE_SZ = 15.0;   // overall headline
-const LABEL_SZ = 7.8;    // green labels
-const VALUE_SZ = 7.8;    // white values
-const HELP_SZ  = 7.0;    // gray helper text
-
-const COLS = {
-  LABEL_X: 36,
-  VALUE_X: 184,  // move right to widen label gutter
-  TOP_Y:   120,
-  ROW_PAD: 12,   // more/less vertical space per row
-  QR_EDGE: 210,  // QR side length
-  QR_PAD:  16,
+const GEOM = {
+  pageW: 1200,
+  pageH: 630,
+  cardR: 20,
+  headerH: 46,
+  rowPad: 12,            // vertical space between rows (increase if you want more air)
+  labelColX: MARGIN,
+  valueColX: MARGIN + 175, // pushes value right so long labels never collide
+  columnGutter: 32,      // space between text column and QR column
+  qrEdge: 270,           // overall QR edge (inner black squares scale automatically)
+  qrFrame: 18,           // green frame thickness around QR
+  logoW: 30,             // header logo width (slightly larger, still subtle)
 };
 
-// ----------------------------------------------------------------------------------------
-
-/** Resolve a file inside the functions bundle (works in Netlify’s /var/task tree). */
-function resolveIn(fnDir, rel) {
-  return path.resolve(fnDir, rel);
+// ---------- Helpers ----------
+function afm(p) {
+  return path.join(__dirname, "data", p);
+}
+function asset(p) {
+  return path.join(__dirname, "assets", p);
+}
+function clamp(n, lo, hi) {
+  return Math.max(lo, Math.min(hi, n));
 }
 
-/** Try to register Helvetica family from bundled AFM files; otherwise fallback. */
-function registerHelvetica(doc, fnDir) {
-  try {
-    const dataDir = resolveIn(fnDir, "data");
-    const haveAll =
-      fs.existsSync(path.join(dataDir, "Helvetica.afm")) &&
-      fs.existsSync(path.join(dataDir, "Helvetica-Bold.afm")) &&
-      fs.existsSync(path.join(dataDir, "Helvetica-Oblique.afm")) &&
-      fs.existsSync(path.join(dataDir, "Helvetica-BoldOblique.afm"));
+function drawHeader(doc, leftX, topY, text) {
+  // transparent logo only; never fall back to non-transparent
+  const logoPath = asset("logo_nobg.png");
+  const LOGO_W = GEOM.logoW;
+  const LOGO_H = Math.round(LOGO_W * 1.0);
 
-    if (haveAll) {
-      doc.registerFont("Helvetica",          path.join(dataDir, "Helvetica.afm"));
-      doc.registerFont("Helvetica-Bold",     path.join(dataDir, "Helvetica-Bold.afm"));
-      doc.registerFont("Helvetica-Oblique",  path.join(dataDir, "Helvetica-Oblique.afm"));
-      doc.registerFont("Helvetica-BoldOblique", path.join(dataDir, "Helvetica-BoldOblique.afm"));
-      return { ok: true, via: "afm" };
+  if (fs.existsSync(logoPath)) {
+    doc.image(logoPath, leftX, topY + 6, { width: LOGO_W, height: LOGO_H });
+  }
+  doc
+    .fillColor(PALETTE.white)
+    .font("Helvetica-Bold")
+    .fontSize(TYPE.header)
+    .text("docuProof.io", leftX + LOGO_W + 12, topY + 9, { continued: true });
+  doc.fillColor(PALETTE.white).text("  —  ");
+  doc.fillColor(PALETTE.white).text(text);
+}
+
+function makeRowRenderer(doc, bounds) {
+  const { labelX, valueX, right, startY } = bounds;
+  let y = startY;
+
+  const lineWidth = right - valueX; // where values + help wrap
+
+  function row(label, value, help) {
+    // label
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(TYPE.label)
+      .fillColor(PALETTE.green)
+      .text(label, labelX, y, { lineBreak: false });
+
+    // value (measured with wrapped width)
+    const valueY = y;
+    doc
+      .font("Helvetica")
+      .fontSize(TYPE.value)
+      .fillColor(PALETTE.white)
+      .text(value, valueX, valueY, { width: lineWidth });
+
+    const afterValueY = doc.y;
+
+    // optional helper
+    let afterHelpY = afterValueY;
+    if (help) {
+      doc
+        .font("Helvetica")
+        .fontSize(TYPE.help)
+        .fillColor(PALETTE.gray)
+        .text(help, valueX, afterValueY + 2, { width: lineWidth });
+      afterHelpY = doc.y;
     }
-  } catch (_) { /* fall through */ }
-  // PDFKit has built-ins; don’t register if AFMs missing.
-  return { ok: true, via: "builtin" };
-}
 
-/** Draw the small brand mark + heading on top */
-function drawHeader(doc, fnDir, panel) {
-  const logoPaths = [
-    resolveIn(fnDir, "assets/logo_nobg.png"),
-    resolveIn(fnDir, "assets/logo.png"),
-  ];
-  let logo = null;
-  for (const p of logoPaths) { if (fs.existsSync(p)) { logo = p; break; } }
+    // divider line at bottom of the tallest block
+    const blockBottom = Math.max(afterValueY, afterHelpY);
+    doc
+      .moveTo(labelX, blockBottom + 6)
+      .lineTo(right, blockBottom + 6)
+      .lineWidth(1)
+      .strokeColor(PALETTE.line)
+      .stroke();
 
-  const y = panel.y - 46;
-  const x = panel.x + 6;
-
-  if (logo) {
-    try {
-      doc.image(logo, x, y - 2, { width: 26, height: 26 });
-    } catch (_) { /* ignore draw-time errors */ }
+    y = blockBottom + GEOM.rowPad;
   }
-  doc
-    .font("Helvetica-Bold")
-    .fontSize(16)
-    .fillColor(COLORS.green)
-    .text("docuProof.io", x + 34, y);
 
-  doc
-    .font("Helvetica-Bold")
-    .fillColor(COLORS.text)
-    .text(" — Proof you can point to.", x + 34 + doc.widthOfString("docuProof.io "), y);
-}
-
-/** Horizontal divider line */
-function divider(doc, x1, x2, y) {
-  doc
-    .moveTo(x1, y)
-    .lineTo(x2, y)
-    .lineWidth(1)
-    .strokeColor(COLORS.divider)
-    .stroke();
-}
-
-/** A single metadata row with label / value / helper. Returns next y. */
-function row(doc, y, label, value, help, panelXRight) {
-  doc.font("Helvetica-Bold").fontSize(LABEL_SZ).fillColor(COLORS.green).text(label, COLS.LABEL_X, y);
-  const lineY = y + LABEL_SZ + 8;
-  divider(doc, COLS.LABEL_X, panelXRight, lineY);
-
-  doc.font("Helvetica-Bold").fontSize(VALUE_SZ).fillColor(COLORS.text).text(value, COLS.VALUE_X, y);
-  if (help) {
-    doc.font("Helvetica").fontSize(HELP_SZ).fillColor(COLORS.soft).text(help, COLS.VALUE_X, y + LABEL_SZ + 10);
+  function currentY() {
+    return y;
   }
-  return y + COLS.ROW_H;
+
+  return { row, currentY };
 }
 
-/** Generate a QR PNG buffer (transparent) */
-async function makeQrPng(data) {
-  return await QRCode.toBuffer(data, {
-    errorCorrectionLevel: "H",
+async function renderPdf(params) {
+  const {
+    id = "proof",
+    filename = "Launch-Test.pdf",
+    displayName = "Launch Sync Test",
+    verifyUrl = "https://docuproof.io/verify?id=proof",
+    quickId = "00000000",
+  } = params;
+
+  // Prepare QR (PNG buffer)
+  const QR_PNG = await QRCode.toBuffer(verifyUrl, {
+    errorCorrectionLevel: "Q",
     margin: 0,
-    color: { dark: COLORS.qrFg, light: "#00000000" },
-    scale: 8,
-    type: "png",
+    color: {
+      dark: "#000000",
+      light: "#99f99900", // fully transparent center; we'll add our own frame
+    },
+    width: GEOM.qrEdge - GEOM.qrFrame * 2,
   });
-}
 
-/** Render the QR with a soft green frame */
-function drawQr(doc, pngBuf, x, y) {
-  const edge = COLS.QR_EDGE;
-  const pad = COLS.QR_PAD;
-
-  // frame
-  doc.save()
-     .roundedRect(x - pad, y - pad, edge + 2 * pad, edge + 2 * pad, 8)
-     .fillColor(COLORS.qrBg)
-     .fill()
-     .restore();
-
-  try {
-    doc.image(pngBuf, x, y, { width: edge, height: edge });
-  } catch (_) { /* ignore */ }
-}
-
-exports.handler = async (event) => {
-  const fnDir = __dirname; // …/netlify/functions
-
-  // --- Parse inputs ---
-  const qp = event.queryStringParameters || {};
-  const proofId   = (qp.id || "unknown").toString();
-  const fileName  = (qp.filename || "document").toString();
-  const display   = (qp.displayName || "Proof").toString();
-  const verifyUrl = (qp.verifyUrl || `https://docuproof.io/verify?id=${encodeURIComponent(proofId)}`).toString();
-  const quickId   = (qp.quickId || Math.random().toString(36).slice(2, 10)).toString();
-
-  // Build a PDF in memory
+  // PDF in memory (binary)
   const doc = new PDFDocument({
-    size: PAGE.size,
-    layout: PAGE.layout,
-    margin: PAGE.margin,
-    bufferPages: true,
+    size: [GEOM.pageW, GEOM.pageH],
+    margins: { top: 0, left: 0, right: 0, bottom: 0 },
+    info: {
+      Title: "docuProof Certificate",
+      Author: "docuProof.io",
+      Producer: "docuProof.io",
+    },
   });
 
-  // Make background
-  const pageW = doc.page.width, pageH = doc.page.height;
-  doc.rect(0, 0, pageW, pageH).fillColor(COLORS.bg).fill();
+  // Fonts (AFM you bundled)
+  PDFDocument.prototype.registerFont.call(doc, "Helvetica", fs.readFileSync(afm("Helvetica.afm")));
+  PDFDocument.prototype.registerFont.call(doc, "Helvetica-Bold", fs.readFileSync(afm("Helvetica-Bold.afm")));
+  PDFDocument.prototype.registerFont.call(doc, "Helvetica-Oblique", fs.readFileSync(afm("Helvetica-Oblique.afm")));
+  PDFDocument.prototype.registerFont.call(doc, "Helvetica-BoldOblique", fs.readFileSync(afm("Helvetica-BoldOblique.afm")));
 
-  // Fonts
-  registerHelvetica(doc, fnDir);
+  const chunks = [];
+  doc.on("data", (c) => chunks.push(c));
+  const done = new Promise((res) => doc.on("end", res));
 
-  // Panel
-  const panel = {
-    x: PAGE.margin + 12,
-    y: PAGE.margin + 60,
-    w: pageW - (PAGE.margin + 12) * 2,
-    h: pageH - (PAGE.margin + 60) - PAGE.margin,
-  };
+  // Background
+  doc.rect(0, 0, GEOM.pageW, GEOM.pageH).fill(PALETTE.bg);
+
+  // Header
+  drawHeader(doc, MARGIN, 10, "Proof you can point to.");
+
+  // Card
+  const cardX = MARGIN - 4;
+  const cardY = GEOM.headerH;
+  const cardW = GEOM.pageW - MARGIN * 2 + 8;
+  const cardH = GEOM.pageH - GEOM.headerH - MARGIN + 6;
   doc
-    .save()
-    .roundedRect(panel.x, panel.y, panel.w, panel.h, PAGE.radius)
-    .fillColor(COLORS.panel)
-    .fill()
-    .restore();
+    .roundedRect(cardX, cardY, cardW, cardH, GEOM.cardR)
+    .fillColor(PALETTE.card)
+    .fill();
 
-  // Header line + title
-  drawHeader(doc, fnDir, panel);
-  doc
-    .font("Helvetica-Bold")
-    .fontSize(TITLE_SZ)
-    .fillColor(COLORS.text)
-    .text("Proof you can point to.", panel.x + 26, panel.y + 18);
+  // Title
+  const titleX = MARGIN + 18;
+  const titleY = GEOM.headerH + 18;
+  doc.font("Helvetica-Bold").fontSize(TYPE.title).fillColor(PALETTE.white);
+  doc.text("Proof you can point to.", titleX, titleY);
 
-  // Subtitle/intro
+  // Subtitle / helper line under title
   doc
     .font("Helvetica")
-    .fontSize(HELP_SZ + 0.4)
-    .fillColor(COLORS.soft)
+    .fontSize(TYPE.help)
+    .fillColor(PALETTE.gray)
     .text(
       "This certificate confirms your document was cryptographically hashed and queued for permanent timestamping on Bitcoin.",
-      panel.x + 26,
-      panel.y + 48,
-      { width: panel.w - 52 }
+      titleX,
+      titleY + 28,
+      { width: GEOM.pageW - titleX - MARGIN - 18 }
     );
 
-  // Left column origin
-  let y = COLS.COL_Y;
-  const panelRight = panel.x + panel.w - 26;
+  // Compute columns
+  const leftColX = titleX;
+  const contentTop = titleY + 64;
 
-  // Section title
-  doc.font("Helvetica-Bold").fontSize(TITLE_SZ).fillColor(COLORS.text).text("Proof Summary", panel.x + 26, y - 28);
-  divider(doc, panel.x + 26, panelRight, y - 6);
+  // Place QR at right within the card
+  const qrOuter = {
+    w: GEOM.qrEdge,
+    h: GEOM.qrEdge,
+    x: GEOM.pageW - MARGIN - GEOM.qrEdge - 6,
+    y: contentTop + 6,
+  };
 
-  // Rows
-  y = row(
-    doc, y,
-    "Proof ID", proofId,
-    "Your permanent reference for this proof. Keep it with your records.",
-    panelRight
-  );
-  y = row(
-    doc, y,
-    "Quick Verify ID", quickId,
-    "10-character code you can paste at docuProof.io/verify for fast lookups.",
-    panelRight
-  );
-  y = row(
-    doc, y,
-    "Created (UTC)", new Date().toISOString(),
-    "Timestamp when this PDF was generated on the server.",
-    panelRight
-  );
-  y = row(
-    doc, y,
-    "File Name", fileName,
-    "Original filename you submitted for hashing.",
-    panelRight
-  );
-  y = row(
-    doc, y,
-    "Display Name", display,
-    "Human-friendly name that appears on your proof.",
-    panelRight
-  );
-  y = row(
-    doc, y,
-    "Public Verify URL", verifyUrl,
-    "Anyone can verify this proof at any time using this URL or the Quick Verify ID above.",
-    panelRight
+  // QR green frame
+  doc
+    .rect(qrOuter.x, qrOuter.y, qrOuter.w, qrOuter.h)
+    .fillColor(PALETTE.green)
+    .fill();
+
+  // QR inner (PNG)
+  const qrInnerX = qrOuter.x + GEOM.qrFrame;
+  const qrInnerY = qrOuter.y + GEOM.qrFrame;
+  const qrInnerEdge = qrOuter.w - GEOM.qrFrame * 2;
+
+  doc.image(QR_PNG, qrInnerX, qrInnerY, { width: qrInnerEdge, height: qrInnerEdge });
+
+  // Rows area right bound is left edge of QR minus gutter
+  const rowsRight = qrOuter.x - GEOM.columnGutter;
+
+  // Section header “Proof Summary”
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(TYPE.label + 2)
+    .fillColor(PALETTE.green)
+    .text("Proof Summary", leftColX, contentTop);
+
+  // Divider under section header
+  doc
+    .moveTo(leftColX, contentTop + 18)
+    .lineTo(rowsRight, contentTop + 18)
+    .lineWidth(1)
+    .strokeColor(PALETTE.line)
+    .stroke();
+
+  const { row } = makeRowRenderer(doc, {
+    labelX: leftColX,
+    valueX: GEOM.valueColX,
+    right: rowsRight,
+    startY: contentTop + 26,
+  });
+
+  // ---------- Data Rows (with helper text) ----------
+  row("Proof ID", id, "Your permanent reference for this proof. Keep it with your records.");
+  row("Quick Verify ID", quickId, "10-character code you can paste at docuProof.io/verify for fast lookups.");
+  row("Created (UTC)", new Date().toISOString(), "Timestamp when this PDF was generated on the server.");
+  row("File Name", filename, "Original filename you submitted for hashing.");
+  row("Display Name", displayName, "Human-friendly name that appears on your proof.");
+  row(
+    "Public Verify URL",
+    verifyUrl,
+    "Anyone can verify this proof at any time using this URL or the Quick Verify ID above."
   );
 
-  // QR on the right column
-  const qrX = panelRight - (COLS.QR_EDGE + COLS.QR_PAD); // inside panel
-  const qrY = COLS.COL_Y - 6; // align with rows visually
-  let qrBuf;
-  try { qrBuf = await makeQrPng(verifyUrl); } catch (_) { qrBuf = null; }
-  if (qrBuf) drawQr(doc, qrBuf, qrX, qrY);
-
-  // Footer disclaimer
-  const foot = "docuProof batches proofs to Bitcoin for tamper-evident timestamping. docuProof is not a notary and does not provide legal attestation.";
+  // Footer legal
   doc
     .font("Helvetica")
-    .fontSize(7)
-    .fillColor(COLORS.soft)
-    .text(foot, panel.x + 10, panel.y + panel.h - 22, { width: panel.w - 20, align: "left" });
+    .fontSize(7.2)
+    .fillColor(PALETTE.gray)
+    .text(
+      "docuProof batches proofs to Bitcoin for tamper-evident timestamping. docuProof is not a notary and does not provide legal attestation.",
+      MARGIN,
+      GEOM.pageH - MARGIN - 10,
+      { width: GEOM.pageW - MARGIN * 2 }
+    );
 
-  // Collect as buffer
-  const chunks = [];
-  const resultP = new Promise((resolve, reject) => {
-    doc.on("data", (c) => chunks.push(c));
-    doc.on("end", () => resolve(Buffer.concat(chunks)));
-    doc.on("error", reject);
-  });
   doc.end();
+  await done;
+  const pdfBuffer = Buffer.concat(chunks);
+  return pdfBuffer;
+}
 
-  let bodyBuf;
-  try { bodyBuf = await resultP; } catch (err) {
+// ---------- Netlify handler ----------
+exports.handler = async (event) => {
+  try {
+    const q = event.queryStringParameters || {};
+    const buf = await renderPdf({
+      id: q.id,
+      filename: q.filename,
+      displayName: q.displayName,
+      verifyUrl: q.verifyUrl,
+      quickId: q.quickId,
+    });
+
+    return {
+      statusCode: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `inline; filename="${(q.filename || "proof").replace(/"/g, "")}"`,
+        "Cache-Control": "no-store,no-cache,must-revalidate",
+      },
+      body: buf.toString("base64"),
+      isBase64Encoded: true,
+    };
+  } catch (err) {
     return {
       statusCode: 500,
-      headers: {
-        "content-type": "application/json",
-        "cache-control": "no-cache",
-        "x-docuproof-version": "proof_pdf v6.1.0 (exception)",
-      },
-      body: JSON.stringify({ ok: false, error: "PDF build failed", detail: String(err && err.message || err) }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ok: false,
+        error: "PDF build failed",
+        detail: String(err && err.message ? err.message : err),
+      }),
     };
   }
-
-  // Response
-  const headers = {
-    "Content-Type": "application/pdf",
-    "Content-Disposition": `inline; filename="${(qp.filename || "proof")}.pdf"`,
-    "Cache-Control": "no-cache,no-store,must-revalidate",
-    "Pragma": "no-cache",
-    "Expires": "0",
-    "x-docuproof-version": "proof_pdf v6.1.0",
-  };
-
-  // (Debug hints to help you verify assets were found; harmless if ignored by clients)
-  try {
-    headers["x-docuproof-logo-src"] = fs.existsSync(resolveIn(fnDir, "assets/logo_nobg.png")) ? "logo_nobg.png" :
-                                      (fs.existsSync(resolveIn(fnDir, "assets/logo.png")) ? "logo.png" : "none");
-    headers["x-docuproof-qr"] = qrBuf ? "1" : "0";
-  } catch (_) { /* ignore */ }
-
-  return {
-    statusCode: 200,
-    headers,
-    isBase64Encoded: true,
-    body: bodyBuf.toString("base64"),
-  };
 };
