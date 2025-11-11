@@ -1,182 +1,302 @@
 // netlify/functions/proof_pdf.js
-// Collision-proof layout for Letter (612x792 pt). QR column is fixed,
-// left column is computed from remaining width. Acrobat-safe PDF.
+// PDF proof renderer — compact, readable, Acrobat-safe
+// Layout: Letter landscape, dark panel, small header logo (left), no large right logo,
+// helper text under each value, smaller consistent typography, compact row spacing,
+// smaller QR with light-green pad & border.
 
-const fs = require("fs");
-const path = require("path");
-const PDFDocument = require("pdfkit");
-const QRCode = require("qrcode");
+const PDFDocument = require('pdfkit');
+const { Buffer } = require('buffer');
+const fs = require('fs');
+const path = require('path');
+const QR = require('qrcode-generator'); // pure JS (no native deps)
 
 exports.handler = async (event) => {
   try {
-    const q = event.queryStringParameters || {};
-    const proofId     = q.id || "qr_fix01";
-    const quickId     = (q.quickId || "00000000").toString();
-    const filename    = q.filename || "Launch-Test.pdf";
-    const displayName = q.displayName || "Launch Sync Test";
-    const verifyUrl   = q.verifyUrl || `https://docuproof.io/verify?id=${encodeURIComponent(proofId)}`;
+    // -------- Parse inputs (querystring) --------
+    const q = new URLSearchParams(event.rawQuery || event.queryStringParameters || {});
+    const proofId   = q.get('id')          || 'qr_fix01';
+    const quickId   = q.get('quickId')     || '00000000';
+    const created   = q.get('createdUtc')  || new Date().toISOString();
+    const filename  = q.get('filename')    || 'Launch-Test.pdf';
+    const display   = q.get('displayName') || 'Launch Sync Test';
+    const verifyUrl = q.get('verifyUrl')   || `https://docuproof.io/verify?id=${encodeURIComponent(proofId)}`;
 
-    // ---- Theme
-    const C_BG     = "#0b0d0f";
-    const C_PANEL  = "#13171b";
-    const C_TXT    = "#e6e7eb";
-    const C_MUTED  = "#9aa1a8";
-    const C_ACCENT = "#16FF70";
-    const C_RULE   = "#252b31";
-    const C_QR_BG  = "#90f9ad33";
+    // -------- Colors & constants (match your brand) --------
+    const COL_BG          = '#0b0d0f';  // page bg
+    const COL_PANEL       = '#151a1f';  // card bg
+    const COL_RULE        = '#2a3138';
+    const COL_TEXT        = '#e6e7eb';
+    const COL_MUTED       = '#9aa2ab';
+    const COL_ACCENT      = '#16FF70';
+    const COL_QR_PAD      = '#82ffa6';  // lighter green pad
+    const COL_QR_FG       = '#000000';  // QR modules
+    const COL_QR_BG       = '#82ffa6';  // QR inner background
 
-    const MARGIN = 40;
+    const PAGE_SIZE       = 'LETTER';
+    const LAYOUT          = 'landscape';
+    const MARGIN          = 36;           // page outer
+    const PANEL_R         = 14;           // panel corner radius
+    const PANEL_PAD       = 26;           // inner padding
 
-    // Resolve logo
-    const logo = (() => {
-      const a = path.resolve("netlify/functions/assets/logo_nobg.png");
-      const b = path.resolve("netlify/functions/assets/logo.png");
-      return fs.existsSync(a) ? a : (fs.existsSync(b) ? b : null);
-    })();
+    // Typography (smaller, consistent)
+    const TITLE_SIZE      = 28;           // “Proof you can point to.”
+    const H2_SIZE         = 18;           // “Proof Summary”
+    const LABEL_SIZE      = 11.5;
+    const VALUE_SIZE      = 14;           // slightly larger for value
+    const HELP_SIZE       = 9.5;          // helper line
+    const LINE_GAP        = 6;            // gap between helper/value block and next rule
+    const COL_GAP         = 28;           // gap between left text column & QR block
+    const ROW_RULE_SPACE  = 10;           // above/below rule
+    const LABEL_WIDTH     = 130;          // left label column
+    const VALUE_WIDTH     = 520;          // right value column
 
-    // Build QR PNG buffer once
-    const qrBuf = Buffer.from(
-      (await QRCode.toDataURL(verifyUrl, {
-        errorCorrectionLevel: "Q",
-        margin: 2,
-        color: { dark: "#000000", light: "#00000000" },
-        scale: 8,
-      })).split(",")[1],
-      "base64"
-    );
+    // QR sizing (smaller than before)
+    const QR_SIZE         = 240;          // square content
+    const QR_PAD          = 18;           // soft pad
+    const QR_BORDER       = 18;           // outer border thickness
+    const QR_BLOCK_W      = QR_BORDER + QR_PAD + QR_SIZE + QR_PAD + QR_BORDER;
 
-    // PDF
+    // Small header logo (left)
+    const LOGO_SIZE       = 18;           // small mark next to brand
+    const LOGO_PATHS = [
+      path.join(__dirname, 'assets', 'logo_nobg.png'),
+      path.join(__dirname, 'assets', 'logo.png'),
+    ];
+    const logoPath = LOGO_PATHS.find(p => fs.existsSync(p));
+
+    // -------- PDF doc --------
     const doc = new PDFDocument({
-      size: "LETTER",
-      margins: { top: MARGIN, left: MARGIN, right: MARGIN, bottom: MARGIN },
-      info: { Title: `docuProof Certificate — ${proofId}`, Author: "docuProof.io" }
+      size: PAGE_SIZE,
+      layout: LAYOUT,
+      margins: { top: MARGIN, right: MARGIN, bottom: MARGIN, left: MARGIN },
+      pdfVersion: '1.3' // conservative for Acrobat
     });
-    const chunks = [];
-    doc.on("data", (c) => chunks.push(c));
-    const done = new Promise((r) => doc.on("end", () => r(Buffer.concat(chunks))));
 
-    // Background
-    doc.rect(0, 0, doc.page.width, doc.page.height).fill(C_BG);
-
-    // Header
-    const headerY = MARGIN - 4;
-    if (logo) doc.image(logo, MARGIN, headerY - 6, { width: 28, height: 28 });
-    const brandX = MARGIN + 36;
-    doc.font("Helvetica-Bold").fontSize(24).fillColor(C_ACCENT).text("docuProof.io", brandX, headerY);
-    doc.font("Helvetica-Bold").fontSize(24).fillColor(C_TXT).text(" — Proof you can point to.", doc.x, headerY);
-
-    // Right mark
-    if (logo) {
-      const markW = 132;
-      doc.image(logo, doc.page.width - MARGIN - markW, headerY + 8, { width: markW });
+    // Use Helvetica AFM family you bundled
+    const fontsDir = path.join(__dirname, 'data');
+    const hasAFM = fs.existsSync(path.join(fontsDir, 'Helvetica.afm'));
+    if (hasAFM) {
+      doc.registerFont('Body', 'Helvetica');
+      doc.registerFont('Body-Bold', 'Helvetica-Bold');
+      doc.registerFont('Body-Oblique', 'Helvetica-Oblique');
+    } else {
+      // Fall back gracefully
+      doc.registerFont('Body', 'Helvetica');
+      doc.registerFont('Body-Bold', 'Helvetica-Bold');
+      doc.registerFont('Body-Oblique', 'Helvetica-Oblique');
     }
 
-    // Rule
-    doc.moveTo(MARGIN, headerY + 42).lineTo(doc.page.width - MARGIN, headerY + 42)
-       .lineWidth(1).strokeColor(C_RULE).stroke();
+    // Collect into buffer
+    const chunks = [];
+    doc.on('data', c => chunks.push(c));
+    const pdfDone = new Promise(res => doc.on('end', () => res(Buffer.concat(chunks))));
+
+    // Page background
+    const { width: PW, height: PH } = doc.page;
+    doc.save()
+      .rect(0, 0, PW, PH)
+      .fill(COL_BG)
+      .restore();
 
     // Panel
     const panelX = MARGIN;
-    const panelY = headerY + 58;
-    const panelW = doc.page.width - 2 * MARGIN; // on Letter: 612 - 80 = 532
-    const panelH = doc.page.height - panelY - MARGIN;
-    doc.roundedRect(panelX, panelY, panelW, panelH, 14).fillColor(C_PANEL).fill();
+    const panelY = MARGIN + 36; // leave space for header brand line
+    const panelW = PW - MARGIN * 2;
+    const panelH = PH - panelY - MARGIN;
 
-    // Title + subtitle
-    const contentX = panelX + 24;
-    let y = panelY + 20;
-    doc.font("Helvetica-Bold").fontSize(32).fillColor(C_TXT).text("Proof you can point to.", contentX, y);
-    y += 38;
-    doc.font("Helvetica").fontSize(12.5).fillColor(C_MUTED).text(
-      "This certificate confirms your document was cryptographically hashed and queued for permanent timestamping on Bitcoin.",
-      contentX, y, { width: panelW - 48, lineGap: 2 }
-    );
-    y += 36;
+    doc.save()
+      .roundedRect(panelX, panelY, panelW, panelH, PANEL_R)
+      .fill(COL_PANEL)
+      .restore();
 
-    // ---- Column math (collision-proof)
-    // Reserve a fixed QR column on the right; left gets the rest.
-    const QR_FRAME  = 232;          // outer square
-    const QR_PAD    = 12;           // inner padding
-    const GUTTER    = 28;           // space between columns
-    const rightX    = panelX + panelW - 24 - QR_FRAME;
-    const rightY    = panelY + 108;
-    const leftX     = contentX;
-    const leftW     = Math.max(260, rightX - GUTTER - leftX); // never negative
+    // Header brand row (mini logo at left; NO big right logo)
+    const brandY = MARGIN + 6;
+    let cursorX = MARGIN;
 
-    // Section header
-    doc.font("Helvetica-Bold").fontSize(16).fillColor(C_ACCENT).text("Proof Summary", leftX, y);
-    y += 10;
+    if (logoPath) {
+      doc.image(logoPath, cursorX, brandY - (LOGO_SIZE - 14) / 2, { width: LOGO_SIZE, height: LOGO_SIZE });
+      cursorX += LOGO_SIZE + 10;
+    }
 
-    const LABEL_W = 130;
-    const VAL_W   = leftW - LABEL_W - 12;
-    const gapVal  = 2;
-    const gapHelp = 1.2;
+    doc.fillColor(COL_ACCENT)
+       .font('Body-Bold')
+       .fontSize(20)
+       .text('docuProof.io', cursorX, brandY, { continued: true });
 
-    const row = (label, value, help) => {
-      // label
-      doc.font("Helvetica-Bold").fontSize(13.5).fillColor(C_ACCENT)
-         .text(label, leftX, y, { width: LABEL_W });
+    doc.fillColor(COL_TEXT)
+       .font('Body')
+       .text(' — Proof you can point to.');
 
-      // value
-      doc.font("Helvetica-Bold").fontSize(16).fillColor(C_TXT)
-         .text(value, leftX + LABEL_W + 12, y, { width: VAL_W, lineGap: gapVal });
-      const vH = doc.heightOfString(value, { width: VAL_W, lineGap: gapVal, font: "Helvetica-Bold", fontSize: 16 });
-      let rowBottom = y + vH;
+    // Title in panel
+    let x = panelX + PANEL_PAD;
+    let y = panelY + PANEL_PAD;
 
-      if (help) {
-        const hy = rowBottom + 2;
-        doc.font("Helvetica").fontSize(11.2).fillColor(C_MUTED)
-           .text(help, leftX + LABEL_W + 12, hy, { width: VAL_W, lineGap: gapHelp });
-        const hH = doc.heightOfString(help, { width: VAL_W, lineGap: gapHelp, font: "Helvetica", fontSize: 11.2 });
-        rowBottom = hy + hH;
-      }
+    doc.fillColor(COL_TEXT)
+       .font('Body-Bold')
+       .fontSize(TITLE_SIZE)
+       .text('Proof you can point to.', x, y);
 
-      // divider
-      const ruleY = rowBottom + 8;
-      doc.moveTo(leftX, ruleY).lineTo(leftX + leftW, ruleY).lineWidth(0.8).strokeColor(C_RULE).stroke();
-      y = ruleY + 10;
+    y += 34; // below title
+
+    // Subtitle
+    doc.fillColor(COL_MUTED)
+       .font('Body')
+       .fontSize(12)
+       .text(
+        'This certificate confirms your document was cryptographically hashed and queued for permanent timestamping on Bitcoin.',
+        x, y, { width: panelW - 2 * PANEL_PAD - QR_BLOCK_W - COL_GAP }
+       );
+
+    // Move below subtitle
+    y += 30;
+
+    // Left column origin (labels/values)
+    const colX = x;
+    let colY = y + 8;
+
+    // Right QR block origin (vertically aligned with Proof Summary)
+    const qrX = panelX + panelW - PANEL_PAD - QR_BLOCK_W;
+    const qrY = y; // align to top of section
+
+    // Section heading + rule
+    doc.fillColor(COL_ACCENT)
+       .font('Body-Bold')
+       .fontSize(H2_SIZE)
+       .text('Proof Summary', colX, colY);
+
+    colY += H2_SIZE + 6;
+
+    // helper to draw a thin rule
+    const rule = (rx, ry, rw) => {
+      doc.save()
+         .moveTo(rx, ry)
+         .lineTo(rx + rw, ry)
+         .lineWidth(0.8)
+         .strokeColor(COL_RULE)
+         .stroke()
+         .restore();
     };
 
-    // Rows with helpers
-    row("Proof ID", proofId, "Your permanent reference for this proof. Keep it with your records.");
-    row("Quick Verify ID", quickId, "10-character code you can paste at docuProof.io/verify for fast lookups.");
-    row("Created (UTC)", new Date().toISOString().replace("Z", "Z"), "Timestamp when this PDF was generated on the server.");
-    row("File Name", filename, "Original filename you submitted for hashing.");
-    row("Display Name", displayName, "Human-friendly name that appears on your proof.");
-    row("Public Verify URL", verifyUrl, "Anyone can verify this proof at any time using this URL or the Quick Verify ID above.");
+    // helper: one field row (label, value, helper)
+    const drawField = (label, value, help) => {
+      // rule above
+      rule(colX, colY, VALUE_WIDTH + LABEL_WIDTH);
 
-    // QR block
-    doc.roundedRect(rightX, rightY, QR_FRAME, QR_FRAME, 12).fillColor(C_QR_BG).fill();
-    const inner = QR_FRAME - 2 * QR_PAD;
-    doc.image(qrBuf, rightX + QR_PAD, rightY + QR_PAD, { width: inner, height: inner });
+      colY += ROW_RULE_SPACE;
 
-    // Footer
-    const footY = panelY + panelH - 18;
-    doc.font("Helvetica").fontSize(9.5).fillColor(C_MUTED).text(
-      "docuProof batches proofs to Bitcoin for tamper-evident timestamping. docuProof is not a notary and does not provide legal attestation.",
-      MARGIN, footY, { width: doc.page.width - 2 * MARGIN, align: "center" }
-    );
+      // label
+      doc.fillColor(COL_ACCENT)
+         .font('Body-Bold')
+         .fontSize(LABEL_SIZE)
+         .text(label, colX, colY, { width: LABEL_WIDTH });
 
+      // value
+      doc.fillColor(COL_TEXT)
+         .font('Body-Bold')
+         .fontSize(VALUE_SIZE)
+         .text(value, colX + LABEL_WIDTH + 16, colY, { width: VALUE_WIDTH });
+
+      // helper
+      colY += VALUE_SIZE + 2;
+      doc.fillColor(COL_MUTED)
+         .font('Body')
+         .fontSize(HELP_SIZE)
+         .text(help, colX + LABEL_WIDTH + 16, colY, { width: VALUE_WIDTH });
+
+      // advance to next row
+      colY += HELP_SIZE + LINE_GAP;
+    };
+
+    // Rows (labels + helpers as requested)
+    drawField('Proof ID',        proofId,   'Your permanent reference for this proof. Keep it with your records.');
+    drawField('Quick Verify ID', quickId,   '10-character code you can paste at docuProof.io/verify for fast lookups.');
+    drawField('Created (UTC)',   created,   'Timestamp when this PDF was generated on the server.');
+    drawField('File Name',       filename,  'Original filename you submitted for hashing.');
+    drawField('Display Name',    display,   'Human-friendly name that appears on your proof.');
+    drawField('Public Verify URL', verifyUrl, 'Anyone can verify this proof at any time using this URL or the Quick Verify ID above.');
+
+    // bottom rule under last row
+    rule(colX, colY, VALUE_WIDTH + LABEL_WIDTH);
+
+    // Legal footer (single line, inside panel bottom)
+    doc.fillColor(COL_MUTED)
+       .font('Body')
+       .fontSize(9)
+       .text(
+         'docuProof batches proofs to Bitcoin for tamper-evident timestamping. docuProof is not a notary and does not provide legal attestation.',
+         panelX + PANEL_PAD, panelY + panelH - PANEL_PAD - 10, { width: panelW - 2 * PANEL_PAD }
+       );
+
+    // -------- QR: draw vector modules (no raster; Acrobat-safe) --------
+    const drawQR = (text, x0, y0, size, pad, border) => {
+      // outer border
+      doc.save()
+         .roundedRect(x0, y0, border + pad + size + pad + border, border + pad + size + pad + border, 8)
+         .fill(COL_QR_PAD)
+         .restore();
+
+      // inner bg
+      const innerX = x0 + border;
+      const innerY = y0 + border;
+      const innerW = pad + size + pad;
+      const innerH = pad + size + pad;
+
+      doc.save()
+         .roundedRect(innerX, innerY, innerW, innerH, 8)
+         .fill(COL_QR_PAD)
+         .restore();
+
+      // QR modules
+      const qr = QR(4, 'M');  // typeNumber auto, errorCorrectionLevel M
+      qr.addData(text);
+      qr.make();
+
+      const count = qr.getModuleCount();
+      const cell  = size / count;
+      const beginX = innerX + pad;
+      const beginY = innerY + pad;
+
+      doc.save().fillColor(COL_QR_FG).strokeColor(COL_QR_FG);
+
+      for (let r = 0; r < count; r++) {
+        for (let c = 0; c < count; c++) {
+          if (qr.isDark(r, c)) {
+            const px = beginX + c * cell;
+            const py = beginY + r * cell;
+            doc.rect(px, py, Math.ceil(cell), Math.ceil(cell)).fill();
+          }
+        }
+      }
+      doc.restore();
+    };
+
+    drawQR(verifyUrl, qrX, qrY, QR_SIZE, QR_PAD, QR_BORDER);
+
+    // -------- Done --------
     doc.end();
-    const pdf = await done;
+    const pdf = await pdfDone;
 
     return {
       statusCode: 200,
       headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `inline; filename="${filename}"`,
-        "Cache-Control": "no-store, no-cache, must-revalidate",
-        "Strict-Transport-Security": "max-age=31536000",
-        "x-docuproof-version": "proof_pdf v6.2.0 geometry-safe"
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `inline; filename="${filename}"`,
+        'Cache-Control': 'no-cache,no-store,must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
       },
-      isBase64Encoded: true,
-      body: pdf.toString("base64")
+      body: pdf.toString('base64'),
+      isBase64Encoded: true
     };
   } catch (err) {
     return {
       statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ok:false, error:"PDF build failed", detail: err.message })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ok: false,
+        error: 'PDF build failed',
+        detail: String(err && err.message || err)
+      })
     };
   }
 };
