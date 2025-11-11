@@ -1,177 +1,174 @@
 // netlify/functions/proof_pdf.js
-// v4.4.1 — dual-path asset lookup, trace headers, bigger QR, transparent PNG support
-const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
-const QRCode = require("qrcode");
-const fs = require("fs");
-const path = require("path");
+// Pure pdfkit pipeline + qrcode PNG -> single, robust implementation.
 
-const HEADERS_NO_CACHE = {
-  "Cache-Control": "no-cache, no-store, must-revalidate",
-  Pragma: "no-cache",
-  Expires: "0",
-};
+const QRCode = require('qrcode');
+const fs = require('fs');
+const path = require('path');
+const stream = require('stream');
+const PDFDocument = require('pdfkit');
 
-function firstExisting(paths) {
-  for (const p of paths) {
-    try { if (fs.existsSync(p)) return p; } catch {}
-  }
-  return null;
+// ---------- helpers ----------
+function toBuffer(readable) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    readable.on('data', (c) => chunks.push(c));
+    readable.on('end', () => resolve(Buffer.concat(chunks)));
+    readable.on('error', reject);
+  });
 }
 
-async function embedPngIfExists(pdfDoc, p) {
-  if (!p) return null;
-  try {
-    const bytes = fs.readFileSync(p);
-    return await pdfDoc.embedPng(bytes);
-  } catch {
-    return null;
-  }
-}
-
-exports.handler = async (event) => {
-  const trace = {
-    version: "proof_pdf v4.4.1 dual-path-logo + bigger-qr",
-    qr: 0,
-    logo: 0,
-    logo_src: "none",
-    path_try: [],
-    path_hit: "none",
-    err: "",
-  };
-
-  try {
-    const q = (event && event.queryStringParameters) || {};
-    const id          = q.id || "unknown";
-    const filename    = (q.filename || "Proof.pdf").replace(/"/g, "");
-    const displayName = q.displayName || "Document Proof";
-    const quickId     = q.quickId || "";
-    const verifyUrl   = (q.verifyUrl && q.verifyUrl.trim())
-      ? q.verifyUrl
-      : "https://docuproof.io/verify?id=" + encodeURIComponent(id);
-
-    // Prepare PDF
-    const pdfDoc = await PDFDocument.create();
-    const W = 1200, H = 630;
-    const page = pdfDoc.addPage([W, H]);
-
-    const helv = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const helvBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-    const charcoal = rgb(0x0b/255, 0x0d/255, 0x0f/255);
-    const graphite = rgb(0x1a/255, 0x1f/255, 0x24/255);
-    const neon     = rgb(0x16/255, 0xFF/255, 0x70/255);
-    const white    = rgb(0xE6/255, 0xE7/255, 0xEB/255);
-
-    page.drawRectangle({ x: 0, y: 0, width: W, height: H, color: charcoal });
-    page.drawRectangle({ x: 60, y: 60, width: W - 120, height: H - 120, borderColor: graphite, borderWidth: 1, opacity: 0.6 });
-
-    const title = "Proof you can point to.";
-    const tSize = 64;
-    const tWidth = helvBold.widthOfTextAtSize(title, tSize);
-    page.drawText(title, { x: (W - tWidth) / 2, y: H - 370, size: tSize, font: helvBold, color: neon });
-
-    const subtitle = "Because memory is fallible - timestamps aren't.";
-    const sSize = 40;
-    const sWidth = helvBold.widthOfTextAtSize(subtitle, sSize);
-    page.drawText(subtitle, { x: (W - sWidth) / 2, y: H - 405, size: sSize, font: helvBold, color: white });
-
-    // ── Logo (dual-path lookup: /assets/* or /netlify/functions/assets/*) ──
-    const candidates_nobg = [
-      path.join(__dirname, "assets", "logo_nobg.png"),
-      path.join(__dirname, "netlify", "functions", "assets", "logo_nobg.png"),
-    ];
-    const candidates_png = [
-      path.join(__dirname, "assets", "logo.png"),
-      path.join(__dirname, "netlify", "functions", "assets", "logo.png"),
-    ];
-    trace.path_try = [...candidates_nobg, ...candidates_png];
-
-    let logoPath = firstExisting(candidates_nobg);
-    let logoImg = await embedPngIfExists(pdfDoc, logoPath);
-    if (!logoImg) {
-      logoPath = firstExisting(candidates_png);
-      logoImg = await embedPngIfExists(pdfDoc, logoPath);
-      if (logoImg) trace.logo_src = path.basename(logoPath) || "logo.png";
-    } else {
-      trace.logo_src = "logo_nobg.png";
-    }
-    trace.path_hit = logoPath || "none";
-
-    if (logoImg) {
-      const targetW = 200;
-      const scale = targetW / logoImg.width;
-      const targetH = logoImg.height * scale;
-      const margin = 60;
-      const x = margin + 8;
-      const y = H - margin - targetH - 8;
-      page.drawImage(logoImg, { x, y, width: targetW, height: targetH });
-      trace.logo = 1;
-    }
-
-    // ── Summary block ──
-    const left = 100; let y = 250; const lh = 26;
-    const label = (t, yy) => page.drawText(t, { x: left, y: yy, size: 14, font: helv, color: white, opacity: 0.7 });
-    const value = (t, yy) => page.drawText(t, { x: left + 180, y: yy, size: 16, font: helvBold, color: white });
-    label("Display Name", y);   value(displayName, y);   y -= lh;
-    label("Document ID", y);    value(id, y);            y -= lh;
-    label("Quick ID", y);       value(quickId || "—", y);y -= lh;
-    label("Verify URL", y);     value(verifyUrl, y);     y -= lh;
-
-    // ── QR (bigger, raised) ──
+function pickLogoPath() {
+  // Prefer transparent logo; fall back to opaque.
+  const tries = [
+    path.join(__dirname, 'assets', 'logo_nobg.png'),
+    path.join(__dirname, 'assets', 'logo.png'),
+  ];
+  for (const p of tries) {
     try {
-      const dataUrl = await QRCode.toDataURL(verifyUrl, {
-        errorCorrectionLevel: "M",
-        margin: 0,
-        color: { dark: "#16FF70", light: "#00000000" },
-      });
-      const b64 = dataUrl.split(",")[1];
-      const qrPng = Buffer.from(b64, "base64");
-      const qrImg = await pdfDoc.embedPng(qrPng);
-
-      const size = 220;    // larger
-      const margin = 60;
-      const x = W - margin - size;
-      const y = margin + 40; // lift off bottom
-      page.drawImage(qrImg, { x, y, width: size, height: size });
-      trace.qr = 1;
-    } catch {
-      trace.qr = -1;
-    }
-
-    // Footer helper
-    page.drawText("Scan the QR or visit the Verify URL to view anchor status and confirmations.", {
-      x: 100, y: 100, size: 12, font: helv, color: white, opacity: 0.8,
-    });
-
-    const pdfBytes = await pdfDoc.save();
-    return {
-      statusCode: 200,
-      isBase64Encoded: true,
-      headers: {
-        ...HEADERS_NO_CACHE,
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `inline; filename="${filename}"`,
-        "X-DocuProof-Version": trace.version,
-        "X-DocuProof-QR": String(trace.qr),
-        "X-DocuProof-Logo": String(trace.logo),
-        "X-DocuProof-Logo-Src": trace.logo_src,
-        // debug paths
-        "X-DocuProof-Logo-Path": trace.path_hit,
-        "X-DocuProof-Logo-Tried": trace.path_try.join(" | "),
-      },
-      body: Buffer.from(pdfBytes).toString("base64"),
-    };
-  } catch (err) {
-    const msg = (err && err.message) ? err.message : String(err || "");
-    return {
-      statusCode: 500,
-      headers: {
-        ...HEADERS_NO_CACHE,
-        "Content-Type": "application/json",
-        "X-DocuProof-Version": "proof_pdf v4.4.1 (exception)",
-        "X-DocuProof-Error": msg.slice(0, 200),
-      },
-      body: JSON.stringify({ error: "PDF generation failed" }),
-    };
+      fs.accessSync(p, fs.constants.R_OK);
+      return { found: p, tried: tries };
+    } catch (_) {/* keep trying */}
   }
+  return { found: null, tried: tries };
+}
+
+function param(query, key, fallback = '') {
+  const v = (query && (query[key] ?? query[key?.toLowerCase?.()])) ?? '';
+  return String(v || fallback);
+}
+
+function header(name, val, h) { h[name] = val; }
+
+// ---------- handler ----------
+exports.handler = async (event) => {
+  const q = event.queryStringParameters || {};
+
+  // Inputs
+  const proofId     = param(q, 'id', 'missing');
+  const fileName    = param(q, 'filename', 'Document.pdf');
+  const displayName = param(q, 'displayName', '');
+  const verifyUrl   = param(q, 'verifyUrl', '');
+  const quickId     = param(q, 'quickId', '');
+
+  // Asset discovery
+  const { found: logoPath, tried: logoTried } = pickLogoPath();
+
+  // Generate QR (PNG buffer). If verifyUrl is missing, derive from proofId.
+  const qrPayload = verifyUrl || `https://docuproof.io/verify?id=${encodeURIComponent(proofId)}`;
+  const qrPngBuffer = await QRCode.toBuffer(qrPayload, {
+    errorCorrectionLevel: 'M',
+    margin: 1,
+    scale: 8,  // good quality at 256px+
+    color: { dark: '#000000', light: '#FFFFFF00' } // transparent light
+  });
+
+  // Compose PDF with pdfkit
+  const doc = new PDFDocument({
+    size: 'LETTER',
+    margins: { top: 56, left: 56, right: 56, bottom: 56 } // 0.78”
+  });
+
+  // Pipe to buffer
+  const pass = new stream.PassThrough();
+  doc.pipe(pass);
+
+  // Colors / fonts
+  const fg = '#E6E7EB';
+  const dim = '#93A1A1';
+  const accent = '#16FF70';
+  const panel = '#111418';
+
+  // Title bar
+  doc.rect(36, 36, 540, 36).fill(panel);
+
+  // Logo (if available)
+  let usedLogo = '0';
+  let usedLogoPath = '';
+  try {
+    if (logoPath) {
+      const imgX = 44;
+      const imgY = 40;
+      const imgH = 24; // small, crisp
+      doc.image(logoPath, imgX, imgY, { height: imgH });
+      usedLogo = '1';
+      usedLogoPath = logoPath;
+    }
+  } catch (_) { /* ignore; we’ll report in headers */ }
+
+  // Title
+  doc.fillColor(accent).fontSize(22).text('Proof you can point to.', 36 + 160, 42, {
+    width: 400, align: 'left'
+  });
+
+  // Panel for body
+  doc.moveDown();
+  const panelTop = 100;
+  doc.save().roundedRect(36, panelTop, 540, 640, 8).lineWidth(1).strokeColor('#1a1f24').stroke().restore();
+
+  // Heading
+  doc.fillColor(fg).fontSize(18).text('Proof Summary', 56, panelTop + 18);
+
+  // Body text helper
+  function field(label, value) {
+    const xLabel = 56, xValue = 170;
+    doc.fillColor(accent).fontSize(11).text(label, xLabel, doc.y + 10);
+    doc.fillColor(fg).fontSize(11).text(value, xValue, doc.y - 14);
+  }
+
+  doc.moveDown().fontSize(11).fillColor(dim)
+    .text('This certificate confirms your document was cryptographically hashed and queued for permanent timestamping on Bitcoin.',
+          56, panelTop + 42, { width: 500 });
+
+  doc.moveDown(0.5);
+
+  // Fields
+  field('Proof ID',           proofId);
+  field('Quick Verify ID',    quickId || '(not set)');
+  field('Created (UTC)',      new Date().toISOString());
+  field('File Name',          fileName);
+  field('Display Name',       displayName || '(not set)');
+  field('Public Verify URL',  qrPayload);
+
+  // QR block (right side box)
+  const qrBox = { x: 420, y: panelTop + 20, size: 140 };
+  doc.save()
+     .roundedRect(qrBox.x - 6, qrBox.y - 6, qrBox.size + 12, qrBox.size + 12, 6)
+     .lineWidth(1).strokeColor('#1a1f24').stroke().restore();
+
+  // Draw QR image
+  try {
+    doc.image(qrPngBuffer, qrBox.x, qrBox.y, { width: qrBox.size, height: qrBox.size });
+  } catch (_) { /* if this fails we still ship the PDF */ }
+
+  // Footer
+  doc.fillColor(dim).fontSize(9)
+     .text('docuProof batches proofs to Bitcoin for tamper-evident timestamping. docuProof is not a notary and does not provide legal attestation.',
+           56, 720, { width: 500 });
+  doc.fillColor(dim).text(`© ${new Date().getUTCFullYear()} docuProof.io — All rights reserved.`, 56, 735);
+
+  doc.end();
+  const pdfBuffer = await toBuffer(pass);
+
+  // Headers (diagnostic)
+  const headers = {
+    'Content-Type'              : 'application/pdf',
+    'Content-Disposition'       : `inline; filename="${fileName.replace(/"/g, '')}"`,
+    'Cache-Control'             : 'no-cache,no-store,must-revalidate',
+    'Pragma'                    : 'no-cache',
+    'Expires'                   : '0',
+    'Strict-Transport-Security' : 'max-age=31536000',
+  };
+  header('x-docuproof-version', 'proof_pdf v5.0.0 (pdfkit-only)', headers);
+  header('x-docuproof-logo', usedLogo, headers);
+  header('x-docuproof-logo-src', path.basename(usedLogoPath || '') || 'none', headers);
+  header('x-docuproof-logo-path', usedLogoPath || 'none', headers);
+  header('x-docuproof-logo-tried', logoTried.join(' | '), headers);
+  header('x-docuproof-qr', '1', headers);
+
+  return {
+    statusCode: 200,
+    headers,
+    isBase64Encoded: true,
+    body: pdfBuffer.toString('base64'),
+  };
 };
