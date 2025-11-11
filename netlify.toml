@@ -1,7 +1,4 @@
-# netlify.toml (full replacement)
-
 [build]
-  publish   = "."
   functions = "netlify/functions"
 
 [build.environment]
@@ -11,12 +8,11 @@
   node_bundler   = "esbuild"
   included_files = [
     "netlify/functions/assets/**",
-    "netlify/functions/fonts/**"
+    "netlify/functions/data/**"
   ]
 
+# keep functions uncached while we iterate
 [[headers]]
   for = "/.netlify/functions/*"
   [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
-    Pragma        = "no-cache"
-    Expires       = "0"
+    Cache-Control = "no-store, no-cache, must-revalidate"
