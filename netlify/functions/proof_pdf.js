@@ -1,130 +1,129 @@
 // netlify/functions/proof_pdf.js
-// v5.2.1 — clean binary output + refined layout + QR + logo
+// v5.2.2 — stable binary PDF for all clients (Acrobat-safe) + one-page layout
 
-const PDFDocument = require("pdfkit");
 const fs = require("fs");
+const PDFDocument = require("pdfkit");
 const QRCode = require("qrcode");
 
-exports.handler = async (event) => {
-  try {
-    const { id, filename, displayName, verifyUrl, quickId } = event.queryStringParameters;
+function mm(n) { return (n * 72) / 25.4; } // millimeters → points
 
-    // --- Create PDF doc ---
+exports.handler = async (event) => {
+  const qp = event.queryStringParameters || {};
+  const id         = qp.id || "unknown";
+  const filename   = qp.filename || "docuProof.pdf";
+  const display    = qp.displayName || "Untitled";
+  const verifyUrl  = qp.verifyUrl || `https://docuproof.io/verify?id=${encodeURIComponent(id)}`;
+  const quickId    = qp.quickId || "----------";
+
+  try {
+    // --- Build PDF in-memory ---
     const doc = new PDFDocument({
       size: "A4",
-      margin: 48,
-      info: { Title: "docuProof Certificate" },
+      margin: mm(14), // ~0.55"
+      info: { Title: "docuProof Certificate" }
     });
 
-    let buffers = [];
-    doc.on("data", buffers.push.bind(buffers));
-    const finish = new Promise((resolve) => doc.on("end", () => resolve(Buffer.concat(buffers))));
+    const chunks = [];
+    doc.on("data", (c) => chunks.push(c));
+    const done = new Promise((resolve) => doc.on("end", () => resolve(Buffer.concat(chunks))));
 
-    // --- Background ---
-    doc.rect(0, 0, doc.page.width, doc.page.height).fill("#0b0d0f");
+    // Background
+    const pageW = doc.page.width, pageH = doc.page.height;
+    doc.rect(0, 0, pageW, pageH).fill("#0b0d0f");
 
-    // --- Header ---
-    doc
-      .fontSize(20)
-      .fillColor("#16FF70")
-      .font("Helvetica-Bold")
-      .text("docuProof.io — Proof you can point to.", 48, 48);
+    // Header
+    const leftX = doc.page.margins.left, rightX = pageW - doc.page.margins.right;
+    doc.font("Helvetica-Bold").fontSize(18).fillColor("#16FF70")
+       .text("docuProof.io — Proof you can point to.", leftX, mm(12), { width: rightX - leftX });
 
-    // --- Logo ---
-    const logoPath = "./netlify/functions/assets/logo_nobg.png";
-    if (fs.existsSync(logoPath)) {
-      doc.image(logoPath, doc.page.width - 180, 42, { width: 110 });
+    // Logo (transparent PNG preferred)
+    const logoPaths = [
+      "./netlify/functions/assets/logo_nobg.png",
+      "./netlify/functions/assets/logo.png",
+    ];
+    let logoUsed = null;
+    for (const p of logoPaths) { if (fs.existsSync(p)) { logoUsed = p; break; } }
+    if (logoUsed) {
+      const w = mm(42);
+      doc.image(logoUsed, rightX - w, mm(8), { width: w });
     }
 
-    // --- Divider line ---
-    doc
-      .moveTo(48, 100)
-      .lineTo(doc.page.width - 48, 100)
-      .strokeColor("#1a1f24")
-      .opacity(0.5)
-      .stroke()
-      .opacity(1);
+    // Divider
+    doc.moveTo(leftX, mm(22)).lineTo(rightX, mm(22))
+       .strokeColor("#1a1f24").opacity(0.6).stroke().opacity(1);
 
-    // --- Title ---
-    doc
-      .font("Helvetica-Bold")
-      .fontSize(16)
-      .fillColor("#E6E7EB")
-      .text("Proof you can point to.", 48, 125);
+    // Title + body
+    doc.font("Helvetica-Bold").fontSize(16).fillColor("#E6E7EB")
+       .text("Proof you can point to.", leftX, mm(26));
+    doc.font("Helvetica").fontSize(9).fillColor("#A8AAB0")
+       .text(
+         "This certificate confirms your document was cryptographically hashed and queued for permanent timestamping on Bitcoin.",
+         leftX, mm(33), { width: mm(120) }
+       );
 
-    // --- Description ---
-    doc
-      .font("Helvetica")
-      .fontSize(9)
-      .fillColor("#A0A0A0")
-      .text(
-        "This certificate confirms your document was cryptographically hashed and queued for permanent timestamping on Bitcoin.",
-        48,
-        145,
-        { width: 480 }
-      );
+    // Summary block
+    doc.font("Helvetica-Bold").fontSize(11).fillColor("#16FF70").text("Proof Summary", leftX, mm(44));
 
-    // --- Proof Summary ---
-    doc.moveDown(1);
-    doc.font("Helvetica-Bold").fontSize(12).fillColor("#16FF70").text("Proof Summary", 48);
-
-    const summary = [
+    const rows = [
       ["Proof ID", id],
       ["Quick Verify ID", quickId],
-      ["Created (UTC)", new Date().toISOString()],
+      ["Created (UTC)", new Date().toISOString().replace("T", " ").replace("Z","Z")],
       ["File Name", filename],
-      ["Display Name", displayName],
-      ["Verification URL", `https://docuproof.io/verify?id=${id}`],
+      ["Display Name", display],
+      ["Public Verify URL", verifyUrl],
     ];
 
-    doc.moveDown(0.3);
-    summary.forEach(([label, value]) => {
-      doc.font("Helvetica-Bold").fontSize(9).fillColor("#16FF70").text(label, { continued: true });
-      doc.font("Helvetica").fillColor("#E6E7EB").text(` ${value}`);
+    let y = mm(50);
+    rows.forEach(([k, v]) => {
+      doc.font("Helvetica-Bold").fontSize(9).fillColor("#16FF70").text(k, leftX, y);
+      doc.font("Helvetica").fontSize(9).fillColor("#E6E7EB").text(v, leftX + mm(36), y, {
+        width: mm(120), continued: false
+      });
+      y += mm(6);
     });
 
-    // --- QR Code ---
-    const qrPng = await QRCode.toDataURL(verifyUrl, {
-      width: 140,
+    // QR code (dark on brand green, size tuned)
+    const qrPng = await QRCode.toBuffer(verifyUrl, {
+      width: 280, // device pixels (we scale via image width below)
       margin: 0,
-      color: { dark: "#16FF70", light: "#0b0d0f" },
+      color: { dark: "#0b0d0f", light: "#16FF70" } // invert to make modules dark on green patch
     });
-    const qrBuf = Buffer.from(qrPng.split(",")[1], "base64");
-    doc.image(qrBuf, doc.page.width - 200, 220, { width: 120 });
 
-    // --- Footer ---
-    doc
-      .fontSize(7.5)
-      .fillColor("#555")
-      .text(
-        "docuProof batches proofs to Bitcoin for tamper-evident timestamping.\n© 2025 docuProof.io — All rights reserved.",
-        48,
-        doc.page.height - 70,
-        { width: doc.page.width - 96, align: "center" }
-      );
+    // Green patch to ensure contrast
+    const qrBoxW = mm(48), qrX = rightX - qrBoxW, qrY = mm(56);
+    doc.rect(qrX, qrY, qrBoxW, qrBoxW).fill("#16FF70");
+    doc.image(qrPng, qrX + mm(3), qrY + mm(3), { width: qrBoxW - mm(6) });
 
-    // --- Finish ---
+    // Footer
+    doc.font("Helvetica").fontSize(7.5).fillColor("#6e737a").text(
+      "docuProof batches proofs to Bitcoin for tamper-evident timestamping. docuProof is not a notary and does not provide legal attestation.\n© 2025 docuProof.io — All rights reserved.",
+      leftX, pageH - mm(18), { width: rightX - leftX, align: "center" }
+    );
+
     doc.end();
-    const pdfBuffer = await finish;
+    const pdf = await done;                  // <— Buffer (binary bytes)
+    const b64 = pdf.toString("base64");
 
-    // --- Binary-safe output ---
+    // Stable, Acrobat-safe response
     return {
       statusCode: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `inline; filename=\"${filename}\"`,
+        "Content-Disposition": `inline; filename="${filename.replace(/"/g, "")}"`,
         "Cache-Control": "no-store, no-cache, must-revalidate",
-        "Content-Transfer-Encoding": "binary",
-        "Accept-Ranges": "bytes",
+        "Content-Length": String(pdf.length),                // important for some clients
+        "x-docuproof-version": "proof_pdf v5.2.2",
       },
-      body: pdfBuffer.toString("base64"),
-      isBase64Encoded: true,
+      body: b64,
+      isBase64Encoded: true,                                  // platform decodes to binary on the wire
     };
+
   } catch (err) {
+    // If anything breaks, return JSON (not a .pdf) so we never save garbage to a PDF file.
     return {
       statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ok: false, error: err.message, stack: err.stack }),
+      headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+      body: JSON.stringify({ ok: false, error: err.message, stack: err.stack?.split("\n").slice(0,6) }),
     };
   }
 };
