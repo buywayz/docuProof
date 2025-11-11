@@ -29,93 +29,102 @@ exports.handler = async (event) => {
       color: { dark: "#000000", light: "#16FF70" }
     });
 
-    const doc = new PDFDocument({ size: "LETTER", margin: 36, pdfVersion: "1.3" });
-    const chunks = [];
-    doc.on("data", c => chunks.push(c));
-    const done = new Promise(r => doc.on("end", () => r(Buffer.concat(chunks))));
-
-    // Theme
+    // ---------- Theme & sizing ----------
     const BG        = "#0b0d0f";
     const MAIN      = "#E6E7EB";
     const SOFT      = "#9aa3ab";
     const ACCENT    = "#16FF70";
     const DIVIDER   = "#1a1f24";
 
+    const TITLE_SZ  = 24;
+    const LABEL_SZ  = 11;
+    const VALUE_SZ  = 11;
+    const HELP_SZ   = 9;
+
+    const LABEL_WIDTH = 120; // label column before values
+    const VALUE_X     = 136; // start of values (more room than before)
+
+    const QR_BLOCK = 180;    // smaller QR
+    const FRAME    = 12;
+
+    // ---------- PDF ----------
+    const doc = new PDFDocument({ size: "LETTER", margin: 36, pdfVersion: "1.3" });
+    const chunks = [];
+    doc.on("data", c => chunks.push(c));
+    const done = new Promise(r => doc.on("end", () => r(Buffer.concat(chunks))));
+
+    // Background
     doc.rect(0,0,doc.page.width,doc.page.height).fill(BG);
     doc.fillColor(MAIN);
 
     // Header
-    const leftX = 54;
-    const rightX = doc.page.width - 54;
-    const headerY = 54;
-
+    const leftX = 54, rightX = doc.page.width - 54, headerY = 54;
     let hX = leftX;
-    if (logoPath) { doc.image(logoPath, hX, headerY-16, { height: 18 }); hX += 26; }
+    if (logoPath) { doc.image(logoPath, hX, headerY-18, { height: 22 }); hX += 30; } // bigger logo
     doc.font("Helvetica-Bold").fontSize(17).fillColor(ACCENT)
-       .text("docuProof.io", hX, headerY-14, { continued:true });
+       .text("docuProof.io", hX, headerY-12, { continued:true });
     doc.fillColor(MAIN).text(" — Proof you can point to.", { continued:false });
+    doc.moveTo(leftX, headerY+12).lineTo(rightX, headerY+12).strokeColor(DIVIDER).lineWidth(1).stroke();
 
-    doc.moveTo(leftX, headerY+10).lineTo(rightX, headerY+10).strokeColor(DIVIDER).lineWidth(1).stroke();
-
-    // Card
-    const cardX = leftX, cardY = headerY + 26;
+    // Card container
+    const cardX = leftX, cardY = headerY + 28;
     const cardW = doc.page.width - leftX - 54;
     const cardH = 520;
     doc.save().roundedRect(cardX, cardY, cardW, cardH, 10)
        .fillOpacity(0.92).fill("#101417").restore();
 
-    // Title & subtitle
+    // Title + subtitle
     const pad = 24;
     let y = cardY + pad;
-    doc.fillColor(MAIN).font("Helvetica-Bold").fontSize(26)
+    doc.fillColor(MAIN).font("Helvetica-Bold").fontSize(TITLE_SZ)
        .text("Proof you can point to.", cardX+pad, y);
-    y += 32;
+    y += 28;
 
-    doc.fillColor(SOFT).font("Helvetica").fontSize(11)
+    doc.fillColor(SOFT).font("Helvetica").fontSize(10)
        .text(
          "This certificate confirms your document was cryptographically hashed and queued for permanent timestamping on Bitcoin.",
-         cardX+pad, y, { width: cardW - pad*2, lineGap: 1 }
+         cardX+pad, y, { width: cardW - pad*2, lineGap: 1.2 }
        );
-    y += 26;
+    y += 24;
 
-    // Layout columns
-    const COL_GAP = 26;
-    const QR_BLOCK = 200;            // << smaller QR
+    // Two columns
+    const COL_GAP = 28;
     const colW = cardW - pad*2 - COL_GAP - QR_BLOCK;
 
-    // Left column “table”
     const lx = cardX + pad;
     let ly = y + 8;
 
-    const row = (label, value, help) => {
-      // divider before each row
+    // Section heading
+    doc.fillColor(ACCENT).font("Helvetica-Bold").fontSize(15).text("Proof Summary", lx, ly - 10);
+    ly += 8;
+
+    const divider = (yy) => {
       doc.strokeColor(DIVIDER).lineWidth(1)
-         .moveTo(lx, ly - 6).lineTo(lx + colW, ly - 6).stroke();
-
-      // label + value on same baseline
-      const labelFont = () => doc.fillColor(ACCENT).font("Helvetica-Bold").fontSize(12);
-      const valueFont = () => doc.fillColor(MAIN).font("Helvetica-Bold").fontSize(12);
-      const helpFont  = () => doc.fillColor(SOFT).font("Helvetica").fontSize(10);
-
-      const valueX = lx + 120;
-      labelFont().text(label, lx, ly);
-      const valueHeight = doc.heightOfString(value, { width: colW - 120 });
-      valueFont().text(value, valueX, ly, { width: colW - 120 });
-
-      const baseline = Math.max(doc.currentLineHeight(), valueHeight);
-      ly += baseline + 2;
-
-      if (help) {
-        const h = doc.heightOfString(help, { width: colW, lineGap: 1 });
-        helpFont().text(help, lx, ly, { width: colW, lineGap: 1 });
-        ly += h + 8;                 // generous spacing under help
-      } else {
-        ly += 8;
-      }
+         .moveTo(lx, yy).lineTo(lx + colW, yy).stroke();
     };
 
-    doc.fillColor(ACCENT).font("Helvetica-Bold").fontSize(16).text("Proof Summary", lx, ly - 10);
-    ly += 10;
+    const row = (label, value, help) => {
+      divider(ly + 2);
+      const labelFont = () => doc.fillColor(ACCENT).font("Helvetica-Bold").fontSize(LABEL_SZ);
+      const valueFont = () => doc.fillColor(MAIN).font("Helvetica-Bold").fontSize(VALUE_SZ);
+      const helpFont  = () => doc.fillColor(SOFT).font("Helvetica").fontSize(HELP_SZ);
+
+      // label & value (compute height to avoid collisions)
+      labelFont().text(label, lx, ly + 6);
+      const valueHeight = doc.heightOfString(value, { width: colW - (VALUE_X - lx), lineGap: 1 });
+      valueFont().text(value, lx + VALUE_X, ly + 6, { width: colW - (VALUE_X - lx), lineGap: 1 });
+
+      const lineH = Math.max(doc.currentLineHeight(), valueHeight);
+      ly += 6 + lineH;
+
+      if (help) {
+        const h = doc.heightOfString(help, { width: colW, lineGap: 1.1 });
+        helpFont().text(help, lx, ly, { width: colW, lineGap: 1.1 });
+        ly += h + 10; // more breathing room
+      } else {
+        ly += 10;
+      }
+    };
 
     row("Proof ID",        proofId,     "Your permanent reference for this proof. Keep it with your records.");
     row("Quick Verify ID", quickId,     "10-character code you can paste at docuProof.io/verify for fast lookups.");
@@ -124,15 +133,14 @@ exports.handler = async (event) => {
     row("Display Name",    displayName, "Human-friendly name that appears on your proof.");
     row("Public Verify URL", verifyUrl, "Anyone can verify this proof at any time using this URL or the Quick Verify ID above.");
 
-    // Right: QR with frame (smaller)
+    // QR column (smaller)
     const qrX = cardX + pad + colW + COL_GAP;
     const qrY = y;
-    const frame = 12;
-    const inner = QR_BLOCK - frame*2;
+    const inner = QR_BLOCK - FRAME*2;
 
     doc.save().rect(qrX, qrY, QR_BLOCK, QR_BLOCK).fill("#49FFA0").restore();
-    doc.save().rect(qrX + frame, qrY + frame, inner, inner).fill("#16FF70").restore();
-    doc.image(qrPng, qrX + frame, qrY + frame, { width: inner, height: inner });
+    doc.save().rect(qrX + FRAME, qrY + FRAME, inner, inner).fill("#16FF70").restore();
+    doc.image(qrPng, qrX + FRAME, qrY + FRAME, { width: inner, height: inner });
 
     // Footer
     doc.moveTo(leftX, cardY + cardH + 14).lineTo(rightX, cardY + cardH + 14).strokeColor(DIVIDER).lineWidth(1).stroke();
@@ -151,7 +159,7 @@ exports.handler = async (event) => {
         "Content-Disposition": `inline; filename="${filename.replace(/"/g, "")}"`,
         "Cache-Control": "no-store,no-cache,must-revalidate",
         "Content-Length": String(buffer.length),
-        "x-docuproof-version": "proof_pdf v5.3.1 (spacing + smaller QR)"
+        "x-docuproof-version": "proof_pdf v5.3.2 (smaller text, less crowding, smaller QR, bigger header logo)"
       },
       body: buffer.toString("base64"),
       isBase64Encoded: true
