@@ -94,11 +94,21 @@ exports.handler = async (event) => {
     doc.rect(qrX, qrY, qrBoxW, qrBoxW).fill("#16FF70");
     doc.image(qrPng, qrX + mm(3), qrY + mm(3), { width: qrBoxW - mm(6) });
 
-    // Footer
-    doc.font("Helvetica").fontSize(7.5).fillColor("#6e737a").text(
-      "docuProof batches proofs to Bitcoin for tamper-evident timestamping. docuProof is not a notary and does not provide legal attestation.\n© 2025 docuProof.io — All rights reserved.",
-      leftX, pageH - mm(18), { width: rightX - leftX, align: "center" }
-    );
+        // Footer — fixed position on page 1, never spills to a second page
+    const footerY = pageH - mm(18);  // 18 mm up from bottom
+
+    doc.font("Helvetica")
+       .fontSize(8)                  // a touch smaller than body copy
+       .fillColor("#A8AAB0")
+       .text(
+         "docuProof batches proofs to Bitcoin for tamper-evident timestamping. docuProof is not a notary and does not provide legal attestation.",
+         leftX,
+         footerY,
+         {
+           width: rightX - leftX,
+           align: "left"
+         }
+       );
 
     doc.end();
     const pdf = await done;                  // <— Buffer (binary bytes)
