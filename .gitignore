@@ -1,12 +1,7 @@
-# Local Netlify folder
-.netlify
-
-# Ignore vendor archives
-*.tar.gz
+node_modules/
+.DS_Store
+.env
 *.zip
-*.pkg
-*.dmg
-
-.env
-.env
-google-cloud-sdk/
+*.log
+netlify/functions/node_modules/
+/netlify/.netlify
