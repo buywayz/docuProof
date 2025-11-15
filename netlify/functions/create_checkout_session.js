@@ -14,17 +14,34 @@ const PRICE_MAP = {
   'pro-annual':       process.env.STRIPE_PRO_ANNUAL_PRICE_ID,
 };
 
-async function createSessionForPlan(plan) {
-  const priceId = PRICE_MAP[plan];
+// Small helper: derive a compact id from a hex hash (no external deps)
+function shortIdFromHash(h) {
+  if (!h || typeof h !== 'string') return undefined;
+  const m = h.toLowerCase().match(/[0-9a-f]{12,}/);
+  return m ? m[0].slice(0, 12) : undefined;
+}
 
+async function createStripeSession(payload) {
+  const {
+    email = '',
+    hash = '',
+    filename = '',
+    displayName = '',
+    plan = 'one-time',
+    billing = 'none',
+  } = payload;
+
+  const priceId = PRICE_MAP[plan];
   if (!priceId) {
     throw new Error(`Unknown plan: ${plan}`);
   }
 
   const isSubscription = plan !== 'one-time';
+  const shortId = shortIdFromHash(hash) || undefined;
 
   const session = await stripe.checkout.sessions.create({
     mode: isSubscription ? 'subscription' : 'payment',
+    customer_email: email || undefined,
     line_items: [
       {
         price: priceId,
@@ -35,6 +52,12 @@ async function createSessionForPlan(plan) {
     cancel_url: `${process.env.URL}/app`,
     metadata: {
       plan,
+      billing,
+      email,
+      hash,
+      filename,
+      displayName,
+      shortId,
     },
   });
 
@@ -43,112 +66,99 @@ async function createSessionForPlan(plan) {
 
 exports.handler = async (event) => {
   try {
-    const method = event.httpMethod || 'GET';
+    const method  = event.httpMethod || 'GET';
     const headers = event.headers || {};
+
     const contentType =
       headers['content-type'] ||
       headers['Content-Type'] ||
       '';
 
-    // --- CASE 1: Plain link: GET /create_checkout_session?plan=starter-monthly
-    if (method === 'GET') {
-      const { plan } = event.queryStringParameters || {};
+    const accept =
+      headers['accept'] ||
+      headers['Accept'] ||
+      '';
 
-      if (!plan) {
-        return {
-          statusCode: 400,
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-store',
-          },
-          body: JSON.stringify({ ok: false, error: 'Missing plan parameter' }),
-        };
+    const wantsHtml = accept.includes('text/html');
+
+    // ---- Normalize input (plan/email/hash/...) from either JSON or form or query ----
+    let bodyData = {};
+    if (event.body) {
+      if (contentType.includes('application/json')) {
+        try {
+          bodyData = JSON.parse(event.body);
+        } catch (e) {
+          console.error('Failed to parse JSON body:', e);
+          bodyData = {};
+        }
+      } else {
+        // Assume URL-encoded form or similar
+        try {
+          const params = new URLSearchParams(event.body);
+          bodyData = Object.fromEntries(params.entries());
+        } catch (e) {
+          console.error('Failed to parse form body:', e);
+          bodyData = {};
+        }
       }
-
-      const session = await createSessionForPlan(plan);
-
-      return {
-        statusCode: 302,
-        headers: {
-          Location: session.url,
-          'Cache-Control': 'no-store',
-        },
-        body: '',
-      };
     }
 
-    // --- CASE 2: POST from browser form (application/x-www-form-urlencoded)
-    const isJson = contentType.includes('application/json');
-
-    if (method === 'POST' && !isJson) {
-      const bodyString = event.body || '';
-      const params = new URLSearchParams(bodyString);
-      const plan = params.get('plan');
-
-      if (!plan) {
-        return {
-          statusCode: 400,
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-store',
-          },
-          body: JSON.stringify({ ok: false, error: 'Missing plan in form body' }),
-        };
-      }
-
-      const session = await createSessionForPlan(plan);
-
-      // Browser form submit → redirect straight to Stripe
-      return {
-        statusCode: 302,
-        headers: {
-          Location: session.url,
-          'Cache-Control': 'no-store',
-        },
-        body: '',
-      };
+    // Plan can come from body or query
+    const queryParams = event.queryStringParameters || {};
+    if (!bodyData.plan && queryParams.plan) {
+      bodyData.plan = queryParams.plan;
     }
 
-    // --- CASE 3: POST via fetch with JSON body (API-style)
-    if (method === 'POST' && isJson) {
-      const body = event.body ? JSON.parse(event.body) : {};
-      const { plan } = body;
-
-      if (!plan) {
-        return {
-          statusCode: 400,
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': 'no-store',
-          },
-          body: JSON.stringify({ ok: false, error: 'Missing plan in JSON body' }),
-        };
-      }
-
-      const session = await createSessionForPlan(plan);
-
+    // ---- Allow GET or POST. Others rejected. ----
+    if (method !== 'GET' && method !== 'POST') {
       return {
-        statusCode: 200,
+        statusCode: 405,
         headers: {
           'Content-Type': 'application/json',
           'Cache-Control': 'no-store',
         },
-        body: JSON.stringify({
-          ok: true,
-          id: session.id,
-          url: session.url,
-        }),
+        body: JSON.stringify({ ok: false, error: 'Method not allowed' }),
       };
     }
 
-    // --- All other methods not allowed
+    if (!bodyData.plan) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store',
+        },
+        body: JSON.stringify({ ok: false, error: 'Missing plan' }),
+      };
+    }
+
+    // ---- Create the Stripe session (includes all metadata) ----
+    const session = await createStripeSession(bodyData);
+
+    // ---- If the caller "wants HTML", treat this as a browser navigation and redirect ----
+    if (wantsHtml) {
+      return {
+        statusCode: 302,
+        headers: {
+          Location: session.url,
+          'Cache-Control': 'no-store',
+        },
+        body: '',
+      };
+    }
+
+    // ---- Otherwise, behave as JSON API ----
     return {
-      statusCode: 405,
+      statusCode: 200,
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-store',
       },
-      body: JSON.stringify({ ok: false, error: 'Method not allowed' }),
+      body: JSON.stringify({
+        ok: true,
+        id: session.id,
+        url: session.url,
+      }),
     };
   } catch (err) {
     console.error('create_checkout_session error:', err);
