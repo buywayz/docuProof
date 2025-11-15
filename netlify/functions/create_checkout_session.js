@@ -43,8 +43,15 @@ async function createSessionForPlan(plan) {
 
 exports.handler = async (event) => {
   try {
-    // --- CASE 1: Called from a plain link: GET /create_checkout_session?plan=starter-monthly
-    if (event.httpMethod === 'GET') {
+    const method = event.httpMethod || 'GET';
+    const headers = event.headers || {};
+    const contentType =
+      headers['content-type'] ||
+      headers['Content-Type'] ||
+      '';
+
+    // --- CASE 1: Plain link: GET /create_checkout_session?plan=starter-monthly
+    if (method === 'GET') {
       const { plan } = event.queryStringParameters || {};
 
       if (!plan) {
@@ -60,7 +67,6 @@ exports.handler = async (event) => {
 
       const session = await createSessionForPlan(plan);
 
-      // Redirect the browser straight to Stripe Checkout
       return {
         statusCode: 302,
         headers: {
@@ -71,8 +77,40 @@ exports.handler = async (event) => {
       };
     }
 
-    // --- CASE 2: Called via fetch/XHR: POST with JSON body { plan: "starter-monthly" }
-    if (event.httpMethod === 'POST') {
+    // --- CASE 2: POST from browser form (application/x-www-form-urlencoded)
+    const isJson = contentType.includes('application/json');
+
+    if (method === 'POST' && !isJson) {
+      const bodyString = event.body || '';
+      const params = new URLSearchParams(bodyString);
+      const plan = params.get('plan');
+
+      if (!plan) {
+        return {
+          statusCode: 400,
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store',
+          },
+          body: JSON.stringify({ ok: false, error: 'Missing plan in form body' }),
+        };
+      }
+
+      const session = await createSessionForPlan(plan);
+
+      // Browser form submit → redirect straight to Stripe
+      return {
+        statusCode: 302,
+        headers: {
+          Location: session.url,
+          'Cache-Control': 'no-store',
+        },
+        body: '',
+      };
+    }
+
+    // --- CASE 3: POST via fetch with JSON body (API-style)
+    if (method === 'POST' && isJson) {
       const body = event.body ? JSON.parse(event.body) : {};
       const { plan } = body;
 
@@ -83,7 +121,7 @@ exports.handler = async (event) => {
             'Content-Type': 'application/json',
             'Cache-Control': 'no-store',
           },
-          body: JSON.stringify({ ok: false, error: 'Missing plan in request body' }),
+          body: JSON.stringify({ ok: false, error: 'Missing plan in JSON body' }),
         };
       }
 
