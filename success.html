@@ -202,7 +202,7 @@
       disableActions();
     } else {
       // Wire buttons/links
-      const vUrl = `/v/${encodeURIComponent(id)}`;
+      const vUrl = `/verify?id=${encodeURIComponent(id)}`;
       if (openBtn)  openBtn.href  = vUrl;
       if (viewLink) viewLink.href = vUrl;
       if (dlOtsBtn) dlOtsBtn.href = `/.netlify/functions/download_receipt?id=${encodeURIComponent(id)}`;
