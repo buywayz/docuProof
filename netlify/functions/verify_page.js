@@ -40,7 +40,7 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
 <style>
   :root{
     --bg:#0b0f14;--ink:#eaeaea;--muted:#a7b0ba;--accent:#22C55E;
-    --card:#151b22;--border:#1e2630;--link:#9cc1ff;--danger:#ffb4b4;--warn:#f5c66a;
+    --card:#151b22;--border:#1e2630;--link:#9cc1ff;--danger:#ffb4b4;--warn:#5b6470;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);
@@ -56,10 +56,11 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
   input,button{border-radius:10px;border:1px solid var(--border);background:#0f141a;color:var(--ink);padding:10px 12px}
   .btn{background:var(--accent);color:#071109;border:none;font-weight:800;cursor:pointer}
   .btn.secondary{background:transparent;color:var(--ink)}
+  .btn[disabled]{opacity:0.5;cursor:not-allowed}
   .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
   .badge{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:999px;padding:6px 10px;font-weight:700}
   .ok{border-color:#1e5131;color:#9af3b4;background:#0d1912}
-  .warn{border-color:#4c3a16;color:#f5c66a;background:#1a1407}
+  .warn{border-color:#4a4f59;color:#e0e4ec;background:#141822}
   .err{border-color:#5b1b1b;color:#ffb4b4;background:#1a0b0b}
   .grid{display:grid;gap:16px;grid-template-columns:1fr 380px}
   @media (max-width:1000px){.grid{grid-template-columns:1fr}}
@@ -146,6 +147,7 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     const v = (idIn.value||'').trim();
     if(!v) return;
     const qs = new URLSearchParams({ id: v }).toString();
+    // Keep the function path stable:
     location.href = "/.netlify/functions/verify_page?" + qs;
   });
 
@@ -160,14 +162,8 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
 
   async function fetchJson(u){
     const r = await fetch(u, { cache: "no-store" });
-    // For anchor_status we *still* want the JSON even if HTTP status is 404.
-    let data;
-    try {
-      data = await r.json();
-    } catch (e) {
-      throw new Error("Non-JSON response");
-    }
-    return data;
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    return r.json();
   }
 
   function setBadge(kind, text){
@@ -192,11 +188,11 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     jsonLink.href = "/.netlify/functions/verify?id=" + encodeURIComponent(v);
     dlCert.disabled = false;
 
-    // 1) Ask canonical status (anchor_status) — we treat ANY JSON as a valid response.
+    // 1) Ask canonical status
     let status;
-    try {
-      status = await fetchJson("/.netlify/functions/anchor_status?id=" + encodeURIComponent(v));
-    } catch (e) {
+    try{
+      status = await fetchJson("/.netlify/functions/anchor_status?id="+encodeURIComponent(v));
+    }catch(e){
       setBadge('err','Status lookup failed');
       return;
     }
@@ -206,36 +202,54 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     kv.conf.textContent  = (status.confirmations ?? 0);
     kv.anchor.textContent= status.anchorKey || '—';
 
-    // If state is missing or NOT_FOUND → clean "Not found" state, *not* a lookup failure.
+    // Neutral handling for NOT_FOUND
     if (!status.state || status.state === "NOT_FOUND") {
-      setBadge('err','Not found');
+      setBadge('warn','No proof found');
+
+      kv.state.textContent = "NOT_FOUND";
+      kv.txid.textContent = "—";
+      kv.conf.textContent = "0";
+      kv.anchor.textContent = "—";
+      kv.receipt.textContent = "—";
+
+      const helper = document.createElement("div");
+      helper.style.marginTop = "8px";
+      helper.style.fontSize = "13px";
+      helper.style.color = "#b9c2cc";
+      helper.textContent =
+        "This proof ID does not have a receipt or Bitcoin anchor yet. " +
+        "If this proof was just generated, anchoring begins shortly. " +
+        "Otherwise, check that the ID is correct.";
+      badges.appendChild(helper);
+
       return;
     }
 
-    if (status.txid) {
-      setBadge('ok','Anchored');
-    } else {
-      setBadge('ok','Receipt available — awaiting anchor');
-    }
-
     // 2) If we’re in OTS_RECEIPT, offer the .ots download
-    if (status.state === "OTS_RECEIPT") {
+    if(status.state === "OTS_RECEIPT"){
       try{
         const dj = await fetchJson("/.netlify/functions/download_receipt_json?id="+encodeURIComponent(v));
         if (dj && dj.base64 && dj.base64.length){
           kv.receipt.textContent = dj.key || (v + ".ots");
           dlOts.disabled = false;
           dlOts.onclick = ()=>{ window.location.href = "/.netlify/functions/download_receipt?id="+encodeURIComponent(v); };
-        } else {
+        }else{
           kv.receipt.textContent = '—';
         }
-      } catch {
+      }catch{
         kv.receipt.textContent = '—';
       }
     }
+
+    // 3) Positive badges for anchored / pending
+    if(status.txid){
+      setBadge('ok','Anchored on Bitcoin');
+    }else{
+      setBadge('ok','Receipt available — awaiting anchor');
+    }
   }
 
-  // Run immediately if we have an ID
+  // Run immediately if we have an ID in URL
   if(hasId && idFromServer){ load(); }
 </script>
 </body>
