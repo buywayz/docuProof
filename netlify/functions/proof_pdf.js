@@ -12,7 +12,7 @@ exports.handler = async (event) => {
   const id         = qp.id || "unknown";
   const filename   = qp.filename || "docuProof.pdf";
   const display    = qp.displayName || "Untitled";
-  const verifyUrl  = qp.verifyUrl || `https://docuproof.io/verify?id=${encodeURIComponent(id)}`;
+  const verifyUrl  = qp.verifyUrl || `https://docuproof.io/.netlify/functions/verify_page?id=${encodeURIComponent(id)}`;
   const quickId    = qp.quickId || "----------";
 
   try {
