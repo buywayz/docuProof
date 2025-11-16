@@ -16,3 +16,15 @@
   for = "/.netlify/functions/*"
   [headers.values]
     Cache-Control = "no-store, no-cache, must-revalidate"
+
+[[redirects]]
+  from = "/verify"
+  to = "/.netlify/functions/verify_page"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/v/:id"
+  to = "/.netlify/functions/verify_page?id=:id"
+  status = 200
+  force = true
