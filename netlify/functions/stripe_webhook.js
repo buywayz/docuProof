@@ -50,7 +50,15 @@ exports.handler = async (event) => {
       const origin = siteOrigin(event);
       if (!origin) throw new Error("Could not determine site origin");
 
-      const pdfUrl = `${origin}/.netlify/functions/proof_pdf?id=${encodeURIComponent(proofId)}`;
+            // Build proof_pdf URL, passing through metadata so the certificate
+      // shows the actual filename and display name the user entered.
+      const qs = new URLSearchParams({
+        id: proofId,
+        filename,
+        displayName,
+      }).toString();
+
+      const pdfUrl = `${origin}/.netlify/functions/proof_pdf?${qs}`;
       const pdfRes = await fetch(pdfUrl, { method: "GET" });
       if (!pdfRes.ok) {
         const errText = await pdfRes.text().catch(() => "");
