@@ -265,8 +265,21 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
       "/.netlify/functions/verify?id=" + encodeURIComponent(v);
   });
 
-  async function fetchJson(u) {
+    async function fetchJson(u, opts) {
+    const options = opts || {};
     const r = await fetch(u, { cache: "no-store" });
+
+    // Special case: allow 404 responses to still return JSON
+    // when the caller explicitly opts in (anchor_status).
+    if (r.status === 404 && options.allow404) {
+      try {
+        return await r.json();
+      } catch {
+        // If there is no JSON body, treat as null and let the caller decide
+        return null;
+      }
+    }
+
     if (!r.ok) throw new Error("HTTP " + r.status);
     return r.json();
   }
@@ -341,6 +354,7 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
       status = await fetchJson(
         "/.netlify/functions/anchor_status?id=" +
           encodeURIComponent(v)
+    { allow404: true }
       );
     } catch (e) {
       setBadge(
