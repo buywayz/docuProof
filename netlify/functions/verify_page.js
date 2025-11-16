@@ -1,3 +1,4 @@
+
 // netlify/functions/verify_page.js
 // Serves the HTML Verify UI and calls JSON endpoints:
 // - /.netlify/functions/anchor_status?id=...
@@ -309,7 +310,11 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     }
 
     if (!v) {
-      setBadge("warn", "Enter an ID to verify");
+      setBadge(
+        "neutral",
+        "Waiting for a Proof ID",
+        "Paste or type a Proof ID from your certificate to fetch live status."
+      );
       return;
     }
 
@@ -339,7 +344,7 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
       );
     } catch (e) {
       setBadge(
-        "err",
+        "neutral",
         "Status lookup failed",
         "We couldn’t retrieve status for this ID. Try again in a moment, or confirm the ID from your certificate."
       );
