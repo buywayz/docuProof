@@ -89,10 +89,13 @@ exports.handler = async (event) => {
       color: { dark: "#0b0d0f", light: "#16FF70" } // invert to make modules dark on green patch
     });
 
-    // Green patch to ensure contrast
-    const qrBoxW = mm(48), qrX = rightX - qrBoxW, qrY = mm(56);
-    doc.rect(qrX, qrY, qrBoxW, qrBoxW).fill("#16FF70");
-    doc.image(qrPng, qrX + mm(3), qrY + mm(3), { width: qrBoxW - mm(6) });
+    // Green patch + QR — moved slightly down & slightly smaller
+const qrBoxW = mm(42);              // was 48mm → now 42mm
+const qrX = rightX - qrBoxW;        // stays aligned to the right margin
+const qrY = mm(62);                 // was 56mm → now 62mm (moves down 6mm)
+
+doc.rect(qrX, qrY, qrBoxW, qrBoxW).fill("#16FF70");
+doc.image(qrPng, qrX + mm(3), qrY + mm(3), { width: qrBoxW - mm(6) });
 
         // Footer — fixed position on page 1, never spills to a second page
     const footerY = pageH - mm(18);  // 18 mm up from bottom
