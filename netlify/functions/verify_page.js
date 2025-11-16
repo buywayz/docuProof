@@ -238,10 +238,17 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     jsonLink.href = "/.netlify/functions/verify?id=" + encodeURIComponent(v);
   });
 
-  async function fetchJson(u){
-    const r = await fetch(u, { cache: "no-store" });
-    if (!r.ok) throw new Error("HTTP "+r.status);
-    return r.json();
+  // NOTE: we no longer rely on r.ok / HTTP status.
+  // We just try to parse JSON and return { ok, status, data }.
+  async function fetchJsonLoose(u){
+    try{
+      const r = await fetch(u, { cache: "no-store" });
+      let data = null;
+      try { data = await r.json(); } catch {}
+      return { ok: r.ok, status: r.status, data };
+    }catch(e){
+      return { ok: false, status: 0, data: null };
+    }
   }
 
   function resetUI(){
@@ -272,21 +279,21 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     jsonLink.href = "/.netlify/functions/verify?id=" + encodeURIComponent(v);
     dlCert.disabled = false;
 
-    let status;
-    try{
-      status = await fetchJson("/.netlify/functions/anchor_status?id=" + encodeURIComponent(v));
-    }catch(e){
+    const res = await fetchJsonLoose("/.netlify/functions/anchor_status?id=" + encodeURIComponent(v));
+    const status = res.data || {};
+    const state = status.state || "NOT_FOUND";
+
+    // If we truly got *no* usable data, show a hard error.
+    if (!res.data) {
       addBadge("err", "Status lookup failed");
       help.textContent = "We couldn’t retrieve status for this ID. Try again in a moment, or confirm the ID from your certificate.";
       return;
     }
 
-    const state = status && status.state || "NOT_FOUND";
-
     kv.state.textContent = state;
-    kv.txid.textContent  = status && status.txid || "—";
-    kv.conf.textContent  = (status && (status.confirmations ?? 0)) || 0;
-    kv.anchor.textContent= status && status.anchorKey || "—";
+    kv.txid.textContent  = status.txid || "—";
+    kv.conf.textContent  = (status.confirmations ?? 0) || 0;
+    kv.anchor.textContent= status.anchorKey || "—";
 
     if (state === "NOT_FOUND"){
       addBadge("neutral", "No proof found yet");
@@ -303,8 +310,9 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
         "Once anchored, this page will show the Bitcoin transaction ID and confirmations.";
 
       try{
-        const dj = await fetchJson("/.netlify/functions/download_receipt_json?id=" + encodeURIComponent(v));
-        if (dj && dj.base64 && dj.base64.length){
+        const djRes = await fetchJsonLoose("/.netlify/functions/download_receipt_json?id=" + encodeURIComponent(v));
+        const dj = djRes.data || {};
+        if (dj.base64 && dj.base64.length){
           kv.receipt.textContent = dj.key || (v + ".ots");
           dlOts.disabled = false;
           dlOts.onclick = ()=>{ window.location.href = "/.netlify/functions/download_receipt?id=" + encodeURIComponent(v); };
@@ -323,7 +331,7 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
       "This proof has been anchored to the Bitcoin blockchain. The transaction ID and confirmation count shown above " +
       "can be verified independently using any Bitcoin block explorer.";
 
-    if (status && status.txid){
+    if (status.txid){
       kv.txid.textContent = status.txid;
     }
   }
@@ -337,6 +345,6 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
 
 function escapeHtml(s){
   return s.replace(/[&<>"']/g, c => (
-    { "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]
+    { "&":"&amp;","<":"&lt;","~":"~",">":"&gt;","\"":"&quot;","'":"&#39;" }[c] || c
   ));
 }
