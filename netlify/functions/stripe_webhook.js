@@ -2,7 +2,6 @@
 // CommonJS runtime
 const Stripe = require("stripe");
 const { sendEmail } = require("./_email");
-const { getStore } = require("@netlify/blobs");  // FIXED: use getStore in Functions runtime
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2024-06-20",
@@ -21,20 +20,6 @@ function siteOrigin(event) {
 /** ArrayBuffer -> base64 string */
 async function arrayBufferToBase64(ab) {
   return Buffer.from(new Uint8Array(ab)).toString("base64");
-}
-
-// --- Idempotency helpers (avoid duplicate emails on Stripe retries) ---
-
-async function wasProcessed(sessionId) {
-  const store = getStore("processed_sessions");
-  const existing = await store.get(sessionId);
-  return existing !== null;
-}
-
-async function markProcessed(sessionId) {
-  const store = getStore("processed_sessions");
-  // Value content is irrelevant; existence of the key is what matters.
-  await store.set(sessionId, "1");
 }
 
 exports.handler = async (event) => {
@@ -63,15 +48,6 @@ exports.handler = async (event) => {
       const displayName = obj.metadata?.displayName || "Document Proof";
       const filename    = obj.metadata?.filename || "DocuProof-Certificate.pdf";
       const proofId     = obj.metadata?.proofId || obj.id;
-      const sessionId   = obj.id;
-
-      // Idempotency: if we've already processed this session, skip sending again
-      if (await wasProcessed(sessionId)) {
-        return {
-          statusCode: 200,
-          body: JSON.stringify({ ok: true, alreadyProcessed: true }),
-        };
-      }
 
       // Fetch your already-working PDF from the existing function
       const origin = siteOrigin(event);
@@ -114,9 +90,6 @@ exports.handler = async (event) => {
           },
         ],
       });
-
-      // Mark this session as processed so retries don't send duplicates
-      await markProcessed(sessionId);
 
       return {
         statusCode: 200,
