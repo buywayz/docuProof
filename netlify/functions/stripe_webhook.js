@@ -2,6 +2,7 @@
 // CommonJS runtime
 const Stripe = require("stripe");
 const { sendEmail } = require("./_email");
+const { blobs } = require("@netlify/blobs");  // NEW: Netlify Blobs for idempotency
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2024-06-20",
@@ -10,13 +11,30 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 /** Get site origin for self-calling proof_pdf */
 function siteOrigin(event) {
   // Netlify provides process.env.URL in prod; fallback to request host
-  const url = process.env.URL || (event.headers && event.headers.host && `https://${event.headers.host}`) || "";
+  const url =
+    process.env.URL ||
+    (event.headers && event.headers.host && `https://${event.headers.host}`) ||
+    "";
   return url.replace(/\/$/, "");
 }
 
 /** ArrayBuffer -> base64 string */
 async function arrayBufferToBase64(ab) {
   return Buffer.from(new Uint8Array(ab)).toString("base64");
+}
+
+// --- Idempotency helpers (avoid duplicate emails on Stripe retries) ---
+
+async function wasProcessed(sessionId) {
+  const store = blobs({ name: "processed_sessions" });
+  const existing = await store.get(sessionId);
+  return existing !== null;
+}
+
+async function markProcessed(sessionId) {
+  const store = blobs({ name: "processed_sessions" });
+  // Value content is irrelevant; existence of the key is what matters.
+  await store.set(sessionId, "1");
 }
 
 exports.handler = async (event) => {
@@ -43,14 +61,23 @@ exports.handler = async (event) => {
 
       // Pull identifiers from metadata; fall back to the session id
       const displayName = obj.metadata?.displayName || "Document Proof";
-      const filename    = obj.metadata?.filename || "DocuProof-Certificate.pdf";
-      const proofId     = obj.metadata?.proofId || obj.id;
+      const filename = obj.metadata?.filename || "DocuProof-Certificate.pdf";
+      const proofId = obj.metadata?.proofId || obj.id;
+      const sessionId = obj.id;
+
+      // Idempotency: if we've already processed this session, skip sending again
+      if (await wasProcessed(sessionId)) {
+        return {
+          statusCode: 200,
+          body: JSON.stringify({ ok: true, alreadyProcessed: true }),
+        };
+      }
 
       // Fetch your already-working PDF from the existing function
       const origin = siteOrigin(event);
       if (!origin) throw new Error("Could not determine site origin");
 
-            // Build proof_pdf URL, passing through metadata so the certificate
+      // Build proof_pdf URL, passing through metadata so the certificate
       // shows the actual filename and display name the user entered.
       const qs = new URLSearchParams({
         id: proofId,
@@ -88,13 +115,25 @@ exports.handler = async (event) => {
         ],
       });
 
-      return { statusCode: 200, body: JSON.stringify({ ok: true, emailed: true }) };
+      // Mark this session as processed so retries don't send duplicates
+      await markProcessed(sessionId);
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ ok: true, emailed: true }),
+      };
     } catch (err) {
       console.error("stripe_webhook error:", err);
-      return { statusCode: 500, body: JSON.stringify({ ok: false, error: err.message }) };
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ ok: false, error: err.message }),
+      };
     }
   }
 
   // Non-target events: succeed no-op
-  return { statusCode: 200, body: JSON.stringify({ ok: true, ignored: type }) };
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ ok: true, ignored: type }),
+  };
 };
