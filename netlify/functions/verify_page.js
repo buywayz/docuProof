@@ -159,21 +159,38 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     jsonLink.href = "/.netlify/functions/verify?id=" + encodeURIComponent(v);
   });
 
-  // Wire the bottom "View verification JSON" button to the same endpoint
-  if (dlCert) {
-    dlCert.addEventListener('click', (e) => {
-      e.preventDefault();
-      const v = (idIn.value || '').trim();
-      if (!v) return;
-      const href = "/.netlify/functions/verify?id=" + encodeURIComponent(v);
-      window.open(href, "_blank", "noopener");
-    });
-  }
-
   async function fetchJson(u){
     const r = await fetch(u, { cache: "no-store" });
     if(!r.ok) throw new Error("HTTP "+r.status);
     return r.json();
+  }
+
+  // Specialized helper for anchor_status: even if the function returns
+  // non-2xx for NOT_FOUND, treat that as a normal outcome.
+  async function fetchStatus(id) {
+    const r = await fetch(
+      "/.netlify/functions/anchor_status?id=" + encodeURIComponent(id),
+      { cache: "no-store" }
+    );
+
+    let data = null;
+    try {
+      data = await r.json();
+    } catch {
+      throw new Error("Status endpoint did not return JSON");
+    }
+
+    // Explicit NOT_FOUND = clean "nothing anchored yet / no record"
+    if (data && data.state === "NOT_FOUND") {
+      return data;
+    }
+
+    // For other cases, if HTTP failed or an error is present, treat as failure
+    if (!r.ok || data.error) {
+      throw new Error(data?.error || "Status HTTP " + r.status);
+    }
+
+    return data;
   }
 
   function setBadge(kind, text){
@@ -189,17 +206,20 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     for (const k of Object.keys(kv)) { kv[k].textContent = '—'; }
     dlOts.disabled = true; dlCert.disabled = true;
 
-    if(!v){ setBadge('warn', 'Enter an ID to verify'); return; }
+    if(!v){
+      setBadge('warn', 'Enter an ID to verify');
+      return;
+    }
 
     kv.id.textContent = v;
     jsonLink.href = "/.netlify/functions/verify?id=" + encodeURIComponent(v);
     dlCert.disabled = false;
 
-    // 1) Ask canonical status
+    // 1) Ask canonical status (anchor_status)
     let status;
-    try{
-      status = await fetchJson("/.netlify/functions/anchor_status?id="+encodeURIComponent(v));
-    }catch(e){
+    try {
+      status = await fetchStatus(v);
+    } catch (e) {
       setBadge('err','Status lookup failed');
       return;
     }
