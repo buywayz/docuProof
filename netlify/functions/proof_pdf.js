@@ -112,7 +112,9 @@ exports.handler = async (event) => {
       ],
     ];
 
-        let y = mm(60); // was 56; move rows further down under the paragraph
+            // Start rows lower to clear the paragraph fully
+    let y = mm(68); // was 60; pushes the first row down another ~8 mm
+
     rows.forEach(([k, v, helper]) => {
       // Key
       doc.font("Helvetica-Bold")
@@ -132,14 +134,14 @@ exports.handler = async (event) => {
       // Helper text under the value
       if (helper) {
         doc.font("Helvetica")
-           .fontSize(8) // was 7 → more legible
+           .fontSize(8)
            .fillColor("#A8AAB0")
            .text(helper, leftX + mm(36), y + mm(3.2), {
              width: mm(120),
            });
-        y += mm(10); // slightly taller row; more breathing room
+        y += mm(11); // slightly taller row; more separation between rows
       } else {
-        y += mm(7);
+        y += mm(8);
       }
     });
 
