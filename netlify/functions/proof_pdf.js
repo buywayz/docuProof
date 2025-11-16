@@ -61,25 +61,86 @@ exports.handler = async (event) => {
          leftX, mm(33), { width: mm(120) }
        );
 
-    // Summary block
-    doc.font("Helvetica-Bold").fontSize(11).fillColor("#16FF70").text("Proof Summary", leftX, mm(44));
+        // Summary block
+    doc.font("Helvetica-Bold")
+       .fontSize(11)
+       .fillColor("#16FF70")
+       .text("Proof Summary", leftX, mm(44));
 
+    // Explanatory paragraph under the summary heading
+    doc.font("Helvetica")
+       .fontSize(8)
+       .fillColor("#A8AAB0")
+       .text(
+         "This proof represents a cryptographic commitment to your original file. docuProof submits proofs to OpenTimestamps for batching and anchoring into the Bitcoin blockchain. Once anchored, anyone can independently verify this timestamp without relying on docuProof.",
+         leftX,
+         mm(47),
+         { width: mm(120) }
+       );
+
+    // Summary rows with per-line helper text
     const rows = [
-      ["Proof ID", id],
-      ["Quick Verify ID", quickId],
-      ["Created (UTC)", new Date().toISOString().replace("T", " ").replace("Z","Z")],
-      ["File Name", filename],
-      ["Display Name", display],
-      ["Public Verify URL", verifyUrl],
+      [
+        "Proof ID",
+        id,
+        "Unique identifier for this proof within docuProof."
+      ],
+      [
+        "Quick Verify ID",
+        quickId,
+        "Short form of the identifier for manual reference or logging."
+      ],
+      [
+        "Created (UTC)",
+        new Date().toISOString().replace("T", " ").replace("Z", "Z"),
+        "Time this certificate was generated (anchoring occurs after batching)."
+      ],
+      [
+        "File Name",
+        filename,
+        "Human-readable name of the original document associated with this proof."
+      ],
+      [
+        "Display Name",
+        display,
+        "Descriptive title for this proof, provided by the user."
+      ],
+      [
+        "Public Verify URL",
+        verifyUrl,
+        "Shareable link to check live status and Bitcoin anchoring for this proof."
+      ],
     ];
 
-    let y = mm(50);
-    rows.forEach(([k, v]) => {
-      doc.font("Helvetica-Bold").fontSize(9).fillColor("#16FF70").text(k, leftX, y);
-      doc.font("Helvetica").fontSize(9).fillColor("#E6E7EB").text(v, leftX + mm(36), y, {
-        width: mm(120), continued: false
-      });
-      y += mm(6);
+    let y = mm(56); // start a bit lower to leave room for the paragraph above
+    rows.forEach(([k, v, helper]) => {
+      // Key
+      doc.font("Helvetica-Bold")
+         .fontSize(9)
+         .fillColor("#16FF70")
+         .text(k, leftX, y);
+
+      // Value
+      doc.font("Helvetica")
+         .fontSize(9)
+         .fillColor("#E6E7EB")
+         .text(v, leftX + mm(36), y, {
+           width: mm(120),
+           continued: false,
+         });
+
+      // Helper text under the value
+      if (helper) {
+        doc.font("Helvetica")
+           .fontSize(7)
+           .fillColor("#A8AAB0")
+           .text(helper, leftX + mm(36), y + mm(3), {
+             width: mm(120),
+           });
+        y += mm(9); // slightly taller row when helper present
+      } else {
+        y += mm(6);
+      }
     });
 
     // QR code (dark on brand green, size tuned)
