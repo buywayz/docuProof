@@ -186,12 +186,24 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
 
       <aside class="card">
         <h3 style="margin-top:0">Downloads</h3>
+
         <div class="row" style="margin:10px 0">
           <button id="dlOts" class="btn" disabled>Download OTS receipt</button>
           <button id="dlCert" class="btn secondary" disabled>View verification JSON</button>
         </div>
-        <div class="small">
+        <div class="small" style="margin-bottom:14px">
           Keep your original file and this <code>.ots</code> together so future verification is trivial.
+        </div>
+
+        <div class="small" style="margin-top:4px">
+          <strong>Shareable QR</strong>
+          <div style="margin-top:8px;display:flex;justify-content:center;">
+            <canvas id="qrCanvas" width="180" height="180"
+                    style="border-radius:12px;background:#111516;"></canvas>
+          </div>
+          <div id="qrCaption" class="small" style="text-align:center;margin-top:6px;">
+            Scan to open this verification page on another device.
+          </div>
         </div>
       </aside>
     </div>
@@ -201,134 +213,223 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     © <span id="year"></span> docuProof.io — Bitcoin-anchored proof of existence.
   </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"
+        integrity="sha512-dzKCoP0YGLBzXbi1kV21RpsfK+tatg68MQ5vDf5sXc67q0VCg15mEhOCmXGYVCHiBs1ITPkuR+i+ECKNfL2V7Q=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
 <script>
-  const $ = (id)=>document.getElementById(id);
-  document.getElementById('year').textContent = new Date().getFullYear();
+  const $ = (id) => document.getElementById(id);
+  document.getElementById("year").textContent = new Date().getFullYear();
 
   const idFromServer = "__ID__";
   const hasId = __HAS_ID__;
-  const idIn = $('idIn'), goBtn = $('goBtn'), jsonLink = $('jsonLink');
+
+  const idIn    = $("idIn");
+  const goBtn   = $("goBtn");
+  const jsonLink = $("jsonLink");
+
   const kv = {
-    id: $('kv_id'), state: $('kv_state'), txid: $('kv_txid'),
-    conf: $('kv_conf'), anchor: $('kv_anchor'), receipt: $('kv_receipt')
+    id: $("kv_id"),
+    state: $("kv_state"),
+    txid: $("kv_txid"),
+    conf: $("kv_conf"),
+    anchor: $("kv_anchor"),
+    receipt: $("kv_receipt"),
   };
-  const badges = $('statusBadges');
-  const help = $('statusHelp');
-  const dlOts = $('dlOts'), dlCert = $('dlCert');
 
-  if (hasId && idFromServer) { idIn.value = idFromServer; }
+  const badges    = $("statusBadges");
+  const dlOts     = $("dlOts");
+  const dlCert    = $("dlCert");
+  const qrCanvas  = $("qrCanvas");
+  const qrCaption = $("qrCaption");
 
-  goBtn.addEventListener('click', ()=>{
-    const v = (idIn.value||'').trim();
+  if (hasId && idFromServer) {
+    idIn.value = idFromServer;
+  }
+
+  goBtn.addEventListener("click", () => {
+    const v = (idIn.value || "").trim();
     if (!v) return;
     const qs = new URLSearchParams({ id: v }).toString();
     location.href = "/.netlify/functions/verify_page?" + qs;
   });
 
-  jsonLink.addEventListener('click', (e)=>{
-    const v = (idIn.value||'').trim();
-    if (!v){
+  jsonLink.addEventListener("click", (e) => {
+    const v = (idIn.value || "").trim();
+    if (!v) {
       e.preventDefault();
       return;
     }
-    jsonLink.href = "/.netlify/functions/verify?id=" + encodeURIComponent(v);
+    jsonLink.href =
+      "/.netlify/functions/verify?id=" + encodeURIComponent(v);
   });
 
-  async function fetchJsonLoose(u){
-    try{
-      const r = await fetch(u, { cache: "no-store" });
-      let data = null;
-      try { data = await r.json(); } catch {}
-      return { ok: r.ok, status: r.status, data };
-    }catch(e){
-      return { ok: false, status: 0, data: null };
+  async function fetchJson(u) {
+    const r = await fetch(u, { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  }
+
+  function setBadge(kind, title, detail) {
+    badges.innerHTML = "";
+
+    const pill = document.createElement("span");
+    pill.className = "badge " + kind;
+    pill.textContent = title;
+    badges.appendChild(pill);
+
+    if (detail) {
+      const p = document.createElement("div");
+      p.className = "small";
+      p.style.marginTop = "6px";
+      p.textContent = detail;
+      badges.appendChild(p);
     }
   }
 
-  function resetUI(){
+  async function load() {
+    const v = (idIn.value || "").trim();
+
+    // Reset UI
     badges.innerHTML = "";
-    help.textContent = "";
-    for (const k of Object.keys(kv)) kv[k].textContent = "—";
+    for (const k of Object.keys(kv)) {
+      kv[k].textContent = "—";
+    }
     dlOts.disabled = true;
     dlCert.disabled = true;
-  }
 
-  function addBadge(kind, text){
-    const span = document.createElement('span');
-    span.className = "badge " + kind;
-    span.textContent = text;
-    badges.appendChild(span);
-  }
+    // Reset QR
+    if (qrCanvas && qrCanvas.getContext) {
+      const ctx = qrCanvas.getContext("2d");
+      ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
+    }
+    if (qrCaption) {
+      qrCaption.textContent =
+        "Scan to open this verification page on another device.";
+    }
 
-  async function load(){
-    resetUI();
-    const v = (idIn.value||"").trim();
-
-    if (!v){
-      addBadge("neutral", "Enter an ID to verify");
-      help.textContent = "Paste a Proof ID from your certificate or email receipt, then select Open.";
+    if (!v) {
+      setBadge("warn", "Enter an ID to verify");
       return;
     }
 
     kv.id.textContent = v;
-    jsonLink.href = "/.netlify/functions/verify?id=" + encodeURIComponent(v);
+    jsonLink.href =
+      "/.netlify/functions/verify?id=" + encodeURIComponent(v);
     dlCert.disabled = false;
 
-    // Try to get status; any failure falls back to NOT_FOUND-style UX.
-    const res = await fetchJsonLoose("/.netlify/functions/anchor_status?id=" + encodeURIComponent(v));
-    const status = res.data || {};
-    const state = status.state || "NOT_FOUND";
+    // Render QR for this public verify URL
+    if (qrCanvas && window.QRious) {
+      const publicUrl =
+        location.origin + "/verify?id=" + encodeURIComponent(v);
+      new QRious({
+        element: qrCanvas,
+        value: publicUrl,
+        size: 180,
+        level: "M",
+      });
+    }
 
-    kv.state.textContent = state;
-    kv.txid.textContent  = status.txid || "—";
-    kv.conf.textContent  = (status.confirmations ?? 0) || 0;
-    kv.anchor.textContent= status.anchorKey || "—";
-
-    if (state === "NOT_FOUND"){
-      addBadge("neutral", "No proof found yet");
-      help.textContent =
-        "We don’t see a receipt or Bitcoin anchor for this ID yet. If you just created this proof, allow time for batching " +
-        "and anchoring. You can still verify independently later using your .ots receipt and original file.";
+    // Fetch canonical status
+    let status;
+    try {
+      status = await fetchJson(
+        "/.netlify/functions/anchor_status?id=" +
+          encodeURIComponent(v)
+      );
+    } catch (e) {
+      setBadge(
+        "err",
+        "Status lookup failed",
+        "We couldn’t retrieve status for this ID. Try again in a moment, or confirm the ID from your certificate."
+      );
       return;
     }
 
-    if (state === "OTS_RECEIPT"){
-      addBadge("ok", "Receipt available — awaiting anchor");
-      help.textContent =
-        "Your proof has a valid OpenTimestamps receipt and is queued to be batched into a Bitcoin transaction. " +
-        "Once anchored, this page will show the Bitcoin transaction ID and confirmations.";
+    // Human-friendly state string
+    const displayState =
+      status.state === "NOT_FOUND"
+        ? "Pending"
+        : status.state || "—";
 
-      try{
-        const djRes = await fetchJsonLoose("/.netlify/functions/download_receipt_json?id=" + encodeURIComponent(v));
-        const dj = djRes.data || {};
-        if (dj.base64 && dj.base64.length){
-          kv.receipt.textContent = dj.key || (v + ".ots");
+    kv.state.textContent = displayState;
+
+    // Block-explorer link when we have a txid
+    if (status.txid) {
+      const mempoolUrl =
+        "https://mempool.space/tx/" +
+        encodeURIComponent(status.txid);
+      kv.txid.innerHTML =
+        `<a class="mono" href="${mempoolUrl}" target="_blank" rel="noopener">${status.txid}</a>`;
+    } else {
+      kv.txid.textContent = "—";
+    }
+
+    kv.conf.textContent = status.confirmations ?? 0;
+    kv.anchor.textContent = status.anchorKey || "—";
+
+    if (status.state === "NOT_FOUND") {
+      setBadge(
+        "neutral",
+        "No proof found yet",
+        "We don’t see a receipt or Bitcoin anchor for this ID yet. If you just created this proof, allow time for batching and anchoring. You can still verify independently later using your .ots receipt and original file."
+      );
+      return;
+    }
+
+    if (status.state === "OTS_RECEIPT") {
+      setBadge(
+        "ok",
+        "Receipt available — awaiting anchor",
+        "Your proof has been committed to the OpenTimestamps calendar and is waiting to be included in a Bitcoin transaction. Keep your .ots receipt and original file together — they are enough to prove this timestamp independently."
+      );
+    } else if (status.state === "ANCHORED") {
+      const conf = status.confirmations ?? 0;
+      setBadge(
+        "ok",
+        "Anchored on Bitcoin",
+        conf > 0
+          ? `Your proof is anchored in a Bitcoin transaction with ${conf} confirmation${conf === 1 ? "" : "s"}.`
+          : "Your proof is anchored in a Bitcoin transaction. Additional confirmations will accumulate over time."
+      );
+    } else if (status.state) {
+      setBadge(
+        "ok",
+        displayState,
+        "Proof status returned by the verification service."
+      );
+    }
+
+    // Enable OTS download if we’re in OTS_RECEIPT and have a stored receipt
+    if (status.state === "OTS_RECEIPT") {
+      try {
+        const dj = await fetchJson(
+          "/.netlify/functions/download_receipt_json?id=" +
+            encodeURIComponent(v)
+        );
+        if (dj && dj.base64 && dj.base64.length) {
+          kv.receipt.textContent =
+            dj.key || v + ".ots";
           dlOts.disabled = false;
-          dlOts.onclick = ()=>{ window.location.href = "/.netlify/functions/download_receipt?id=" + encodeURIComponent(v); };
-        }else{
+          dlOts.onclick = () => {
+            window.location.href =
+              "/.netlify/functions/download_receipt?id=" +
+              encodeURIComponent(v);
+          };
+        } else {
           kv.receipt.textContent = "—";
         }
-      }catch{
+      } catch {
         kv.receipt.textContent = "—";
       }
-      return;
-    }
-
-    // Anchored or any other non-NOT_FOUND state.
-    addBadge("ok", "Anchored on Bitcoin");
-    help.textContent =
-      "This proof has been anchored to the Bitcoin blockchain. The transaction ID and confirmation count shown above " +
-      "can be verified independently using any Bitcoin block explorer.";
-
-    if (status.txid){
-      kv.txid.textContent = status.txid;
     }
   }
 
-  if (hasId && idFromServer){
+  if (hasId && idFromServer) {
     load();
   }
 </script>
+
 </body>
 </html>`;
 
