@@ -65,7 +65,7 @@ exports.handler = async (event) => {
     doc.font("Helvetica-Bold")
        .fontSize(11)
        .fillColor("#16FF70")
-       .text("Proof Summary (Refined)", leftX, mm(44));
+       .text("Proof Summary", leftX, mm(44));
 
     // Explanatory paragraph under the summary heading
     doc.font("Helvetica")
