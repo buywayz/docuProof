@@ -159,6 +159,17 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     jsonLink.href = "/.netlify/functions/verify?id=" + encodeURIComponent(v);
   });
 
+  // Wire the bottom "View verification JSON" button to the same endpoint
+  if (dlCert) {
+    dlCert.addEventListener('click', (e) => {
+      e.preventDefault();
+      const v = (idIn.value || '').trim();
+      if (!v) return;
+      const href = "/.netlify/functions/verify?id=" + encodeURIComponent(v);
+      window.open(href, "_blank", "noopener");
+    });
+  }
+
   async function fetchJson(u){
     const r = await fetch(u, { cache: "no-store" });
     if(!r.ok) throw new Error("HTTP "+r.status);
