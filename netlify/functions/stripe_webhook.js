@@ -2,7 +2,7 @@
 // CommonJS runtime
 const Stripe = require("stripe");
 const { sendEmail } = require("./_email");
-const { blobs } = require("@netlify/blobs");  // NEW: Netlify Blobs for idempotency
+const { getStore } = require("@netlify/blobs");  // FIXED: use getStore in Functions runtime
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2024-06-20",
@@ -26,13 +26,13 @@ async function arrayBufferToBase64(ab) {
 // --- Idempotency helpers (avoid duplicate emails on Stripe retries) ---
 
 async function wasProcessed(sessionId) {
-  const store = blobs({ name: "processed_sessions" });
+  const store = getStore("processed_sessions");
   const existing = await store.get(sessionId);
   return existing !== null;
 }
 
 async function markProcessed(sessionId) {
-  const store = blobs({ name: "processed_sessions" });
+  const store = getStore("processed_sessions");
   // Value content is irrelevant; existence of the key is what matters.
   await store.set(sessionId, "1");
 }
@@ -61,9 +61,9 @@ exports.handler = async (event) => {
 
       // Pull identifiers from metadata; fall back to the session id
       const displayName = obj.metadata?.displayName || "Document Proof";
-      const filename = obj.metadata?.filename || "DocuProof-Certificate.pdf";
-      const proofId = obj.metadata?.proofId || obj.id;
-      const sessionId = obj.id;
+      const filename    = obj.metadata?.filename || "DocuProof-Certificate.pdf";
+      const proofId     = obj.metadata?.proofId || obj.id;
+      const sessionId   = obj.id;
 
       // Idempotency: if we've already processed this session, skip sending again
       if (await wasProcessed(sessionId)) {
