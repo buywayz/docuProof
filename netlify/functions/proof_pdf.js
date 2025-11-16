@@ -61,7 +61,7 @@ exports.handler = async (event) => {
          leftX, mm(33), { width: mm(120) }
        );
 
-        // Summary block
+            // Summary block
     doc.font("Helvetica-Bold")
        .fontSize(11)
        .fillColor("#16FF70")
@@ -69,12 +69,12 @@ exports.handler = async (event) => {
 
     // Explanatory paragraph under the summary heading
     doc.font("Helvetica")
-       .fontSize(8)
+       .fontSize(9) // was 8
        .fillColor("#A8AAB0")
        .text(
          "This proof represents a cryptographic commitment to your original file. docuProof submits proofs to OpenTimestamps for batching and anchoring into the Bitcoin blockchain. Once anchored, anyone can independently verify this timestamp without relying on docuProof.",
          leftX,
-         mm(47),
+         mm(48),     // was 47 → a bit lower under the heading
          { width: mm(120) }
        );
 
@@ -112,7 +112,7 @@ exports.handler = async (event) => {
       ],
     ];
 
-    let y = mm(56); // start a bit lower to leave room for the paragraph above
+        let y = mm(60); // was 56; move rows further down under the paragraph
     rows.forEach(([k, v, helper]) => {
       // Key
       doc.font("Helvetica-Bold")
@@ -132,14 +132,14 @@ exports.handler = async (event) => {
       // Helper text under the value
       if (helper) {
         doc.font("Helvetica")
-           .fontSize(7)
+           .fontSize(8) // was 7 → more legible
            .fillColor("#A8AAB0")
-           .text(helper, leftX + mm(36), y + mm(3), {
+           .text(helper, leftX + mm(36), y + mm(3.2), {
              width: mm(120),
            });
-        y += mm(9); // slightly taller row when helper present
+        y += mm(10); // slightly taller row; more breathing room
       } else {
-        y += mm(6);
+        y += mm(7);
       }
     });
 
