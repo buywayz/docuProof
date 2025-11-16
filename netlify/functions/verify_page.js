@@ -359,13 +359,16 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
 
     kv.state.textContent = displayState;
 
-    // Block-explorer link when we have a txid
+       // Block-explorer link when we have a txid
     if (status.txid) {
       const mempoolUrl =
         "https://mempool.space/tx/" +
         encodeURIComponent(status.txid);
+      // Use plain string concatenation here to avoid nested template literals
       kv.txid.innerHTML =
-        `<a class="mono" href="${mempoolUrl}" target="_blank" rel="noopener">${status.txid}</a>`;
+        '<a class="mono" href="' + mempoolUrl + '" target="_blank" rel="noopener">' +
+        status.txid +
+        "</a>";
     } else {
       kv.txid.textContent = "—";
     }
