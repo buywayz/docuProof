@@ -146,7 +146,6 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     const v = (idIn.value||'').trim();
     if(!v) return;
     const qs = new URLSearchParams({ id: v }).toString();
-    // Keep the function path stable:
     location.href = "/.netlify/functions/verify_page?" + qs;
   });
 
@@ -161,35 +160,13 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
 
   async function fetchJson(u){
     const r = await fetch(u, { cache: "no-store" });
-    if(!r.ok) throw new Error("HTTP "+r.status);
-    return r.json();
-  }
-
-  // Specialized helper for anchor_status: even if the function returns
-  // non-2xx for NOT_FOUND, treat that as a normal outcome.
-  async function fetchStatus(id) {
-    const r = await fetch(
-      "/.netlify/functions/anchor_status?id=" + encodeURIComponent(id),
-      { cache: "no-store" }
-    );
-
-    let data = null;
+    // For anchor_status we *still* want the JSON even if HTTP status is 404.
+    let data;
     try {
       data = await r.json();
-    } catch {
-      throw new Error("Status endpoint did not return JSON");
+    } catch (e) {
+      throw new Error("Non-JSON response");
     }
-
-    // Explicit NOT_FOUND = clean "nothing anchored yet / no record"
-    if (data && data.state === "NOT_FOUND") {
-      return data;
-    }
-
-    // For other cases, if HTTP failed or an error is present, treat as failure
-    if (!r.ok || data.error) {
-      throw new Error(data?.error || "Status HTTP " + r.status);
-    }
-
     return data;
   }
 
@@ -215,10 +192,10 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     jsonLink.href = "/.netlify/functions/verify?id=" + encodeURIComponent(v);
     dlCert.disabled = false;
 
-    // 1) Ask canonical status (anchor_status)
+    // 1) Ask canonical status (anchor_status) — we treat ANY JSON as a valid response.
     let status;
     try {
-      status = await fetchStatus(v);
+      status = await fetchJson("/.netlify/functions/anchor_status?id=" + encodeURIComponent(v));
     } catch (e) {
       setBadge('err','Status lookup failed');
       return;
@@ -229,29 +206,30 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     kv.conf.textContent  = (status.confirmations ?? 0);
     kv.anchor.textContent= status.anchorKey || '—';
 
-    if(status.state === "NOT_FOUND"){
+    // If state is missing or NOT_FOUND → clean "Not found" state, *not* a lookup failure.
+    if (!status.state || status.state === "NOT_FOUND") {
       setBadge('err','Not found');
       return;
     }
 
-    if(status.txid){
+    if (status.txid) {
       setBadge('ok','Anchored');
-    }else{
+    } else {
       setBadge('ok','Receipt available — awaiting anchor');
     }
 
     // 2) If we’re in OTS_RECEIPT, offer the .ots download
-    if(status.state === "OTS_RECEIPT"){
+    if (status.state === "OTS_RECEIPT") {
       try{
         const dj = await fetchJson("/.netlify/functions/download_receipt_json?id="+encodeURIComponent(v));
         if (dj && dj.base64 && dj.base64.length){
           kv.receipt.textContent = dj.key || (v + ".ots");
           dlOts.disabled = false;
           dlOts.onclick = ()=>{ window.location.href = "/.netlify/functions/download_receipt?id="+encodeURIComponent(v); };
-        }else{
+        } else {
           kv.receipt.textContent = '—';
         }
-      }catch{
+      } catch {
         kv.receipt.textContent = '—';
       }
     }
