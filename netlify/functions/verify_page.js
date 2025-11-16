@@ -1,14 +1,15 @@
 // netlify/functions/verify_page.js
-// CJS: serves a lightweight HTML verification UI that calls your JSON endpoints:
+// Serves the HTML Verify UI and calls JSON endpoints:
 // - /.netlify/functions/anchor_status?id=...
 // - /.netlify/functions/download_receipt?id=...
 // - /.netlify/functions/download_receipt_json?id=...
 // - /.netlify/functions/verify?id=...
 
 exports.handler = async (event) => {
-  // Allow either query param (?id=...) or path form /v/<id>
   const url = new URL(event.rawUrl || "http://x/");
   const qsId = (url.searchParams.get("id") || "").trim();
+
+  // Allow /v/<id> style paths as a fallback
   const pathId = (event.path || "")
     .split("/")
     .slice(-1)[0]
@@ -99,11 +100,6 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     padding:6px 12px;
     font-weight:600;
     font-size:13px;
-  }
-  .badge.err{
-    border:1px solid var(--danger);
-    color:var(--danger);
-    background:var(--danger-bg);
   }
   .badge.neutral{
     border:1px solid var(--neutral-border);
@@ -238,8 +234,6 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     jsonLink.href = "/.netlify/functions/verify?id=" + encodeURIComponent(v);
   });
 
-  // NOTE: we no longer rely on r.ok / HTTP status.
-  // We just try to parse JSON and return { ok, status, data }.
   async function fetchJsonLoose(u){
     try{
       const r = await fetch(u, { cache: "no-store" });
@@ -269,6 +263,7 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
   async function load(){
     resetUI();
     const v = (idIn.value||"").trim();
+
     if (!v){
       addBadge("neutral", "Enter an ID to verify");
       help.textContent = "Paste a Proof ID from your certificate or email receipt, then select Open.";
@@ -279,16 +274,10 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     jsonLink.href = "/.netlify/functions/verify?id=" + encodeURIComponent(v);
     dlCert.disabled = false;
 
+    // Try to get status; any failure falls back to NOT_FOUND-style UX.
     const res = await fetchJsonLoose("/.netlify/functions/anchor_status?id=" + encodeURIComponent(v));
     const status = res.data || {};
     const state = status.state || "NOT_FOUND";
-
-    // If we truly got *no* usable data, show a hard error.
-    if (!res.data) {
-      addBadge("err", "Status lookup failed");
-      help.textContent = "We couldn’t retrieve status for this ID. Try again in a moment, or confirm the ID from your certificate.";
-      return;
-    }
 
     kv.state.textContent = state;
     kv.txid.textContent  = status.txid || "—";
@@ -325,7 +314,7 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
       return;
     }
 
-    // Anchored (or any other non-NOT_FOUND state)
+    // Anchored or any other non-NOT_FOUND state.
     addBadge("ok", "Anchored on Bitcoin");
     help.textContent =
       "This proof has been anchored to the Bitcoin blockchain. The transaction ID and confirmation count shown above " +
@@ -345,6 +334,6 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
 
 function escapeHtml(s){
   return s.replace(/[&<>"']/g, c => (
-    { "&":"&amp;","<":"&lt;","~":"~",">":"&gt;","\"":"&quot;","'":"&#39;" }[c] || c
+    { "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]
   ));
 }
