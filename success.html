@@ -165,6 +165,23 @@
     // Print the resolved ID
     idSpan.textContent = id;
 
+// Helper tooltips (explanations)
+if (idSpan) {
+  idSpan.title = "Unique identifier for this proof within docuProof. Use it to look up status or download receipts later.";
+}
+if (openBtn) {
+  openBtn.title = "Open a detailed verification page for this proof.";
+}
+if (viewLink) {
+  viewLink.title = "Open a detailed verification page showing status, receipts, and JSON.";
+}
+if (dlPdfBtn) {
+  dlPdfBtn.title = "Download a PDF certificate summarizing this proof and its verification details.";
+}
+if (dlOtsBtn) {
+  dlOtsBtn.title = "Download the raw OpenTimestamps (.ots) receipt once it becomes available.";
+}
+
     // Helper: set status line
     function setStatus(state, txid, confirmations) {
       let label = 'Not found';
@@ -178,13 +195,15 @@
       statusEl.textContent = label;
       dotEl.className = 'status-dot ' + dot;
 
-      if (txid) {
-        const href = `https://mempool.space/tx/${encodeURIComponent(txid)}`;
-        txEl.innerHTML = `<a class="mono" href="${href}" target="_blank" rel="noopener">${txid}</a>`;
-      } else {
-        txEl.textContent = '—';
-      }
-    }
+        if (txid) {
+    const href = `https://mempool.space/tx/${encodeURIComponent(txid)}`;
+    txEl.innerHTML = `<a class="mono" href="${href}" target="_blank" rel="noopener">${txid}</a>`;
+    txEl.title = "Bitcoin transaction ID that anchors this proof. Click to view it in a block explorer.";
+  } else {
+    txEl.textContent = '—';
+    txEl.title = "Once this proof has been batched and anchored to Bitcoin, the transaction ID will appear here.";
+  }
+}
 
     // Actions depend on having a real id
     const hasRealId = id && id !== '{CHECKOUT_SESSION_ID}';
@@ -215,15 +234,37 @@
       }
 
       // Live status poll (lightweight)
-      async function refreshStatus() {
-        try {
-          const r = await fetch(`/.netlify/functions/verify?id=${encodeURIComponent(id)}`, { cache: 'no-store' });
-          const data = await r.json();
-          setStatus(data?.state, data?.txid, data?.confirmations);
-        } catch (e) {
-          setStatus('NOT_FOUND', null, 0);
+        async function refreshStatus() {
+    try {
+      const r = await fetch(`/.netlify/functions/verify?id=${encodeURIComponent(id)}`, { cache: 'no-store' });
+      const data = await r.json();
+
+      setStatus(data?.state, data?.txid, data?.confirmations);
+
+      // Gate the OTS receipt button on whether a receipt actually exists
+      if (dlOtsBtn) {
+        if (data && data.receiptAvailable) {
+          // Receipt ready: keep normal link behavior
+          dlOtsBtn.onclick = null;
+          dlOtsBtn.removeAttribute('aria-disabled');
+        } else {
+          // No receipt yet: intercept clicks and explain why
+          dlOtsBtn.setAttribute('aria-disabled', 'true');
+          dlOtsBtn.onclick = (e) => {
+            e.preventDefault();
+            alert(
+              "Your OpenTimestamps (.ots) receipt is not available yet.\n\n" +
+              "docuProof batches proofs and anchors them to Bitcoin. " +
+              "Once this proof has been anchored, this button will download the receipt."
+            );
+          };
         }
       }
+
+    } catch (e) {
+      setStatus('NOT_FOUND', null, 0);
+    }
+  }
       refreshStatus();
       const iv = setInterval(refreshStatus, 10000);
 
