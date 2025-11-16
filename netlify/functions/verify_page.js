@@ -391,15 +391,24 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
         "Receipt available — awaiting anchor",
         "Your proof has been committed to the OpenTimestamps calendar and is waiting to be included in a Bitcoin transaction. Keep your .ots receipt and original file together — they are enough to prove this timestamp independently."
       );
-    } else if (status.state === "ANCHORED") {
+    } else     if (status.state === "ANCHORED") {
       const conf = status.confirmations ?? 0;
-      setBadge(
-        "ok",
-        "Anchored on Bitcoin",
-        conf > 0
-          ? `Your proof is anchored in a Bitcoin transaction with ${conf} confirmation${conf === 1 ? "" : "s"}.`
-          : "Your proof is anchored in a Bitcoin transaction. Additional confirmations will accumulate over time."
-      );
+
+      // Build the helper text without using template literals (no backticks)
+      let detail;
+      if (conf > 0) {
+        detail =
+          "Your proof is anchored in a Bitcoin transaction with " +
+          conf +
+          " confirmation" +
+          (conf === 1 ? "" : "s") +
+          ".";
+      } else {
+        detail =
+          "Your proof is anchored in a Bitcoin transaction. Additional confirmations will accumulate over time.";
+      }
+
+      setBadge("ok", "Anchored on Bitcoin", detail);
     } else if (status.state) {
       setBadge(
         "ok",
