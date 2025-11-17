@@ -93,6 +93,11 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     cursor:pointer;
   }
   .btn.secondary{background:transparent;color:var(--ink)}
+  .btn[disabled]{
+    opacity:0.45;
+    cursor:default;
+    pointer-events:none;
+  }
   .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
   .badge{
     display:inline-flex;
