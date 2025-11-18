@@ -86,13 +86,19 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     padding:10px 12px;
   }
   .btn{
-    background:var(--accent);
-    color:#071109;
-    border:none;
-    font-weight:800;
-    cursor:pointer;
-  }
-  .btn.secondary{background:transparent;color:var(--ink)}
+  background:var(--accent);
+  color:#071109;
+  border:none;
+  font-weight:800;
+  cursor:pointer;
+}
+/* Visually dim disabled buttons (e.g., OTS when no receipt yet) */
+.btn[disabled]{
+  opacity:0.45;
+  cursor:default;
+  box-shadow:none;
+}
+.btn.secondary{background:transparent;color:var(--ink)}
   .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
   .badge{
     display:inline-flex;
