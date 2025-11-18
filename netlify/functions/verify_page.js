@@ -93,11 +93,6 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     cursor:pointer;
   }
   .btn.secondary{background:transparent;color:var(--ink)}
-  .btn[disabled]{
-    opacity:0.45;
-    cursor:default;
-    pointer-events:none;
-  }
   .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
   .badge{
     display:inline-flex;
@@ -178,7 +173,6 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
       <div class="row">
         <input id="idIn" class="mono" placeholder="Enter Proof ID (e.g., cs_… or wXXXXXXXXX)" style="min-width:320px;flex:1">
         <button id="goBtn" class="btn">Open</button>
-        <a id="jsonLink" class="btn secondary" href="#" target="_blank" rel="noopener">View JSON</a>
       </div>
       <div class="small" style="margin-top:6px">
         Tip: If you downloaded a <code>.ots</code> file, you can verify independently with
@@ -237,14 +231,24 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
 (function () {
   function $(id) { return document.getElementById(id); }
 
+  // Small helper to safely embed JSON into our viewer page
+  function htmlEscape(s) {
+    return s.replace(/[&<>]/g, function (c) {
+      if (c === "&") return "&amp;";
+      if (c === "<") return "&lt;";
+      return "&gt;";
+    });
+  }
+
   document.getElementById("year").textContent = new Date().getFullYear();
 
   var idFromServer = "__ID__";
   var hasId = __HAS_ID__;
 
-  var idIn     = $("idIn");
-  var goBtn    = $("goBtn");
-  var jsonLink = $("jsonLink");
+  var idIn   = $("idIn");
+  var goBtn  = $("goBtn");
+  var dlOts  = $("dlOts");
+  var dlCert = $("dlCert");
 
   var kv = {
     id: $("kv_id"),
@@ -255,12 +259,10 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     receipt: $("kv_receipt")
   };
 
-  var badges    = $("statusBadges");
+  var badges     = $("statusBadges");
   var statusHelp = $("statusHelp");
-  var dlOts     = $("dlOts");
-  var dlCert    = $("dlCert");
-  var qrCanvas  = $("qrCanvas");
-  var qrCaption = $("qrCaption");
+  var qrCanvas   = $("qrCanvas");
+  var qrCaption  = $("qrCaption");
 
   if (hasId && idFromServer) {
     idIn.value = idFromServer;
@@ -270,17 +272,50 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     var v = (idIn.value || "").trim();
     if (!v) return;
     var qs = new URLSearchParams({ id: v }).toString();
+    // Pretty URL; /verify is wired to this function via _redirects
     location.href = "/verify?" + qs;
   });
 
-  jsonLink.addEventListener("click", function (e) {
-    var v = (idIn.value || "").trim();
-    if (!v) {
-      e.preventDefault();
-      return;
-    }
-    jsonLink.href = "/.netlify/functions/verify?id=" + encodeURIComponent(v);
-  });
+  // Click handler for “View verification JSON”
+  if (dlCert) {
+    dlCert.addEventListener("click", async function () {
+      var v = (idIn.value || "").trim();
+      if (!v) return;
+
+      try {
+        var resp = await fetch(
+          "/.netlify/functions/verify?id=" + encodeURIComponent(v),
+          { cache: "no-store" }
+        );
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+
+        var data = await resp.json();
+        var pretty = JSON.stringify(data, null, 2);
+
+        var win = window.open("", "_blank");
+        if (!win) return; // Popup blocked
+
+        var html =
+          "<!doctype html><html><head>" +
+            "<meta charset='utf-8'>" +
+            "<title>Verification JSON – " + htmlEscape(v) + "</title>" +
+            "<style>" +
+              "body{background:#0b0f14;color:#eaeaea;" +
+              "font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;" +
+              "padding:16px;margin:0;}" +
+              "pre{white-space:pre-wrap;word-break:break-word;}" +
+            "</style>" +
+          "</head><body>" +
+            "<pre>" + htmlEscape(pretty) + "</pre>" +
+          "</body></html>";
+
+        win.document.write(html);
+        win.document.close();
+      } catch (e) {
+        alert("Could not load verification JSON. Please try again.");
+      }
+    });
+  }
 
   function clearBadge() {
     badges.innerHTML = "";
@@ -310,8 +345,8 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
         kv[k].textContent = "—";
       }
     }
-    dlOts.disabled = true;
-    dlCert.disabled = true;
+    if (dlOts) dlOts.disabled = true;
+    if (dlCert) dlCert.disabled = true;
 
     if (qrCanvas && qrCanvas.getContext) {
       var ctx = qrCanvas.getContext("2d");
@@ -369,8 +404,7 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     }
 
     kv.id.textContent = v;
-    jsonLink.href = "/.netlify/functions/verify?id=" + encodeURIComponent(v);
-    dlCert.disabled = false;
+    if (dlCert) dlCert.disabled = false;
 
     renderQrForId(v);
 
@@ -437,22 +471,30 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
 
     if (state === "OTS_RECEIPT") {
       try {
-        var dj = await (await fetch(
+        var djResponse = await fetch(
           "/.netlify/functions/download_receipt_json?id=" + encodeURIComponent(v),
           { cache: "no-store" }
-        )).json();
+        );
+        var dj;
+        try {
+          dj = await djResponse.json();
+        } catch (e2) {
+          dj = null;
+        }
 
         if (dj && dj.base64 && dj.base64.length) {
           kv.receipt.textContent = dj.key || (v + ".ots");
-          dlOts.disabled = false;
-          dlOts.onclick = function () {
-            window.location.href =
-              "/.netlify/functions/download_receipt?id=" + encodeURIComponent(v);
-          };
+          if (dlOts) {
+            dlOts.disabled = false;
+            dlOts.onclick = function () {
+              window.location.href =
+                "/.netlify/functions/download_receipt?id=" + encodeURIComponent(v);
+            };
+          }
         } else {
           kv.receipt.textContent = "—";
         }
-      } catch (e2) {
+      } catch (e3) {
         kv.receipt.textContent = "—";
       }
     }
