@@ -51,17 +51,17 @@ function normalizeRecord(meta) {
     throw new Error('normalizeRecord: "id" is required');
   }
   const now = new Date().toISOString();
-  return {
+    return {
     id: meta.id,
     filename: meta.filename || null,
     displayName: meta.displayName || null,
     hash: meta.hash || null,
     customerEmail: meta.customerEmail || meta.email || null,
     createdAt: meta.createdAt || now,
+    emailedAt: meta.emailedAt || null,   // <— NEW
     source: meta.source || 'stripe_webhook',
     version: 1,
   };
-}
 
 /**
  * Persist a proof record by its canonical key. Idempotent (overwrite).

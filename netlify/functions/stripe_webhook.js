@@ -2,7 +2,7 @@
 // CommonJS runtime
 const Stripe = require("stripe");
 const { sendEmail } = require("./_email");
-const { saveProof, appendToFeeds } = require("./_db");
+const { saveProof, appendToFeeds, getProof } = require("./_db");
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2024-06-20",
@@ -42,9 +42,27 @@ exports.handler = async (event) => {
   const type = payload?.type;
   const obj = payload?.data?.object || {};
 
-  // We only care about completed Checkout Sessions
+    // We only care about completed Checkout Sessions
   if (type === "checkout.session.completed") {
     try {
+      const proofId = obj.id;
+      if (!proofId) throw new Error("Missing Checkout Session id");
+
+      // Idempotency: if we've already marked this proof as emailed, skip
+      try {
+        const existing = await getProof(proofId);
+        if (existing && existing.emailedAt) {
+          console.log("stripe_webhook replay: email already sent for", proofId);
+          return {
+            statusCode: 200,
+            body: JSON.stringify({ ok: true, replay: true, id: proofId }),
+          };
+        }
+      } catch (checkErr) {
+        console.error("getProof idempotency check failed:", checkErr);
+        // Better to risk a duplicate email than drop it entirely, so continue.
+      }
+
       const to = obj.customer_email;
       if (!to) throw new Error("Missing customer_email in Stripe session");
 
@@ -59,7 +77,6 @@ exports.handler = async (event) => {
       const shortId = md.shortId || null;
 
       // Canonical proof id: the Checkout Session id
-      const proofId = obj.id;
 
       const origin = siteOrigin(event);
       if (!origin) throw new Error("Could not determine site origin");
@@ -174,6 +191,22 @@ exports.handler = async (event) => {
           },
         ],
       });
+
+      // Mark email as sent so retries don't send duplicates
+      try {
+        await saveProof({
+          id: proofId,
+          filename,
+          displayName,
+          hash,
+          customerEmail: to,
+          source: "stripe_webhook",
+          createdAt: new Date().toISOString(),
+          emailedAt: new Date().toISOString(),
+        });
+      } catch (markErr) {
+        console.error("saveProof emailedAt mark failed (non-fatal):", markErr);
+      }
 
       return {
         statusCode: 200,
