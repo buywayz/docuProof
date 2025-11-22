@@ -443,11 +443,11 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     kv.conf.textContent = status.confirmations != null ? status.confirmations : 0;
     kv.anchor.textContent = status.anchorKey || "—";
 
-    if (state === "NOT_FOUND") {
+        if (state === "NOT_FOUND") {
       setBadge(
         "neutral",
-        "No proof found yet",
-        "We do not see a receipt or Bitcoin anchor for this ID yet. If you just created this proof, allow time for batching and anchoring. You can still verify independently later using your .ots receipt and original file."
+        "Queued for anchoring",
+        "We have your proof on file but do not yet see a Bitcoin receipt or anchor for this ID. If you just created this proof, allow time for batching and anchoring. You can always check back here later using your Proof ID."
       );
       return;
     }
