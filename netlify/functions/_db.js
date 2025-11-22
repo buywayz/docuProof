@@ -1,5 +1,5 @@
 // netlify/functions/_db.js
-// Persistence via Netlify Blobs (dynamic ESM import for compatibility in CJS functions).
+// Persistence via Netlify Blobs (with safe dynamic import for CJS functions).
 
 // Memoized dynamic import so we only resolve the module once per cold start.
 let _storePromise = null;
@@ -10,11 +10,12 @@ async function getStoreSafe() {
 
   _storePromise = (async () => {
     try {
-      const mod = await import('@netlify/blobs');
+      const mod = await import("@netlify/blobs");
 
-      // Try auto-configured environment first
+      // First try the automatic environment binding (recommended by Netlify)
       try {
-        return mod.getStore('proofs');
+        // Named store "proofs"
+        return mod.getStore("proofs");
       } catch {
         // Manual fallback if environment isn’t fully configured
         const siteID =
@@ -22,21 +23,29 @@ async function getStoreSafe() {
           process.env.SITE_ID ||
           process.env.SITE_NAME ||
           null;
+
         const token =
           process.env.NETLIFY_BLOBS_TOKEN ||
           process.env.BLOBS_TOKEN ||
           null;
 
         if (siteID && token) {
+          // Newer SDKs expose BlobsClient, older ones only getStore(options)
           if (mod.BlobsClient) {
             const client = new mod.BlobsClient({ siteID, token });
-            return client.getStore('proofs');
+            return client.getStore("proofs");
           }
-          return mod.getStore({ name: 'proofs', siteID, token });
+
+          // Legacy style
+          return mod.getStore({ name: "proofs", siteID, token });
         }
+
+        // No usable configuration
         return null;
       }
-    } catch {
+    } catch (err) {
+      // Blobs SDK not available at all (local/dev or older env)
+      console.error("getStoreSafe: failed to import @netlify/blobs:", err);
       return null;
     }
   })();
@@ -44,24 +53,30 @@ async function getStoreSafe() {
   return _storePromise;
 }
 
+// In-memory fallback (only used if Blobs are unavailable; process-local only)
 const memFallback = new Map();
 
+/**
+ * Normalize and validate a proof record going into storage.
+ */
 function normalizeRecord(meta) {
   if (!meta || !meta.id) {
     throw new Error('normalizeRecord: "id" is required');
   }
+
   const now = new Date().toISOString();
-    return {
+
+  return {
     id: meta.id,
     filename: meta.filename || null,
     displayName: meta.displayName || null,
     hash: meta.hash || null,
     customerEmail: meta.customerEmail || meta.email || null,
     createdAt: meta.createdAt || now,
-    emailedAt: meta.emailedAt || null,   // <— NEW
-    source: meta.source || 'stripe_webhook',
+    source: meta.source || "stripe_webhook",
     version: 1,
   };
+}
 
 /**
  * Persist a proof record by its canonical key. Idempotent (overwrite).
@@ -72,7 +87,9 @@ async function saveProof(meta) {
 
   const store = await getStoreSafe();
   if (store) {
-    await store.set(key, JSON.stringify(record), { contentType: 'application/json' });
+    await store.set(key, JSON.stringify(record), {
+      contentType: "application/json",
+    });
     return record;
   }
 
@@ -80,10 +97,11 @@ async function saveProof(meta) {
   memFallback.set(key, record);
   return record;
 }
+
 /**
  * Append a compact entry to rolling feeds:
- * - "feed:all"
- * - "feed:email:<email>"
+ *  - "feed:all"
+ *  - "feed:email:<email>"
  * Keeps up to 200 recent items, newest first.
  */
 async function appendToFeeds(record) {
@@ -101,20 +119,23 @@ async function appendToFeeds(record) {
 
   async function writeFeed(key) {
     try {
-      let feed = await store.get(key, { type: 'json' });
+      let feed = await store.get(key, { type: "json" });
       if (!Array.isArray(feed)) feed = [];
+
       // prepend newest
       feed.unshift(entry);
       if (feed.length > 200) feed = feed.slice(0, 200);
+
       await store.set(key, JSON.stringify(feed), {
-        contentType: 'application/json',
+        contentType: "application/json",
       });
-    } catch {
-      // swallow: feeds are best-effort
+    } catch (err) {
+      // feeds are best-effort; never break the webhook on this
+      console.error("appendToFeeds error for", key, err);
     }
   }
 
-  await writeFeed('feed:all');
+  await writeFeed("feed:all");
   if (record.customerEmail) {
     await writeFeed(`feed:email:${record.customerEmail}`);
   }
@@ -127,12 +148,15 @@ async function appendToFeeds(record) {
 async function listProofs({ email, limit = 50 } = {}) {
   const store = await getStoreSafe();
   if (!store) return [];
-  const key = email ? `feed:email:${email}` : 'feed:all';
+
+  const key = email ? `feed:email:${email}` : "feed:all";
+
   try {
-    const feed = await store.get(key, { type: 'json' });
+    const feed = await store.get(key, { type: "json" });
     if (!Array.isArray(feed)) return [];
     return feed.slice(0, limit);
-  } catch {
+  } catch (err) {
+    console.error("listProofs error:", err);
     return [];
   }
 }
@@ -140,34 +164,45 @@ async function listProofs({ email, limit = 50 } = {}) {
 /**
  * Retrieve a proof record by id, or null if missing.
  */
-
-// Clean JSON getter
 async function getProof(id) {
   if (!id) throw new Error('getProof: "id" is required');
 
   const store = await getStoreSafe();
-  if (!store) return null;
+  if (!store) {
+    // fall back to in-memory store if present
+    const k = `proof:${id}`;
+    return memFallback.get(k) || null;
+  }
 
   const keys = [`proof:${id}`, `proof:${id}.json`];
 
   for (const key of keys) {
     try {
-      const j = await store.get(key, { type: 'json' });
-      if (j && typeof j === 'object') return j;
-    } catch {}
+      const j = await store.get(key, { type: "json" });
+      if (j && typeof j === "object") return j;
+    } catch {
+      // ignore and try raw
+    }
 
     try {
       const val = await store.get(key);
       if (!val) continue;
-      if (typeof val === 'string') return JSON.parse(val);
-      if (val && typeof val.text === 'function') return JSON.parse(await val.text());
-    } catch {}
+
+      if (typeof val === "string") return JSON.parse(val);
+      if (val && typeof val.text === "function") {
+        return JSON.parse(await val.text());
+      }
+    } catch (err) {
+      console.error("getProof parse error for", key, err);
+    }
   }
 
   return null;
 }
 
-// Quiet ping check
+/**
+ * Quiet health check used by /env_dump or other diagnostics.
+ */
 async function ping() {
   const store = await getStoreSafe();
   return { blobsReady: !!store };
