@@ -1,287 +1,350 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>docuProof — Success</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
-  <!-- Canonical & SEO -->
-  <link rel="canonical" href="https://docuproof.io/success.html">
-  <meta name="description" content="Your document fingerprint has been saved. Download your OTS receipt, your court-friendly PDF certificate, or open the verification page.">
+<title>Payment complete — proof saved | docuProof</title>
+<meta name="description" content="Your proof has been queued for anchoring on Bitcoin.">
 
-  <!-- Open Graph -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://docuproof.io/success.html">
-  <meta property="og:title" content="docuProof — Proof saved">
-  <meta property="og:description" content="Your proof-of-existence was created. Download your receipt and certificate or verify now.">
-  <meta property="og:image" content="https://docuproof.io/assets/meta/og-start.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
+<link rel="icon" href="/docuproof-logo.png">
+<meta name="theme-color" content="#0b0f14">
+<style>
+  :root{
+    --bg:#0b0f14;--ink:#eaeaea;--muted:#a7b0ba;--accent:#22C55E;
+    --card:#151b22;--card-soft:#10151b;--border:#1e2630;--link:#9cc1ff;
+    --danger:#ffb4b4;--danger-bg:#1a0b0b;
+    --neutral-bg:#151821;--neutral-border:#303749;--neutral-text:#cbd3e1;
+    --warn-bg:#231c12;--warn-border:#5f461f;--warn-text:#f4d28a;
+    --ok-bg:#0d1912;--ok-border:#1e5131;--ok-text:#9af3b4;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  }
+  a{color:var(--link)}
+  header,main,footer{max-width:1100px;margin:auto;padding:16px 20px}
+  .header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border-bottom:1px solid var(--border);
+  }
+  .brand{display:flex;gap:10px;align-items:center;text-decoration:none;color:var(--ink)}
+  .brand img{height:32px}
+  h1{font-size:32px;margin:18px 0 8px}
+  .subhead{color:var(--muted);margin-bottom:24px}
 
-  <!-- Twitter (X) -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="docuProof — Proof saved">
-  <meta name="twitter:description" content="Your proof-of-existence was created. Download your receipt and certificate or verify now.">
-  <meta name="twitter:image" content="https://docuproof.io/assets/meta/og-start.png">
+  .layout{
+    display:flex;
+    flex-wrap:wrap;
+    gap:20px;
+  }
+  .main-card{
+    flex:2 1 520px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:20px 20px 24px;
+  }
+  .side-card{
+    flex:1 1 260px;
+    background:var(--card-soft);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:18px 18px 22px;
+  }
 
-  <!-- Icons & theme -->
-  <link rel="manifest" href="/site.webmanifest">
-  <link rel="icon" href="/docuproof-logo.png">
-  <link rel="shortcut icon" href="/docuproof-logo.png">
-  <link rel="apple-touch-icon" href="/docuproof-logo.png">
-  <meta name="theme-color" content="#0b0f0f">
+  .label{font-size:13px;color:var(--muted);margin-bottom:2px}
+  .value{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px}
 
-  <style>
-    :root{
-      /* Match start.html palette */
-      --bg:#0b0f14; --ink:#eaeaea; --muted:#a7b0ba; --accent:#22C55E;
-      --card:#151b22; --border:#1e2630; --link:#9cc1ff; --danger:#ffb4b4;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
-    a{color:var(--link);text-decoration:none}
-    a:hover{text-decoration:underline}
-    .wrap{max-width:920px;margin:48px auto;padding:0 20px}
-    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-    .brand{display:flex;align-items:center;gap:10px;color:var(--ink)}
-    .brand img{height:32px}
-    .brand span{font-weight:700}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .btn{display:inline-block;padding:12px 16px;border-radius:12px;font-weight:800;border:1px solid transparent;cursor:pointer}
-    .btn-primary{background:var(--accent);color:#0b0f14}
-    .btn-ghost{background:transparent;color:var(--ink);border-color:#2a3542}
-    .small{font-size:13px;color:#c9d2db}
-    .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
-    .muted{color:var(--muted)}
-    .grid{display:grid;gap:18px;grid-template-columns:1fr}
-    h1{font-size:clamp(28px,4.2vw,44px);line-height:1.1;margin:0 0 10px}
-    h2{font-size:20px;margin:0 0 8px}
-    .kv{display:grid;grid-template-columns:120px 1fr;gap:10px;font-size:14px}
-    .kv div:nth-child(odd){color:#a7b0ba}
-    .status-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
-    .ok{background:#35d08a}
-    .pending{background:#d0b235}
-    .err{background:#d03535}
-    .copy-btn{padding:8px 12px;border-radius:10px;border:1px solid #2a3542;background:transparent;color:var(--ink);cursor:pointer}
-    .cta-bar{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
-    .notice{border-left:4px solid var(--accent);background:#0e141a;border-radius:8px;padding:14px 16px;margin-top:12px}
-    footer{margin-top:44px;text-align:center;color:#9aa3af;font-size:13px}
-    .help{color:#9aa3af}
-  </style>
+  .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .status-dot{
+    width:8px;height:8px;border-radius:999px;
+    display:inline-block;
+  }
+  .status-dot.neutral{background:#f4d28a;}
+  .status-dot.warn{background:#f4d28a;}
+  .status-dot.err{background:#ff6b6b;}
+  .status-dot.ok{background:#22C55E;}
+
+  .status-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:6px 10px;
+    border-radius:999px;
+    font-size:13px;
+  }
+  .status-pill.neutral{
+    background:var(--neutral-bg);
+    border:1px solid var(--neutral-border);
+    color:var(--neutral-text);
+  }
+  .status-pill.warn{
+    background:var(--warn-bg);
+    border:1px solid var(--warn-border);
+    color:var(--warn-text);
+  }
+  .status-pill.ok{
+    background:var(--ok-bg);
+    border:1px solid var(--ok-border);
+    color:var(--ok-text);
+  }
+
+  .field-row{margin-top:10px;margin-bottom:6px}
+  .actions{margin-top:18px;display:flex;flex-wrap:wrap;gap:10px}
+  button{
+    border-radius:999px;
+    border:1px solid var(--border);
+    background:#0f141a;
+    color:var(--ink);
+    padding:10px 18px;
+    font-size:14px;
+    cursor:pointer;
+    font-weight:600;
+  }
+  button.primary{
+    background:var(--accent);
+    color:#071109;
+    border:none;
+  }
+  button:disabled{
+    opacity:0.4;
+    cursor:default;
+  }
+  .helper-box{
+    margin-top:18px;
+    border-radius:12px;
+    border:1px solid #164e2f;
+    background:#08140d;
+    padding:14px 14px 16px;
+    font-size:13px;
+    color:var(--neutral-text);
+  }
+  .helper-box strong{color:#c0f2ce}
+
+  .what-next{
+    margin-top:24px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:18px 20px 22px;
+  }
+  .what-next h2{margin:0 0 8px;font-size:18px}
+  .what-next ul{
+    margin:8px 0 0;
+    padding-left:18px;
+    color:var(--muted);
+    font-size:14px;
+  }
+
+  footer{
+    color:var(--muted);
+    text-align:center;
+    border-top:1px solid var(--border);
+    margin-top:28px;
+    padding:24px 20px;
+  }
+
+  @media (max-width:900px){
+    h1{font-size:26px}
+  }
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <a class="brand" href="/" aria-label="docuProof home">
-        <img src="/docuproof-logo.png" alt="docuProof logo">
-        <span>docuProof</span>
-      </a>
-      <nav class="small">
-        <a href="/start.html">Start</a> · <a href="/app">App</a> · <a href="/.netlify/functions/verify_page">Verify</a>
-      </nav>
-    </header>
+<header class="header">
+  <a class="brand" href="/" aria-label="docuProof home">
+    <img src="/docuproof-logo.png" alt="docuProof">
+    <strong>docuProof</strong>
+  </a>
+  <nav>
+    <a href="/start.html">Start</a> · <a href="/app">App</a> · <a href="/verify">Verify</a>
+  </nav>
+</header>
 
-    <main class="grid">
-      <section class="card">
-        <h1>Payment complete — proof saved</h1>
-        <p class="small">Below are your next steps and live status. Keep your original file with the downloaded proof bundle.</p>
-
-        <div class="kv" style="margin-top:10px">
-          <div>Proof ID</div>
-          <div>
-            <span id="proofId" data-proof-id class="mono">{CHECKOUT_SESSION_ID}</span>
-            <button id="copyProofId" class="copy-btn">Copy</button>
-            <span class="small" style="margin-left:10px">
-              <a id="viewStatusLink" href="#" aria-label="View live status">View live status</a>
-            </span>
-          </div>
-
-          <div>Status</div>
-          <div id="statusLine">
-            <span class="status-dot pending" id="statusDot"></span>
-            <span id="statusText" class="mono">Not found</span>
-          </div>
-
-          <div>Bitcoin txid</div>
-          <div id="txLine" class="mono muted">—</div>
-        </div>
-
-        <div class="cta-bar">
-          <a id="openVerify" class="btn btn-ghost" href="#">Open Verify Page</a>
-          <a id="downloadOts" class="btn btn-ghost" href="#">Download OTS Receipt</a>
-          <a id="downloadCert" class="btn btn-primary" href="#">Download PDF Certificate</a>
-        </div>
-
-        <div class="notice">
-          <p class="small">
-            To independently verify later: keep your original file (e.g. <code>document.pdf</code>)
-            together with the OTS receipt (<code>document.pdf.ots</code>). Anyone can verify using
-            our site or the open-source <code>ots</code> tool.
-          </p>
-        </div>
-      </section>
-
-      <section class="card">
-        <h2>What happens next?</h2>
-        <ul class="small">
-          <li>Your receipt is already created and downloadable above.</li>
-          <li>We batch and anchor proofs to Bitcoin. Once mined, a txid appears here with confirmations.</li>
-          <li>You can always verify later via the “Verify” link using your Proof ID.</li>
-        </ul>
-      </section>
-    </main>
-
-    <footer>© <span id="year"></span> docuProof.io — Proof of Existence on the Bitcoin Blockchain</footer>
+<main>
+  <h1>Payment complete — proof saved</h1>
+  <div class="subhead">
+    Below are your next steps and live status. Keep your original file with the downloaded proof bundle.
   </div>
 
-  <script>
-    // Year
-    document.getElementById('year').textContent = new Date().getFullYear();
+  <section class="layout">
+    <article class="main-card">
+      <!-- Proof ID -->
+      <div class="field-row">
+        <div class="label">Proof ID</div>
+        <div class="row">
+          <div id="proofId" class="value">—</div>
+          <a id="statusLink" href="#" style="font-size:13px;">status</a>
+          <a id="viewLiveLink" href="#" style="font-size:13px;">View live</a>
+        </div>
+      </div>
 
-    // --- Resolve the Proof ID ---
-    const url = new URL(location.href);
-    let id = (url.searchParams.get('session_id') || '').trim();
-    if (!id) {
-      // Fallback to what we saved at checkout time
-      try { id = localStorage.getItem('last_session_id') || ''; } catch {}
-    }
-    if (!id) {
-      // Last resort: keep the placeholder visible but disable actions
-      id = '{CHECKOUT_SESSION_ID}';
-    }
+      <!-- Status -->
+      <div class="field-row">
+        <div class="label">Status</div>
+        <div id="statusPill" class="status-pill neutral">
+          <span class="status-dot neutral"></span>
+          <span id="statusText">Queued for anchoring</span>
+        </div>
+      </div>
 
-    // --- Wire UI elements ---
-    const idSpan   = document.getElementById('proofId');
-    const copyBtn  = document.getElementById('copyProofId');
-    const openBtn  = document.getElementById('openVerify');
-    const dlOtsBtn = document.getElementById('downloadOts');
-    const dlPdfBtn = document.getElementById('downloadCert');
-    const statusEl = document.getElementById('statusText');
-    const dotEl    = document.getElementById('statusDot');
-    const txEl     = document.getElementById('txLine');
-    const viewLink = document.getElementById('viewStatusLink');
+      <!-- Txid -->
+      <div class="field-row">
+        <div class="label">Bitcoin txid</div>
+        <div id="txidValue" class="value">—</div>
+      </div>
 
-    // Print the resolved ID
-    idSpan.textContent = id;
+      <!-- Actions -->
+      <div class="actions">
+        <button id="openVerify" class="primary">Open Verify Page</button>
+        <button id="dlOts" disabled>Download OTS Receipt</button>
+        <button id="dlPdf">Download PDF Certificate</button>
+      </div>
 
-// Helper tooltips (explanations)
-if (idSpan) {
-  idSpan.title = "Unique identifier for this proof within docuProof. Use it to look up status or download receipts later.";
-}
-if (openBtn) {
-  openBtn.title = "Open a detailed verification page for this proof.";
-}
-if (viewLink) {
-  viewLink.title = "Open a detailed verification page showing status, receipts, and JSON.";
-}
-if (dlPdfBtn) {
-  dlPdfBtn.title = "Download a PDF certificate summarizing this proof and its verification details.";
-}
-if (dlOtsBtn) {
-  dlOtsBtn.title = "Download the raw OpenTimestamps (.ots) receipt once it becomes available.";
-}
+      <div class="helper-box" id="helperBox">
+        <strong>What this means:</strong>
+        <div id="helperText">
+          Your receipt is created and your proof has been queued for batching and anchoring to Bitcoin.
+          You can always verify later at the <strong>Verify</strong> link using your Proof ID.
+        </div>
+      </div>
+    </article>
 
-    // Helper: set status line
-    function setStatus(state, txid, confirmations) {
-      let label = 'Not found';
-      let dot   = 'err';
+    <aside class="side-card">
+      <h3 style="margin:0 0 8px;font-size:18px;">What happens next?</h3>
+      <ul style="margin:6px 0 0 0;padding-left:18px;font-size:14px;color:var(--muted);">
+        <li>Your receipt is already created and downloadable above (once ready).</li>
+        <li>We batch and anchor proofs to Bitcoin. Once mined, a txid appears with confirmations.</li>
+        <li>You can always verify later via <strong>Verify</strong> using your Proof ID.</li>
+      </ul>
+    </aside>
+  </section>
 
-      if (state === 'OTS_RECEIPT') { label = 'Receipt available — awaiting anchor'; dot = 'pending'; }
-      if (state === 'ANCHORED')     { label = `Anchored${typeof confirmations === 'number' ? ' — ' + confirmations + ' conf' : ''}`; dot = 'ok'; }
-      if (state === 'OTS_SUBMITTED') { label = 'Submitted to calendar (pre-anchor)'; dot = 'pending'; }
-      if (state === 'NOT_FOUND' || !state) { label = 'Not found'; dot = 'err'; }
+  <section class="what-next">
+    <h2>Keep your proof bundle together</h2>
+    <ul>
+      <li>Save your original file (for example <code>document.pdf</code>).</li>
+      <li>Save the OpenTimestamps receipt (for example <code>document.pdf.ots</code>).</li>
+      <li>Optionally save this PDF certificate for a human-readable summary and QR.</li>
+    </ul>
+  </section>
+</main>
 
-      statusEl.textContent = label;
-      dotEl.className = 'status-dot ' + dot;
+<footer>
+  © <span id="year"></span> docuProof.io — Proof of Existence on the Bitcoin Blockchain.
+</footer>
 
-        if (txid) {
-    const href = `https://mempool.space/tx/${encodeURIComponent(txid)}`;
-    txEl.innerHTML = `<a class="mono" href="${href}" target="_blank" rel="noopener">${txid}</a>`;
-    txEl.title = "Bitcoin transaction ID that anchors this proof. Click to view it in a block explorer.";
-  } else {
-    txEl.textContent = '—';
-    txEl.title = "Once this proof has been batched and anchored to Bitcoin, the transaction ID will appear here.";
+<script>
+(function () {
+  function $(id){ return document.getElementById(id); }
+
+  document.getElementById("year").textContent = new Date().getFullYear();
+
+  // --- Pull proofId from URL (session_id or id) ---
+  const params = new URLSearchParams(location.search);
+  const proofId = (params.get("session_id") || params.get("id") || "").trim();
+
+  const proofIdEl   = $("proofId");
+  const statusPill  = $("statusPill");
+  const statusText  = $("statusText");
+  const txidValue   = $("txidValue");
+  const helperText  = $("helperText");
+  const openVerify  = $("openVerify");
+  const dlOts       = $("dlOts");
+  const dlPdf       = $("dlPdf");
+  const statusLink  = $("statusLink");
+  const viewLive    = $("viewLiveLink");
+
+  if (!proofId) {
+    proofIdEl.textContent = "Missing session_id";
+    openVerify.disabled = true;
+    dlPdf.disabled = true;
+    dlOts.disabled = true;
+    return;
   }
-}
 
-    // Actions depend on having a real id
-    const hasRealId = id && id !== '{CHECKOUT_SESSION_ID}';
+  proofIdEl.textContent = proofId;
 
-    function disableActions() {
-      [openBtn, dlOtsBtn, dlPdfBtn, viewLink].forEach(a=>{
-        if (!a) return;
-        a.href = '#';
-        a.addEventListener('click', e=>{ e.preventDefault(); alert('No Proof ID detected for this session.'); });
-      });
-      setStatus('NOT_FOUND', null, 0);
-    }
+  const verifyUrl = "/verify?id=" + encodeURIComponent(proofId);
+  statusLink.href = verifyUrl;
+  viewLive.href   = verifyUrl;
+  openVerify.onclick = function () {
+    window.location.href = verifyUrl;
+  };
 
-    if (!hasRealId) {
-      disableActions();
-    } else {
-      // Wire buttons/links
-            const vUrl = `/.netlify/functions/verify_page?id=${encodeURIComponent(id)}`;
-      if (openBtn)  openBtn.href  = vUrl;
-      if (viewLink) viewLink.href = vUrl;
-      if (dlOtsBtn) dlOtsBtn.href = `/.netlify/functions/download_receipt?id=${encodeURIComponent(id)}`;
-      if (dlPdfBtn) dlPdfBtn.href = `/.netlify/functions/proof_pdf?id=${encodeURIComponent(id)}`;
+  dlPdf.onclick = function () {
+    window.location.href =
+      "/.netlify/functions/proof_pdf?id=" + encodeURIComponent(proofId);
+  };
 
-      if (copyBtn) {
-        copyBtn.addEventListener('click', async () => {
-          try { await navigator.clipboard.writeText(id); copyBtn.textContent='Copied!'; setTimeout(()=>copyBtn.textContent='Copy', 1200); } catch {}
-        });
-      }
+  function setStatus(kind, label, helper) {
+    statusPill.className = "status-pill " + kind;
+    const dot = statusPill.querySelector(".status-dot") || document.createElement("span");
+    dot.className = "status-dot " + kind;
+    if (!dot.parentNode) statusPill.insertBefore(dot, statusPill.firstChild);
+    statusText.textContent = label;
+    if (helper) helperText.textContent = helper;
+  }
 
-      // Live status poll (lightweight)
-        async function refreshStatus() {
+  // --- Fetch live status from anchor_status, but present "NOT_FOUND" as "Queued" ---
+  (async function loadStatus() {
     try {
-      const r = await fetch(`/.netlify/functions/verify?id=${encodeURIComponent(id)}`, { cache: 'no-store' });
-      const data = await r.json();
+      const r = await fetch(
+        "/.netlify/functions/anchor_status?id=" + encodeURIComponent(proofId),
+        { cache: "no-store" }
+      );
+      const data = await r.json().catch(() => ({}));
 
-      setStatus(data?.state, data?.txid, data?.confirmations);
+      const state = data.state || "NOT_FOUND";
 
-      // Gate the OTS receipt button on whether a receipt actually exists
-      if (dlOtsBtn) {
-        if (data && data.receiptAvailable) {
-          // Receipt ready: keep normal link behavior
-          dlOtsBtn.onclick = null;
-          dlOtsBtn.removeAttribute('aria-disabled');
-        } else {
-          // No receipt yet: intercept clicks and explain why
-          dlOtsBtn.setAttribute('aria-disabled', 'true');
-          dlOtsBtn.onclick = (e) => {
-            e.preventDefault();
-            alert(
-              "Your OpenTimestamps (.ots) receipt is not available yet.\n\n" +
-              "docuProof batches proofs and anchors them to Bitcoin. " +
-              "Once this proof has been anchored, this button will download the receipt."
-            );
-          };
+      if (state === "ANCHORED") {
+        // Green, anchored
+        setStatus(
+          "ok",
+          "Anchored on Bitcoin",
+          "Your proof has been anchored in a Bitcoin transaction. Confirmations will accumulate over time."
+        );
+        if (data.txid) {
+          const mempoolUrl = "https://mempool.space/tx/" + encodeURIComponent(data.txid);
+          txidValue.innerHTML =
+            '<a class="value" href="' + mempoolUrl + '" target="_blank" rel="noopener">' +
+            data.txid +
+            "</a>";
         }
+      } else if (state === "OTS_RECEIPT") {
+        // Receipt exists, anchor pending
+        setStatus(
+          "warn",
+          "Receipt created — awaiting anchor",
+          "Your OpenTimestamps receipt is available and will be batched into a Bitcoin transaction shortly."
+        );
+
+        // Attempt to enable OTS download if available
+        dlOts.disabled = false;
+        dlOts.onclick = function () {
+          window.location.href =
+            "/.netlify/functions/download_receipt?id=" + encodeURIComponent(proofId);
+        };
+      } else {
+        // NOT_FOUND or anything else → user-friendly pending
+        setStatus(
+          "neutral",
+          "Queued for anchoring",
+          "We do not yet see a receipt or Bitcoin anchor for this ID. If you just created this proof, allow time for batching and anchoring. You can always check back via the Verify page."
+        );
       }
-
     } catch (e) {
-      setStatus('NOT_FOUND', null, 0);
+      // On error, keep the default “queued” messaging
+      console.error("success status load error:", e);
     }
-  }
-      refreshStatus();
-      const iv = setInterval(refreshStatus, 10000);
+  })();
+})();
+</script>
 
-      // Optional: stop polling once anchored with ≥ 1 conf
-      // (Uncomment if desired)
-      // const stopIfAnchored = async () => {
-      //   try {
-      //     const r = await fetch(`/.netlify/functions/verify?id=${encodeURIComponent(id)}`, { cache: 'no-store' });
-      //     const d = await r.json();
-      //     if (d?.txid && (d?.confirmations ?? 0) >= 1) clearInterval(iv);
-      //   } catch {}
-      // };
-      // setInterval(stopIfAnchored, 15000);
-
-      // Clean up the remembered id so it doesn't leak across sessions
-      try { localStorage.removeItem('last_session_id'); } catch {}
-    }
-  </script>
 </body>
 </html>
