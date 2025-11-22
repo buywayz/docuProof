@@ -78,11 +78,22 @@ exports.handler = async (event) => {
          { width: mm(120) }
        );
 
-    // Summary rows with per-line helper text
+       // Summary rows with per-line helper text
+    // Shorten very long values so they don't collide visually with the QR block.
+    const shortProofId =
+      typeof id === "string" && id.length > 70
+        ? id.slice(0, 46) + "…" + id.slice(-23)
+        : id;
+
+    const shortVerifyUrl =
+      typeof verifyUrl === "string" && verifyUrl.length > 80
+        ? verifyUrl.slice(0, 54) + "…" + verifyUrl.slice(-25)
+        : verifyUrl;
+
     const rows = [
       [
         "Proof ID",
-        id,
+        shortProofId,
         "Unique identifier for this proof within docuProof."
       ],
       [
@@ -107,12 +118,12 @@ exports.handler = async (event) => {
       ],
       [
         "Public Verify URL",
-        verifyUrl,
+        shortVerifyUrl,
         "Shareable link to check live status and Bitcoin anchoring for this proof."
       ],
     ];
 
-            // Start rows lower to clear the paragraph fully
+    // Start rows lower to clear the paragraph fully
     let y = mm(68); // was 60; pushes the first row down another ~8 mm
 
     rows.forEach(([k, v, helper]) => {
