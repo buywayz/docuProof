@@ -1,7 +1,7 @@
 // netlify/functions/ots_submit.js
 // Submit a hash to the OTS sidecar and store the .ots receipt in Netlify Blobs.
 
-const STAMP_PATH = "/stamp"; // path on the sidecar (base URL from env)
+const STAMP_PATH = "/stamp-hash"; // path on the sidecar (base URL from env)
 const OTS_BASE =
   process.env.OTS_SERVICE_URL ||
   process.env.OTS_SIDECAR_URL ||
