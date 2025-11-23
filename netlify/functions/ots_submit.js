@@ -1,91 +1,182 @@
 // netlify/functions/ots_submit.js
-// Write-only anchor creation with idempotency and optional HMAC guard.
+// Submit a hash to the OTS sidecar and store the .ots receipt in Netlify Blobs.
+//
+// Called as POST with JSON:
+//   { "id": "<proof id>", "hash": "<64-hex>" }
 
-const crypto = require("crypto");
+const STAMP_PATH = "/stamp-hash"; // ⬅️ adjust if your sidecar uses a different path
 
-const HMAC_SECRET = process.env.OTS_INTERNAL_HMAC || ""; // optional: can be empty
+// Small helper to get a Blobs store using explicit siteID + token
+let storePromise = null;
+async function getStoreSafe() {
+  if (storePromise) return storePromise;
 
-async function getFunctionStore(event) {
-  const mod = await import("@netlify/blobs");
-  if (typeof mod.connectLambda === "function") await mod.connectLambda(event);
-  const getStore = mod.getStore || mod.default?.getStore;
-  if (!getStore) throw new Error("getStore not available in @netlify/blobs");
-  const store = getStore({ name: "default" });
-  if (!store?.get || !store?.set) throw new Error("Function store unavailable");
-  return store;
+  storePromise = (async () => {
+    const mod = await import("@netlify/blobs");
+
+    const siteID =
+      process.env.NETLIFY_SITE_ID ||
+      process.env.SITE_ID ||
+      process.env.SITE_NAME ||
+      null;
+
+    const token =
+      process.env.NETLIFY_BLOBS_TOKEN ||
+      process.env.BLOBS_TOKEN ||
+      null;
+
+    if (!siteID || !token) {
+      console.error("ots_submit: missing Blobs credentials", { siteID, haveToken: !!token });
+      return null;
+    }
+
+    if (mod.BlobsClient) {
+      const client = new mod.BlobsClient({ siteID, token });
+      return client.getStore("proofs");
+    }
+
+    return mod.getStore({ name: "proofs", siteID, token });
+  })();
+
+  return storePromise;
 }
 
-function validSignature(id, hash, sig) {
-  if (!HMAC_SECRET) return true; // skip check if no secret configured
-  const msg = `${id}.${hash}`;
-  const h = crypto.createHmac("sha256", HMAC_SECRET).update(msg).digest("hex");
-  return crypto.timingSafeEqual(Buffer.from(h), Buffer.from(sig || "", "hex"));
+/** Normalize sidecar base URL */
+function sidecarBase() {
+  const base =
+    process.env.OTS_SIDECAR_URL ||
+    process.env.OTS_SERVICE_URL ||
+    "";
+  return base.replace(/\/+$/, "");
 }
 
 exports.handler = async (event) => {
   try {
-    if (event.httpMethod !== "GET") {
-      return { statusCode: 405, body: "Method Not Allowed" };
-    }
-
-    const qs = new URLSearchParams(event.queryStringParameters);
-    const id = (qs.get("id") || "").trim();
-    const passedHash = (qs.get("hash") || "").trim();
-    const sig = (qs.get("sig") || "").trim();
-
-    if (!id) return { statusCode: 400, body: "Missing ?id=" };
-
-    const hash =
-      passedHash || crypto.createHash("sha256").update(id).digest("hex");
-
-    if (!validSignature(id, hash, sig)) {
-      return { statusCode: 403, body: "Invalid signature" };
-    }
-
-    const store = await getFunctionStore(event);
-
-    const anchorKey = `anchor:${id}.json`;
-
-    // idempotency: if already anchored, just return existing record
-    let existing = null;
-    try {
-      existing = await store.get(anchorKey, { type: "json" });
-    } catch {}
-    if (existing && existing.state && existing.state !== "OTS_SUBMITTED") {
+    if (event.httpMethod !== "POST") {
       return {
-        statusCode: 200,
+        statusCode: 405,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ok: false, error: "POST required" }),
+      };
+    }
+
+    let body;
+    try {
+      body = JSON.parse(event.body || "{}");
+    } catch (e) {
+      return {
+        statusCode: 400,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ok: false, error: "Invalid JSON body" }),
+      };
+    }
+
+    const id = body.id || body.proofId;
+    const hash = (body.hash || "").toLowerCase();
+
+    if (!id) {
+      return {
+        statusCode: 400,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ok: false, error: "Missing id" }),
+      };
+    }
+    if (!/^[0-9a-f]{64}$/i.test(hash)) {
+      return {
+        statusCode: 400,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ok: false, error: "Invalid or missing 64-hex hash" }),
+      };
+    }
+
+    const base = sidecarBase();
+    if (!base) {
+      return {
+        statusCode: 500,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ok: false, error: "OTS sidecar URL not configured" }),
+      };
+    }
+
+    // --- 1) Call Cloud Run OTS sidecar ------------------------------------
+    const stampUrl = `${base}${STAMP_PATH}`;
+
+    const sideRes = await fetch(stampUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, hash }),
+    });
+
+    if (!sideRes.ok) {
+      const text = await sideRes.text().catch(() => "");
+      console.error("ots_submit: sidecar error", sideRes.status, text);
+      return {
+        statusCode: 502,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ok: true,
-          anchorKey,
-          state: existing.state,
-          note: "Already anchored",
+          ok: false,
+          error: `Sidecar HTTP ${sideRes.status}`,
+          body: text.slice(0, 500),
         }),
       };
     }
 
-    const anchorData = {
-      id,
-      hash,
-      state: "OTS_SUBMITTED",
-      submittedAt: new Date().toISOString(),
-      calendars: [
-        "https://alice.btc.calendar.opentimestamps.org",
-        "https://bob.btc.calendar.opentimestamps.org",
-      ],
-    };
+    const payload = await sideRes.json().catch(() => ({}));
 
-    await store.set(anchorKey, JSON.stringify(anchorData), {
-      contentType: "application/json",
+    // Try a few common property names for base64 receipt
+    const receiptB64 =
+      payload.receiptBase64 ||
+      payload.receipt ||
+      payload.ots ||
+      null;
+
+    if (!receiptB64) {
+      console.error("ots_submit: no receipt field in sidecar payload", payload);
+      return {
+        statusCode: 500,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ok: false,
+          error: "Sidecar did not return a base64 receipt (adjust ots_submit.js)",
+          raw: payload,
+        }),
+      };
+    }
+
+    const receiptBuf = Buffer.from(receiptB64, "base64");
+
+    // --- 2) Store .ots file in Netlify Blobs ------------------------------
+    const store = await getStoreSafe();
+    if (!store) {
+      return {
+        statusCode: 500,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ok: false, error: "No Blobs store available" }),
+      };
+    }
+
+    const key = `ots/receipts/${id}.ots`;
+
+    await store.set(key, receiptBuf, {
+      contentType: "application/octet-stream",
     });
 
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ok: true, anchorKey, state: anchorData.state }),
+      body: JSON.stringify({
+        ok: true,
+        id,
+        state: "OTS_SUBMITTED",
+        receiptKey: key,
+      }),
     };
   } catch (err) {
-    console.error("[OTS_SUBMIT] fatal:", err?.message);
-    return { statusCode: 500, body: "Internal Server Error" };
+    console.error("ots_submit error:", err);
+    return {
+      statusCode: 500,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ok: false, error: String(err && err.message || err) }),
+    };
   }
 };
