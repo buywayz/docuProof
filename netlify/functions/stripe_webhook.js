@@ -10,7 +10,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 
 /** Get site origin for self-calling functions (proof_pdf, submit_proof) */
 function siteOrigin(event) {
-  // Netlify provides process.env.URL in prod; fallback to request host
   const url =
     process.env.URL ||
     (event.headers &&
@@ -30,8 +29,7 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
-  // If you verify Stripe signatures, keep your existing logic here.
-  // For this flow, we accept the JSON as-is.
+  // We accept the JSON as-is; Stripe signature verification is external.
   let payload;
   try {
     payload = JSON.parse(event.body || "{}");
@@ -42,25 +40,19 @@ exports.handler = async (event) => {
   const type = payload?.type;
   const obj = payload?.data?.object || {};
 
-    // We only care about completed Checkout Sessions
+  // We only care about completed Checkout Sessions
   if (type === "checkout.session.completed") {
-    try {
-      const proofId = obj.id;
-      if (!proofId) throw new Error("Missing Checkout Session id");
+    const proofId = obj.id;
 
-      // Idempotency: if we've already marked this proof as emailed, skip
-      try {
-        const existing = await getProof(proofId);
-        if (existing && existing.emailedAt) {
-          console.log("stripe_webhook replay: email already sent for", proofId);
-          return {
-            statusCode: 200,
-            body: JSON.stringify({ ok: true, replay: true, id: proofId }),
-          };
-        }
-      } catch (checkErr) {
-        console.error("getProof idempotency check failed:", checkErr);
-        // Better to risk a duplicate email than drop it entirely, so continue.
+    try {
+      // --- 1) Idempotency: bail out if we've already sent the email for this id ---
+      const existing = proofId ? await getProof(proofId).catch(() => null) : null;
+      if (existing && existing.emailSentAt) {
+        console.log("stripe_webhook: duplicate event, already emailed", proofId);
+        return {
+          statusCode: 200,
+          body: JSON.stringify({ ok: true, duplicate: true, id: proofId }),
+        };
       }
 
       const to = obj.customer_email;
@@ -76,36 +68,29 @@ exports.handler = async (event) => {
       const hash = md.hash || null;
       const shortId = md.shortId || null;
 
-      // Canonical proof id: the Checkout Session id
-
       const origin = siteOrigin(event);
       if (!origin) throw new Error("Could not determine site origin");
 
-      // -------------------------------------------------------------------
-      // 1) Persist proof metadata to Netlify Blobs (via _db)
-      // -------------------------------------------------------------------
+      // --- 2) Persist proof metadata (Blobs) + history feeds ---
+      let record = null;
       try {
-        const record = await saveProof({
+        record = await saveProof({
           id: proofId,
           filename,
           displayName,
           hash,
           customerEmail: to,
           source: "stripe_webhook",
-          createdAt: new Date().toISOString(),
+          createdAt: existing?.createdAt,
         });
 
-        // Best-effort feed update (history + per-email view)
         await appendToFeeds(record);
       } catch (dbErr) {
         console.error("saveProof/appendToFeeds error (non-fatal):", dbErr);
         // Do not fail the webhook if persistence has a transient problem
       }
 
-      // -------------------------------------------------------------------
-      // 2) Fire-and-forget anchoring job via submit_proof
-      //    (we don't block the webhook on anchoring)
-      // -------------------------------------------------------------------
+      // --- 3) Fire-and-forget anchoring job via submit_proof (non-blocking) ---
       try {
         if (hash) {
           const submitUrl = `${origin}/.netlify/functions/submit_proof`;
@@ -119,8 +104,6 @@ exports.handler = async (event) => {
             source: "stripe_webhook",
           };
 
-          // Fire and forget: start the request, but don't await its result.
-          // We only log if the promise later rejects.
           fetch(submitUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -148,13 +131,12 @@ exports.handler = async (event) => {
         // Still continue with PDF + email
       }
 
-      // -------------------------------------------------------------------
-      // 3) Generate PDF certificate via existing proof_pdf function
-      // -------------------------------------------------------------------
+      // --- 4) Generate PDF certificate via proof_pdf (now with quickId) ---
       const qs = new URLSearchParams({
         id: proofId,
         filename,
         displayName,
+        quickId: shortId || "",
       }).toString();
 
       const pdfUrl = `${origin}/.netlify/functions/proof_pdf?${qs}`;
@@ -165,9 +147,7 @@ exports.handler = async (event) => {
       }
       const pdfB64 = await arrayBufferToBase64(await pdfRes.arrayBuffer());
 
-      // -------------------------------------------------------------------
-      // 4) Email certificate via Postmark
-      // -------------------------------------------------------------------
+      // --- 5) Email certificate via Postmark ---
       await sendEmail({
         to,
         subject: `Your Proof Certificate: ${displayName}`,
@@ -192,20 +172,24 @@ exports.handler = async (event) => {
         ],
       });
 
-      // Mark email as sent so retries don't send duplicates
+      // --- 6) Mark this proof as "email sent" so future webhook retries are no-ops ---
       try {
+        const nowIso = new Date().toISOString();
         await saveProof({
           id: proofId,
           filename,
           displayName,
           hash,
           customerEmail: to,
+          createdAt: record?.createdAt,
           source: "stripe_webhook",
-          createdAt: new Date().toISOString(),
-          emailedAt: new Date().toISOString(),
+          emailSentAt: nowIso,
+          emailCount: typeof existing?.emailCount === "number"
+            ? existing.emailCount + 1
+            : 1,
         });
       } catch (markErr) {
-        console.error("saveProof emailedAt mark failed (non-fatal):", markErr);
+        console.error("saveProof(emailSentAt) error (non-fatal):", markErr);
       }
 
       return {
