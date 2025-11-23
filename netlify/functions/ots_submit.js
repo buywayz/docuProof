@@ -1,11 +1,13 @@
 // netlify/functions/ots_submit.js
 // Submit a hash to the OTS sidecar and store the .ots receipt in Netlify Blobs.
 
-const STAMP_PATH = "/stamp-hash"; // path on the sidecar (base URL from env)
 const OTS_BASE =
   process.env.OTS_SERVICE_URL ||
   process.env.OTS_SIDECAR_URL ||
   "";
+
+// Sidecar lives at the root path (we probed /, /stamp, /stamp-hash)
+const STAMP_PATH = ""; // root
 
 // Lazy, shared Blobs store using the same manual-blobs-token path
 let storePromise = null;
@@ -27,15 +29,12 @@ async function getStoreSafe() {
         process.env.BLOBS_TOKEN ||
         null;
 
+      const storeName = process.env.BLOBS_STORE_NAME || "docuproof";
+
       if (!siteID || !token) {
-        console.error("getStoreSafe: missing siteID/token", {
-          siteID: !!siteID,
-          token: !!token,
-        });
+        console.error("getStoreSafe: missing siteID/token");
         return null;
       }
-
-      const storeName = process.env.BLOBS_STORE_NAME || "docuproof";
 
       if (mod.BlobsClient) {
         const client = new mod.BlobsClient({ siteID, token });
@@ -43,8 +42,8 @@ async function getStoreSafe() {
       }
 
       return mod.getStore({ name: storeName, siteID, token });
-    } catch (err) {
-      console.error("getStoreSafe error:", err);
+    } catch (e) {
+      console.error("getStoreSafe error:", e);
       return null;
     }
   })();
@@ -57,7 +56,7 @@ exports.handler = async (event) => {
     if (event.httpMethod !== "POST") {
       return {
         statusCode: 405,
-        headers: { "Content-Type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ ok: false, error: "Method Not Allowed" }),
       };
     }
@@ -65,67 +64,67 @@ exports.handler = async (event) => {
     if (!OTS_BASE) {
       return {
         statusCode: 500,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ok: false, error: "OTS service URL missing" }),
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ok: false, error: "OTS service URL not configured" }),
       };
     }
 
-    let body = {};
+    let body;
     try {
       body = JSON.parse(event.body || "{}");
-    } catch (e) {
+    } catch {
       return {
         statusCode: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ ok: false, error: "Invalid JSON body" }),
       };
     }
 
-    const id = body.id;
-    const hash = (body.hash || "").toLowerCase();
+    const id = (body.id || "").trim();
+    const hash = (body.hash || "").trim();
 
-    if (!id || typeof id !== "string") {
+    if (!id) {
       return {
         statusCode: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ ok: false, error: "Missing id" }),
       };
     }
 
-    if (!/^[0-9a-f]{64}$/.test(hash)) {
+    if (!hash || !/^[0-9a-fA-F]{64}$/.test(hash)) {
       return {
         statusCode: 400,
-        headers: { "Content-Type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({ ok: false, error: "Invalid or missing hash" }),
       };
     }
 
-    // 1) Call the OTS sidecar
-    const sidecarUrl = OTS_BASE.replace(/\/$/, "") + STAMP_PATH;
+    const target =
+      OTS_BASE.replace(/\/$/, "") + (STAMP_PATH || "");
 
-    const sidecarRes = await fetch(sidecarUrl, {
+    // 1) Call the sidecar at the root path with { id, hash }
+    const resp = await fetch(target, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hash }),
+      body: JSON.stringify({ id, hash }),
     });
 
-    const sidecarText = await sidecarRes.text();
+    const text = await resp.text();
     let sidecarJson = null;
     try {
-      sidecarJson = JSON.parse(sidecarText);
+      sidecarJson = JSON.parse(text);
     } catch {
-      // leave as null; we might have gotten raw data, but we expect JSON
+      sidecarJson = null;
     }
 
-    if (!sidecarRes.ok) {
-      console.error("OTS sidecar error:", sidecarRes.status, sidecarText);
+    if (!resp.ok) {
       return {
         statusCode: 502,
-        headers: { "Content-Type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           ok: false,
-          error: `Sidecar HTTP ${sidecarRes.status}`,
-          body: sidecarText,
+          error: `Sidecar HTTP ${resp.status}`,
+          body: text,
         }),
       };
     }
@@ -134,75 +133,63 @@ exports.handler = async (event) => {
       (sidecarJson && (sidecarJson.receipt_b64 || sidecarJson.receipt)) || null;
 
     if (!receiptB64) {
-      console.error("OTS sidecar: no receipt_b64 in response", sidecarText);
       return {
         statusCode: 502,
-        headers: { "Content-Type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           ok: false,
-          error: "Sidecar response missing receipt_b64",
+          error: "Sidecar did not return a receipt_b64 field",
+          body: sidecarJson,
         }),
       };
     }
 
-    // 2) Store the .ots receipt + a simple anchor record in Blobs
+    // 2) Store the receipt in the same Blobs store that anchor_status/diag_receipt use
     const store = await getStoreSafe();
     if (!store) {
-      console.error("ots_submit: no Blobs store available");
       return {
         statusCode: 500,
-        headers: { "Content-Type": "application/json" },
+        headers: { "content-type": "application/json" },
         body: JSON.stringify({
           ok: false,
-          error: "Blobs store not available",
+          error: "Netlify Blobs not configured",
         }),
       };
     }
 
+    const rawBuf = Buffer.from(receiptB64, "base64");
     const receiptKey = `ots/receipts/${id}.ots`;
-    const anchorKey = `anchor:${id}.json`;
+    const altKey = `ots:${id}.receipt`;
 
-    const receiptBytes = Buffer.from(receiptB64, "base64");
-
-    // Binary .ots receipt
-    await store.set(receiptKey, receiptBytes, {
-      contentType: "application/vnd.opentimestamps.ots",
+    // Binary .ots (for independent verification)
+    await store.set(receiptKey, rawBuf, {
+      contentType: "application/octet-stream",
     });
 
-    // Minimal anchor metadata
-    const anchorRecord = {
-      id,
-      hash,
-      state: "OTS_SUBMITTED",
-      receiptKey,
-      createdAt: new Date().toISOString(),
-      source: "ots_submit",
-    };
-
-    await store.set(anchorKey, JSON.stringify(anchorRecord), {
-      contentType: "application/json",
-    });
+    // JSON helper used by download_receipt_json / verify_page
+    await store.set(
+      altKey,
+      JSON.stringify({ base64: receiptB64, key: receiptKey }),
+      { contentType: "application/json" }
+    );
 
     return {
       statusCode: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({
         ok: true,
         id,
         receiptKey,
-        anchorKey,
+        altKey,
+        sidecar: { ok: true },
       }),
     };
   } catch (err) {
-    console.error("ots_submit handler error:", err);
+    console.error("ots_submit error:", err);
     return {
       statusCode: 500,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ok: false,
-        error: "Internal server error",
-        message: String(err?.message || err),
-      }),
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ok: false, error: err.message }),
     };
   }
 };
