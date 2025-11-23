@@ -48,10 +48,6 @@ exports.handler = async (event) => {
       doc.image(logoUsed, rightX - w, mm(8), { width: w });
     }
 
-    // Divider
-    doc.moveTo(leftX, mm(22)).lineTo(rightX, mm(22))
-       .strokeColor("#1a1f24").opacity(0.6).stroke().opacity(1);
-
     // Title + body
     doc.font("Helvetica-Bold").fontSize(16).fillColor("#E6E7EB")
        .text("Proof you can point to.", leftX, mm(26));
@@ -61,7 +57,7 @@ exports.handler = async (event) => {
          leftX, mm(33), { width: mm(120) }
        );
 
-            // Summary block
+    // Summary block
     doc.font("Helvetica-Bold")
        .fontSize(11)
        .fillColor("#16FF70")
@@ -78,22 +74,11 @@ exports.handler = async (event) => {
          { width: mm(120) }
        );
 
-       // Summary rows with per-line helper text
-    // Shorten very long values so they don't collide visually with the QR block.
-    const shortProofId =
-      typeof id === "string" && id.length > 70
-        ? id.slice(0, 46) + "…" + id.slice(-23)
-        : id;
-
-    const shortVerifyUrl =
-      typeof verifyUrl === "string" && verifyUrl.length > 80
-        ? verifyUrl.slice(0, 54) + "…" + verifyUrl.slice(-25)
-        : verifyUrl;
-
+    // Summary rows with per-line helper text
     const rows = [
       [
         "Proof ID",
-        shortProofId,
+        id,
         "Unique identifier for this proof within docuProof."
       ],
       [
@@ -118,7 +103,7 @@ exports.handler = async (event) => {
       ],
       [
         "Public Verify URL",
-        shortVerifyUrl,
+        verifyUrl,
         "Shareable link to check live status and Bitcoin anchoring for this proof."
       ],
     ];
@@ -164,14 +149,14 @@ exports.handler = async (event) => {
     });
 
     // Green patch + QR — moved slightly down & slightly smaller
-const qrBoxW = mm(42);              // was 48mm → now 42mm
-const qrX = rightX - qrBoxW;        // stays aligned to the right margin
-const qrY = mm(62);                 // was 56mm → now 62mm (moves down 6mm)
+    const qrBoxW = mm(42);              // was 48mm → now 42mm
+    const qrX = rightX - qrBoxW;        // stays aligned to the right margin
+    const qrY = mm(62);                 // was 56mm → now 62mm (moves down 6mm)
 
-doc.rect(qrX, qrY, qrBoxW, qrBoxW).fill("#16FF70");
-doc.image(qrPng, qrX + mm(3), qrY + mm(3), { width: qrBoxW - mm(6) });
+    doc.rect(qrX, qrY, qrBoxW, qrBoxW).fill("#16FF70");
+    doc.image(qrPng, qrX + mm(3), qrY + mm(3), { width: qrBoxW - mm(6) });
 
-        // Footer — fixed position on page 1, never spills to a second page
+    // Footer — fixed position on page 1, never spills to a second page
     const footerY = pageH - mm(18);  // 18 mm up from bottom
 
     doc.font("Helvetica")
