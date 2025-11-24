@@ -1,92 +1,84 @@
 // netlify/functions/submit_proof.js
-import { getStore } from "@netlify/blobs";
-import { customAlphabet } from "nanoid";
-
-// Create short, unique proof IDs
-const makeId = customAlphabet(
-  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_",
-  12
-);
+// Minimal bridge: accepts {id, hash} and forwards to ots_submit.
+// This is what stripe_webhook expects for fire-and-forget stamping.
 
 export async function handler(event) {
+  if (event.httpMethod !== "POST") {
+    return {
+      statusCode: 405,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ok: false, error: "Method Not Allowed" }),
+    };
+  }
+
+  let payload;
   try {
-    if (event.httpMethod !== "POST") {
+    payload = JSON.parse(event.body || "{}");
+  } catch {
+    return {
+      statusCode: 400,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ok: false, error: "Invalid JSON" }),
+    };
+  }
+
+  const { id, hash } = payload;
+
+  if (!id || typeof id !== "string" || !id.trim()) {
+    return {
+      statusCode: 400,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ok: false, error: "Missing or invalid id" }),
+    };
+  }
+
+  if (!hash || !/^[0-9a-fA-F]{64}$/.test(hash)) {
+    return {
+      statusCode: 400,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ok: false, error: "Invalid or missing hash" }),
+    };
+  }
+
+  try {
+    // Forward the request to ots_submit
+    const otsUrl = `${process.env.URL}/.netlify/functions/ots_submit`;
+
+    const resp = await fetch(otsUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, hash }),
+    });
+
+    if (!resp.ok) {
+      const text = await resp.text();
+      console.error("submit_proof → ots_submit error:", resp.status, text);
+      // Fire-and-forget semantics: don't fail webhook
       return {
-        statusCode: 405,
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ error: "Method Not Allowed" }),
-      };
-    }
-
-    const body = JSON.parse(event.body || "{}");
-    const { email, hash, filename, displayName, logoUrl } = body;
-
-    if (!hash || !/^[a-f0-9]{64}$/i.test(hash)) {
-      return {
-        statusCode: 400,
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ error: "Invalid or missing hash" }),
-      };
-    }
-
-    const siteID =
-      process.env.NETLIFY_SITE_ID ||
-      process.env.SITE_ID ||
-      "REDACTED"; // fallback
-    const token = process.env.NETLIFY_BLOBS_TOKEN;
-
-    if (!siteID || !token) {
-      console.error("Missing Blobs credentials", { siteID, token: !!token });
-      return {
-        statusCode: 500,
+        statusCode: 200,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          error: "Blobs environment missing",
-          siteID,
-          tokenSet: !!token,
+          ok: false,
+          forwarded: false,
+          detail: text,
         }),
       };
     }
 
-    // ✅ Explicitly initialize with siteID and token
-    const store = getStore({
-      name: "proofs",
-      siteID,
-      token,
-    });
-
-    const id = makeId();
-    const verifyUrl = `https://docuproof.io/v/${id}`;
-    const createdAt = new Date().toISOString();
-
-    const record = {
-      id,
-      hash: hash.toLowerCase(),
-      filename,
-      email: email || null,
-      displayName: displayName || null,
-      logoUrl: logoUrl || null,
-      createdAt,
-      verifyUrl,
-    };
-
-    await store.set(`proofs/${id}.json`, JSON.stringify(record), {
-      contentType: "application/json",
-    });
-
     return {
       statusCode: 200,
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ ok: true, id, verifyUrl }),
+      body: JSON.stringify({ ok: true, forwarded: true }),
     };
   } catch (err) {
     console.error("submit_proof error:", err);
     return {
-      statusCode: 500,
+      statusCode: 200,
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        error: "Server error",
-        message: String(err?.message || err),
+        ok: false,
+        error: "submit_proof internal error",
+        detail: String(err),
       }),
     };
   }
