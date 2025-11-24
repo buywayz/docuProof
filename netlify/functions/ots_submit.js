@@ -1,6 +1,16 @@
-const { getStore } = require('./_db'); // your existing Blobs wrapper
-
 const OTS_SIDECAR_URL = process.env.OTS_SIDECAR_URL;
+
+// Robust loader that works whether _db.js is CommonJS or ESM
+async function getProofStore() {
+  const mod = await import('./_db.js'); // Netlify bundler resolves this
+  const db = mod.default || mod;
+
+  // Try common patterns
+  if (typeof db.getStore === 'function') return db.getStore();
+  if (typeof db.getProofStore === 'function') return db.getProofStore();
+
+  throw new Error('No getStore/getProofStore function exported from _db.js');
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -80,7 +90,7 @@ exports.handler = async (event) => {
 
     // Decode base64 and write .ots into Netlify Blobs
     const bytes = Buffer.from(json.receipt_b64, 'base64');
-    const store = getStore(); // your "proofs" store
+    const store = await getProofStore();
     const key = `ots/receipts/${id}.ots`;
 
     await store.set(key, bytes);
