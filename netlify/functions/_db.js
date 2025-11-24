@@ -189,6 +189,28 @@ async function getProof(id) {
   return null;
 }
 
+/**
+ * Store a raw .ots receipt by proof id.
+ */
+async function setOtsReceipt(id, bytes) {
+  if (!id) throw new Error('setOtsReceipt: "id" is required');
+  if (!bytes) throw new Error('setOtsReceipt: "bytes" is required');
+
+  const key = `ots/receipts/${id}.ots`;
+  const store = await getStoreSafe();
+
+  if (store) {
+    await store.set(key, bytes, {
+      contentType: "application/octet-stream",
+    });
+    return true;
+  }
+
+  // Volatile fallback (local/dev): just hold bytes in memory
+  memFallback.set(key, bytes);
+  return true;
+}
+
 // Quiet ping check
 async function ping() {
   const store = await getStoreSafe();
@@ -200,5 +222,6 @@ module.exports = {
   appendToFeeds,
   listProofs,
   getProof,
+  setOtsReceipt,
   ping,
 };
