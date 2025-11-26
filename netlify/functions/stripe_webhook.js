@@ -45,7 +45,7 @@ exports.handler = async (event) => {
     const proofId = obj.id;
 
     try {
-      // --- 1) Idempotency: bail out if we've already sent the email for this id ---
+      // --- 1) Idempotency: bail out if we've already marked email for this id ---
       const existing = proofId ? await getProof(proofId).catch(() => null) : null;
       if (existing && existing.emailSentAt) {
         console.log("stripe_webhook: duplicate event, already emailed", proofId);
@@ -71,7 +71,20 @@ exports.handler = async (event) => {
       const origin = siteOrigin(event);
       if (!origin) throw new Error("Could not determine site origin");
 
-      // --- 2) Persist proof metadata (Blobs) + history feeds ---
+      const nowIso =
+        existing?.createdAt && typeof existing.createdAt === "string"
+          ? existing.createdAt
+          : new Date().toISOString();
+
+      const emailMarkTime = new Date().toISOString();
+      const emailCount =
+        typeof existing?.emailCount === "number"
+          ? existing.emailCount + 1
+          : 1;
+
+      // --- 2) Persist / update proof metadata (Blobs) + history feeds
+      //       IMPORTANT: we write emailSentAt BEFORE sending the email
+      //       so any retry of this event sees it and short-circuits.
       let record = null;
       try {
         record = await saveProof({
@@ -81,7 +94,9 @@ exports.handler = async (event) => {
           hash,
           customerEmail: to,
           source: "stripe_webhook",
-          createdAt: existing?.createdAt,
+          createdAt: nowIso,
+          emailSentAt: emailMarkTime,
+          emailCount,
         });
 
         await appendToFeeds(record);
@@ -140,58 +155,53 @@ exports.handler = async (event) => {
       }).toString();
 
       const pdfUrl = `${origin}/.netlify/functions/proof_pdf?${qs}`;
-      const pdfRes = await fetch(pdfUrl, { method: "GET" });
-      if (!pdfRes.ok) {
-        const errText = await pdfRes.text().catch(() => "");
-        throw new Error(`proof_pdf failed ${pdfRes.status}: ${errText}`);
+      let pdfB64 = null;
+      try {
+        const pdfRes = await fetch(pdfUrl, { method: "GET" });
+        if (!pdfRes.ok) {
+          const errText = await pdfRes.text().catch(() => "");
+          console.error(`proof_pdf failed ${pdfRes.status}: ${errText}`);
+        } else {
+          pdfB64 = await arrayBufferToBase64(await pdfRes.arrayBuffer());
+        }
+      } catch (e) {
+        console.error("Error calling proof_pdf:", e);
       }
-      const pdfB64 = await arrayBufferToBase64(await pdfRes.arrayBuffer());
 
-      // --- 5) Email certificate via Postmark ---
-      await sendEmail({
-        to,
-        subject: `Your Proof Certificate: ${displayName}`,
-        htmlBody: `
-          <p>Thanks for using docuProof.io.</p>
-          <p>Your proof certificate is attached as a PDF.</p>
-          <p>Reference: <code>${proofId}</code></p>
-          <p>You can always verify later at <a href="${origin}/verify">${origin}/verify</a>
-          using your Proof ID.</p>
-        `,
-        textBody:
-          `Thanks for using docuProof.io.\n\n` +
-          `Your proof certificate is attached (PDF).\n` +
-          `Reference: ${proofId}\n` +
-          `You can always verify later at ${origin}/verify using your Proof ID.\n`,
-        attachments: [
-          {
+      // --- 5) Email certificate via Postmark (best-effort) ---
+      try {
+        const attachments = [];
+        if (pdfB64) {
+          attachments.push({
             Name: filename.endsWith(".pdf") ? filename : `${filename}.pdf`,
             Content: pdfB64,
             ContentType: "application/pdf",
-          },
-        ],
-      });
+          });
+        }
 
-      // --- 6) Mark this proof as "email sent" so future webhook retries are no-ops ---
-      try {
-        const nowIso = new Date().toISOString();
-        await saveProof({
-          id: proofId,
-          filename,
-          displayName,
-          hash,
-          customerEmail: to,
-          createdAt: record?.createdAt,
-          source: "stripe_webhook",
-          emailSentAt: nowIso,
-          emailCount: typeof existing?.emailCount === "number"
-            ? existing.emailCount + 1
-            : 1,
+        await sendEmail({
+          to,
+          subject: `Your Proof Certificate: ${displayName}`,
+          htmlBody: `
+            <p>Thanks for using docuProof.io.</p>
+            <p>Your proof certificate is attached as a PDF.</p>
+            <p>Reference: <code>${proofId}</code></p>
+            <p>You can always verify later at <a href="${origin}/verify">${origin}/verify</a>
+            using your Proof ID.</p>
+          `,
+          textBody:
+            `Thanks for using docuProof.io.\n\n` +
+            `Your proof certificate is attached (PDF).\n` +
+            `Reference: ${proofId}\n` +
+            `You can always verify later at ${origin}/verify using your Proof ID.\n`,
+          attachments,
         });
-      } catch (markErr) {
-        console.error("saveProof(emailSentAt) error (non-fatal):", markErr);
+      } catch (emailErr) {
+        // We log but DO NOT throw, so Stripe doesn't keep retrying and cause duplicates.
+        console.error("Postmark sendEmail error (non-fatal):", emailErr);
       }
 
+      // We already wrote emailSentAt/emailCount above, so nothing more to persist.
       return {
         statusCode: 200,
         body: JSON.stringify({ ok: true, emailed: true, id: proofId }),
