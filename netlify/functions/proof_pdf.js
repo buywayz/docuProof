@@ -1,5 +1,5 @@
 // netlify/functions/proof_pdf.js
-// v5.3.0 — stable binary PDF + reserved right column for QR (no overlap)
+// v5.3.1 — stable binary PDF + reserved right column for QR (no overlap)
 
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
@@ -28,24 +28,25 @@ exports.handler = async (event) => {
       doc.on("end", () => resolve(Buffer.concat(chunks)))
     );
 
-    const pageW = doc.page.width;
-    const pageH = doc.page.height;
-    const leftX = doc.page.margins.left;
+    const pageW  = doc.page.width;
+    const pageH  = doc.page.height;
+    const leftX  = doc.page.margins.left;
     const rightX = pageW - doc.page.margins.right;
 
-    // === QR COLUMN GEOMETRY (reserve this from the start) ===
-    const qrBoxW = mm(42);             // width of green QR patch
-    const qrX = rightX - qrBoxW;       // right column start (QR box)
-    const qrY = mm(60);                // vertical position for QR box
-    const qrPadding = mm(3);           // padding inside green patch
+    // === QR COLUMN GEOMETRY (reserved) ===
+    const qrBoxW    = mm(42);
+    const qrX       = rightX - qrBoxW;
+    const qrY       = mm(60);
+    const qrPadding = mm(3);
 
-    // Left column max width (all summary text stays here)
-    const summaryRight = qrX - mm(4);  // 4mm gutter between text and QR
+    // Left column bounds (all text stays here)
+    const summaryRight = qrX - mm(4);        // gutter before QR column
     const summaryWidth = summaryRight - leftX;
 
-    // Value column inside summary block
-    const valueX = leftX + mm(36);
-    const valueWidth = summaryRight - valueX;
+    // Key/value layout inside summary block
+    const keyRight    = leftX + mm(32);
+    const valueX      = leftX + mm(36);
+    const valueWidth  = summaryRight - valueX;
 
     // Background
     doc.rect(0, 0, pageW, pageH).fill("#0b0d0f");
@@ -78,7 +79,7 @@ exports.handler = async (event) => {
       doc.image(logoUsed, rightX - w, mm(8), { width: w });
     }
 
-    // Title + body (confined to summaryWidth)
+    // Title + body
     doc.font("Helvetica-Bold")
       .fontSize(16)
       .fillColor("#E6E7EB")
@@ -96,7 +97,7 @@ exports.handler = async (event) => {
         { width: summaryWidth }
       );
 
-    // Summary block heading
+    // Summary heading
     doc.font("Helvetica-Bold")
       .fontSize(11)
       .fillColor("#16FF70")
@@ -113,10 +114,10 @@ exports.handler = async (event) => {
         { width: summaryWidth }
       );
 
-    // Summary rows with helper text
+    // Rows
     const rows = [
-      ["Proof ID", id, "Unique identifier for this proof within docuProof."],
-      ["Quick Verify ID", quickId, "Short form of the identifier for manual reference or logging."],
+      ["Proof ID",         id,        "Unique identifier for this proof within docuProof."],
+      ["Quick Verify ID",  quickId,   "Short form of the identifier for manual reference or logging."],
       [
         "Created (UTC)",
         new Date().toISOString().replace("T", " ").replace("Z", "Z"),
@@ -139,45 +140,53 @@ exports.handler = async (event) => {
       ],
     ];
 
-    let y = mm(66); // rows start; comfortably below the paragraph
+    // Dynamic row layout: respect wrapped heights
+    let y = mm(66);
 
     for (const [k, v, helper] of rows) {
-      // Key
+      const rowTop = y;
+
+      // Key label
       doc.font("Helvetica-Bold")
         .fontSize(9)
         .fillColor("#16FF70")
-        .text(k, leftX, y, { width: valueX - leftX - mm(2) });
+        .text(k, leftX, rowTop, {
+          width: keyRight - leftX,
+        });
 
-      // Value (confined within left column, never under QR)
+      // Value text (can wrap to multiple lines)
       doc.font("Helvetica")
         .fontSize(9)
         .fillColor("#E6E7EB")
-        .text(v, valueX, y, {
+        .text(v, valueX, rowTop, {
           width: valueWidth,
         });
 
-      // Helper
+      const afterValueY = doc.y; // actual bottom of wrapped value
+
+      let afterHelperY = afterValueY;
       if (helper) {
         doc.font("Helvetica")
           .fontSize(8)
           .fillColor("#A8AAB0")
-          .text(helper, valueX, y + mm(3.2), {
+          .text(helper, valueX, afterValueY + mm(1.5), {
             width: valueWidth,
           });
-        y += mm(11);
-      } else {
-        y += mm(8);
+        afterHelperY = doc.y;
       }
+
+      // Small gap before next row
+      y = afterHelperY + mm(3);
     }
 
-    // QR code buffer (using verifyUrl)
+    // QR code
     const qrPng = await QRCode.toBuffer(verifyUrl, {
       width: 280,
       margin: 0,
       color: { dark: "#0b0d0f", light: "#16FF70" },
     });
 
-    // Green patch + QR, fully in reserved right column
+    // Green patch + QR in reserved right column
     doc.rect(qrX, qrY, qrBoxW, qrBoxW).fill("#16FF70");
     doc.image(qrPng, qrX + qrPadding, qrY + qrPadding, {
       width: qrBoxW - 2 * qrPadding,
@@ -210,7 +219,7 @@ exports.handler = async (event) => {
         "Content-Disposition": `inline; filename="${filename.replace(/"/g, "")}"`,
         "Cache-Control": "no-store, no-cache, must-revalidate",
         "Content-Length": String(pdf.length),
-        "x-docuproof-version": "proof_pdf v5.3.0",
+        "x-docuproof-version": "proof_pdf v5.3.1",
       },
       body: b64,
       isBase64Encoded: true,
