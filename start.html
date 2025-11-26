@@ -198,97 +198,87 @@
 <section class="reveal">
   <h2>FAQ</h2>
   <div class="grid">
+
     <div class="faq-item">
       <div class="faq-q">
-        <span>Is this a legal notary?</span>
+        <span>Is this a legal notary service?</span>
         <span class="chev">⌄</span>
       </div>
       <div class="faq-a">
-        <p>No. docuProof provides a blockchain timestamp (proof of existence), not a notarial act. It proves a file existed, unchanged, at a specific time.</p>
+        <p>No. docuProof creates a cryptographic proof-of-existence, not a notarization. It verifies that your file existed at a specific time and has not changed since.</p>
       </div>
     </div>
 
     <div class="faq-item">
       <div class="faq-q">
-        <span>Does my document get uploaded or stored?</span>
+        <span>Does my file get uploaded or saved anywhere?</span>
         <span class="chev">⌄</span>
       </div>
       <div class="faq-a">
-        <p>No. Hashing happens locally in your browser; only the SHA-256 fingerprint is sent for anchoring. We never collect or store your document.</p>
+        <p>No. Your file never leaves your device. We hash it locally in your browser and only submit the SHA-256 fingerprint for blockchain anchoring.</p>
       </div>
     </div>
 
     <div class="faq-item">
       <div class="faq-q">
-        <span>How long does anchoring take?</span>
+        <span>What exactly gets stored on Bitcoin?</span>
         <span class="chev">⌄</span>
       </div>
       <div class="faq-a">
-        <p>Fingerprints are batched and written to Bitcoin. Your proof receipt and ID are available immediately; blockchain confirmations may take time depending on network conditions. Your certificate explains how to check status and confirmations.</p>
+        <p>Only your file’s cryptographic fingerprint (a 64-character SHA-256 digest). It cannot be reversed or used to reconstruct the file. Your document’s contents always remain private.</p>
       </div>
     </div>
 
     <div class="faq-item">
       <div class="faq-q">
-        <span>What should I save after I create a timestamp?</span>
+        <span>How long does blockchain anchoring take?</span>
         <span class="chev">⌄</span>
       </div>
       <div class="faq-a">
-        <p>Keep your original file (e.g., <code>contract.pdf</code>) and its proof bundle (e.g., <code>contract.pdf.ots</code> plus an optional <code>sha256.txt</code>). Store them together so future verification is trivial.</p>
+        <p>Your certificate and Proof ID are issued instantly. Bitcoin anchoring depends on network activity and occurs asynchronously. Your certificate includes a link to live status and confirmations.</p>
       </div>
     </div>
 
     <div class="faq-item">
       <div class="faq-q">
-        <span>Can I timestamp plain text or notes?</span>
+        <span>What should I save after generating a proof?</span>
         <span class="chev">⌄</span>
       </div>
       <div class="faq-a">
-        <p>Yes. You can timestamp files or raw text. For text, we hash your input on-device and anchor that fingerprint in the same way.</p>
+        <p>Save your original file and the PDF certificate you receive. Together they allow anyone to independently verify your proof at any time — with or without docuProof.</p>
       </div>
     </div>
 
     <div class="faq-item">
       <div class="faq-q">
-        <span>Which blockchain do you use?</span>
+        <span>What types of files can I timestamp?</span>
         <span class="chev">⌄</span>
       </div>
       <div class="faq-a">
-        <p>docuProof anchors to the Bitcoin blockchain for maximum security and verifiability. We prioritize permanence and censorship-resistance over speed-only networks.</p>
+        <p>Almost anything: PDFs, images, videos, text files, manuscripts, contracts, research notes, artwork, audio files, and more. If it can be hashed, it can be proven.</p>
       </div>
     </div>
 
     <div class="faq-item">
       <div class="faq-q">
-        <span>What happens if I typed the wrong file or need a refund?</span>
+        <span>Why is Bitcoin used instead of another blockchain?</span>
         <span class="chev">⌄</span>
       </div>
       <div class="faq-a">
-        <p>If you made a purchase error, contact us at <a href="mailto:support@docuproof.io">support@docuproof.io</a> within 7 days. We’ll review and help where possible. Note: anchoring transactions cannot be reversed once confirmed on-chain.</p>
+        <p>Bitcoin provides the most secure, neutral, globally replicated ledger for proof-of-existence. Its immutability and longevity make it the preferred chain for long-term evidence.</p>
       </div>
     </div>
 
     <div class="faq-item">
       <div class="faq-q">
-        <span>What if Bitcoin fees spike?</span>
+        <span>Can I verify my proof without docuProof?</span>
         <span class="chev">⌄</span>
       </div>
       <div class="faq-a">
-        <p>We batch proofs to keep costs predictable. In rare fee spikes, anchoring may take longer, but your Proof ID and certificate remain valid and verifiable.</p>
+        <p>Yes. Your certificate includes everything needed to verify independently using OpenTimestamps and your original file. docuProof is not a point of failure.</p>
       </div>
     </div>
-  </div>
-</section>
 
-<section class="reveal">
-  <h2>Compliance & Important Notes</h2>
-  <div class="notice">
-    <p class="small">
-      docuProof™ provides cryptographic proof of existence via Bitcoin anchoring. It does not constitute legal advice or a notarial service. Users are responsible for maintaining access to their original documents and any proof files provided. Certificates are informational records reflecting hash & timestamp data. Availability of external networks (e.g., Bitcoin) may affect anchoring time; integrity of proof is independent of docuProof’s continued operation.
-    </p>
-    <p class="small" style="margin-top:8px">
-      Questions? <a href="mailto:support@docuproof.io">Contact us at support@docuproof.io</a>.
-    </p>
   </div>
 </section>
 
