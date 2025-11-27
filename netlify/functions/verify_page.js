@@ -86,19 +86,18 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     padding:10px 12px;
   }
   .btn{
-  background:var(--accent);
-  color:#071109;
-  border:none;
-  font-weight:800;
-  cursor:pointer;
-}
-/* Visually dim disabled buttons (e.g., OTS when no receipt yet) */
-.btn[disabled]{
-  opacity:0.45;
-  cursor:default;
-  box-shadow:none;
-}
-.btn.secondary{background:transparent;color:var(--ink)}
+    background:var(--accent);
+    color:#071109;
+    border:none;
+    font-weight:800;
+    cursor:pointer;
+  }
+  .btn[disabled]{
+    opacity:0.45;
+    cursor:default;
+    box-shadow:none;
+  }
+  .btn.secondary{background:transparent;color:var(--ink)}
   .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
   .badge{
     display:inline-flex;
@@ -177,11 +176,12 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
 
     <div class="card" style="margin:12px 0 18px">
       <div class="row">
-        <input id="idIn" class="mono" placeholder="Enter Proof ID (e.g., cs_… or wXXXXXXXXX)" style="min-width:320px;flex:1">
+        <input id="idIn" class="mono" placeholder="Enter Proof ID from your certificate" style="min-width:320px;flex:1">
         <button id="goBtn" class="btn">Open</button>
       </div>
       <div class="small" style="margin-top:6px">
-        Tip: If you downloaded a <code>.ots</code> file, you can verify independently with
+        Your Proof ID appears on your docuProof certificate and in your email.  
+        If you downloaded a <code>.ots</code> file, you can also verify independently with
         <code class="mono">ots verify yourfile.ots</code>.
       </div>
     </div>
@@ -209,7 +209,8 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
           <button id="dlCert" class="btn secondary" disabled>View verification JSON</button>
         </div>
         <div class="small" style="margin-bottom:14px">
-          Keep your original file and this <code>.ots</code> together so future verification is trivial.
+          The <code>.ots</code> file is your raw timestamp proof.  
+          Keep it together with your original file so future verification is trivial.
         </div>
 
         <div class="small" style="margin-top:4px">
@@ -230,14 +231,13 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     © <span id="year"></span> docuProof.io — Bitcoin-anchored proof of existence.
   </footer>
 
-<!-- Load QRious without integrity/crossorigin so the browser does not block it -->
+<!-- Load QRious -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 
 <script>
 (function () {
   function $(id) { return document.getElementById(id); }
 
-  // Small helper to safely embed JSON into our viewer page
   function htmlEscape(s) {
     return s.replace(/[&<>]/g, function (c) {
       if (c === "&") return "&amp;";
@@ -278,11 +278,9 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     var v = (idIn.value || "").trim();
     if (!v) return;
     var qs = new URLSearchParams({ id: v }).toString();
-    // Pretty URL; /verify is wired to this function via _redirects
     location.href = "/verify?" + qs;
   });
 
-  // Click handler for “View verification JSON”
   if (dlCert) {
     dlCert.addEventListener("click", async function () {
       var v = (idIn.value || "").trim();
@@ -299,7 +297,7 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
         var pretty = JSON.stringify(data, null, 2);
 
         var win = window.open("", "_blank");
-        if (!win) return; // Popup blocked
+        if (!win) return;
 
         var html =
           "<!doctype html><html><head>" +
@@ -330,23 +328,16 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
 
   function setBadge(kind, title, detail) {
     badges.innerHTML = "";
-
     var pill = document.createElement("span");
     pill.className = "badge " + kind;
     pill.textContent = title;
     badges.appendChild(pill);
-
-    if (detail) {
-      statusHelp.textContent = detail;
-    } else {
-      statusHelp.textContent = "";
-    }
+    statusHelp.textContent = detail || "";
   }
 
   function resetUI() {
     clearBadge();
-    var k;
-    for (k in kv) {
+    for (var k in kv) {
       if (Object.prototype.hasOwnProperty.call(kv, k)) {
         kv[k].textContent = "—";
       }
@@ -385,17 +376,13 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     }
 
     if (r.status === 404) {
-      if (!data || typeof data !== "object") {
-        data = {};
-      }
+      if (!data || typeof data !== "object") data = {};
       if (!data.state) data.state = "NOT_FOUND";
       if (data.confirmations == null) data.confirmations = 0;
       return data;
     }
 
-    if (!r.ok) {
-      throw new Error("HTTP " + r.status);
-    }
+    if (!r.ok) throw new Error("HTTP " + r.status);
     return data;
   }
 
@@ -404,14 +391,10 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
 
     resetUI();
 
-    if (!v) {
-      // Nothing entered yet; leave the table blank.
-      return;
-    }
+    if (!v) return;
 
     kv.id.textContent = v;
     if (dlCert) dlCert.disabled = false;
-
     renderQrForId(v);
 
     var status;
@@ -421,7 +404,7 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
       setBadge(
         "err",
         "Status lookup failed",
-        "We could not retrieve status for this ID. Try again in a moment, or confirm the ID from your certificate."
+        "We could not retrieve status for this ID. Try again in a moment, or confirm the ID exactly as printed on your certificate."
       );
       return;
     }
@@ -443,11 +426,11 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
     kv.conf.textContent = status.confirmations != null ? status.confirmations : 0;
     kv.anchor.textContent = status.anchorKey || "—";
 
-        if (state === "NOT_FOUND") {
+    if (state === "NOT_FOUND") {
       setBadge(
         "neutral",
         "Queued for anchoring",
-        "We have your proof on file but do not yet see a Bitcoin receipt or anchor for this ID. If you just created this proof, allow time for batching and anchoring. You can always check back here later using your Proof ID."
+        "We have your proof record but do not yet see a Bitcoin receipt or anchor for this ID. If you just created this proof, allow time for batching and anchoring, then check back using the same Proof ID."
       );
       return;
     }
@@ -456,7 +439,7 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
       setBadge(
         "ok",
         "Receipt available — awaiting anchor",
-        "Your proof has been committed to the OpenTimestamps calendar and is waiting to be included in a Bitcoin transaction. Keep your .ots receipt and original file together — they are enough to prove this timestamp independently."
+        "Your proof has been committed to the OpenTimestamps calendar and is waiting to be included in a Bitcoin transaction. Download the .ots receipt on the right and keep it with your original file."
       );
     } else if (state === "ANCHORED") {
       var conf = status.confirmations != null ? status.confirmations : 0;
@@ -466,7 +449,7 @@ const TEMPLATE_HTML = String.raw`<!doctype html>
               conf +
               " confirmation" +
               (conf === 1 ? "" : "s") +
-              ".";
+              ". You can independently verify using the .ots receipt and your original file.";
       } else {
         msg = "Your proof is anchored in a Bitcoin transaction. Additional confirmations will accumulate over time.";
       }
