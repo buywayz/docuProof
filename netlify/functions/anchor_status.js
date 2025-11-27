@@ -13,7 +13,7 @@ export const handler = async (event) => {
 
     const siteID = (process.env.NETLIFY_SITE_ID || "").trim();
     const token  = (process.env.NETLIFY_BLOBS_TOKEN || "").trim();
-    const primary = (process.env.BLOBS_STORE_NAME || "docuproof").trim();
+    const primary = (process.env.BLOBS_STORE_NAME || "proofs").trim();
 
     const { getStore } = await import("@netlify/blobs");
 
@@ -23,7 +23,7 @@ export const handler = async (event) => {
     const altReceipt = `ots:${id}.receipt`;
 
     // Preferred read order for anchor JSON
-    const anchorStores = [primary, "docuproof", "ots", "default"];
+    const anchorStores = [primary, "proofs", "docuproof", "ots", "default"];
     const anchor = await findFirstJson({ getStore, siteID, token, key: anchorKey, stores: anchorStores });
 
     // If we found a canonical anchor JSON, normalize and return it
@@ -42,7 +42,7 @@ export const handler = async (event) => {
     }
 
     // Otherwise, detect if a receipt exists anywhere we care about
-    const receiptStores = [primary, "docuproof", "ots", "default"];
+    const receiptStores = [primary, "proofs", "docuproof", "ots", "default"];
     const receipt = await findFirstBytes({ getStore, siteID, token, key: receiptKey, stores: receiptStores })
                 || await findFirstBytes({ getStore, siteID, token, key: altReceipt,  stores: receiptStores });
 
