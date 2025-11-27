@@ -2,6 +2,12 @@
 // CommonJS runtime
 const Stripe = require("stripe");
 const { sendEmail } = require("./_email");
+function shortIdFromHash(h) {
+  if (!h || typeof h !== "string") return "----------";
+  const m = h.toLowerCase().match(/[0-9a-f]{12,}/);
+  return m ? m[0].slice(0, 12) : "----------";
+}
+
 const { saveProof, appendToFeeds, getProof } = require("./_db");
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -66,7 +72,7 @@ exports.handler = async (event) => {
           ? md.filename.trim()
           : "DocuProof-Certificate.pdf";
       const hash = md.hash || null;
-      const shortId = md.shortId || null;
+      const shortId = hash ? shortIdFromHash(hash) : "----------";
 
       const origin = siteOrigin(event);
       if (!origin) throw new Error("Could not determine site origin");
@@ -151,7 +157,7 @@ exports.handler = async (event) => {
         id: proofId,
         filename,
         displayName,
-        quickId: shortId || "",
+        quickId: shortId,
       }).toString();
 
       const pdfUrl = `${origin}/.netlify/functions/proof_pdf?${qs}`;
