@@ -4,7 +4,7 @@
 
 const { getProof } = require("./_db");
 
-// Small helper: derive a compact id from a hex hash (no external deps)
+// Derive a short ID from the stored hash
 function shortIdFromHash(h) {
   if (!h || typeof h !== "string") return "----------";
   const m = h.toLowerCase().match(/[0-9a-f]{12,}/);
@@ -18,11 +18,15 @@ exports.handler = async (event) => {
   if (!id) {
     return {
       statusCode: 400,
-      headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
+      },
       body: JSON.stringify({ ok: false, error: "Missing id" }),
     };
   }
 
+  // Defaults (if lookup fails)
   let filename = "docuProof.pdf";
   let displayName = "Untitled";
   let quickId = "----------";
@@ -43,8 +47,8 @@ exports.handler = async (event) => {
       }
     }
   } catch (e) {
-    // If lookup fails, we just fall back to defaults
     console.error("proof_pdf_meta getProof error:", e);
+    // fall back to defaults
   }
 
   const params = new URLSearchParams({
