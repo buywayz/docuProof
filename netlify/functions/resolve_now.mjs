@@ -4,6 +4,50 @@
 // Usage:
 //   /.netlify/functions/resolve_now?id=<proofId>
 
+let _storePromise = null;
+
+// Minimal, robust store getter mirroring _db.js behavior.
+async function getStoreSafe() {
+  if (_storePromise) return _storePromise;
+
+  _storePromise = (async () => {
+    try {
+      const mod = await import("@netlify/blobs");
+
+      // First: try automatic environment binding (same as _db.js)
+      try {
+        return mod.getStore("proofs");
+      } catch {
+        // Fallback: manual configuration if needed
+        const siteID =
+          process.env.NETLIFY_SITE_ID ||
+          process.env.SITE_ID ||
+          process.env.SITE_NAME ||
+          null;
+
+        const token =
+          process.env.NETLIFY_BLOBS_TOKEN ||
+          process.env.BLOBS_TOKEN ||
+          null;
+
+        if (siteID && token) {
+          if (mod.BlobsClient) {
+            const client = new mod.BlobsClient({ siteID, token });
+            return client.getStore("proofs");
+          }
+          return mod.getStore({ name: "proofs", siteID, token });
+        }
+
+        return null;
+      }
+    } catch {
+      return null;
+    }
+  })();
+
+  return _storePromise;
+}
+
 export const handler = async (event) => {
   try {
     if (event.httpMethod !== "GET") {
@@ -20,23 +64,29 @@ export const handler = async (event) => {
       return json(500, { ok: false, error: "OTS_SIDECAR_URL not configured" });
     }
 
-    const siteID = (process.env.NETLIFY_SITE_ID || "").trim();
-    const token  = (process.env.NETLIFY_BLOBS_TOKEN || "").trim();
-    const primary = (process.env.BLOBS_STORE_NAME || "proofs").trim();
-
-    if (!siteID || !token) {
+    const store = await getStoreSafe();
+    if (!store) {
       return json(500, {
         ok: false,
-        error: "Blobs not configured (missing NETLIFY_SITE_ID or NETLIFY_BLOBS_TOKEN)",
+        error: "Blobs store 'proofs' not available from this function",
       });
     }
 
-    const { getStore } = await import("@netlify/blobs");
-    const store = getStore({ name: primary, siteID, token });
-
-    // 1) Load the .ots receipt
     const receiptKey = `ots/receipts/${id}.ots`;
-    const ab = await store.get(receiptKey, { type: "arrayBuffer" });
+
+    // 1) Load the .ots receipt exactly where _db.setOtsReceipt wrote it
+    let ab;
+    try {
+      ab = await store.get(receiptKey, { type: "arrayBuffer" });
+    } catch (e) {
+      return json(500, {
+        ok: false,
+        error: "error reading receipt from blobs",
+        detail: String(e?.message || e),
+        id,
+        receiptKey,
+      });
+    }
 
     if (!ab || !ab.byteLength) {
       return json(404, {
@@ -63,6 +113,7 @@ export const handler = async (event) => {
         error: "OTS sidecar /upgrade failed",
         status: upgradeResp.status,
         detail: text,
+        id,
       });
     }
 
@@ -73,21 +124,22 @@ export const handler = async (event) => {
         ok: false,
         error: "Invalid response from OTS sidecar /upgrade",
         raw: upgrade,
+        id,
       });
     }
 
     const state = upgrade.state || "OTS_RECEIPT";
     const txid  = upgrade.txid || null;
 
-    // 3) Persist the upgraded receipt back into blobs
+    // 3) Persist upgraded receipt back into the same store
     try {
       const upgradedBytes = Buffer.from(upgrade.receipt_b64, "base64");
       await store.set(receiptKey, upgradedBytes, {
         contentType: "application/octet-stream",
       });
     } catch (e) {
-      // Non-fatal; we still write the anchor JSON
       console.error("resolve_now: failed to persist upgraded receipt:", e);
+      // Non-fatal.
     }
 
     // 4) Write anchor JSON so anchor_status can see it
@@ -101,9 +153,21 @@ export const handler = async (event) => {
       source: "resolve_now",
     };
 
-    await store.set(anchorKey, JSON.stringify(anchorDoc), {
-      contentType: "application/json",
-    });
+    try {
+      await store.set(anchorKey, JSON.stringify(anchorDoc), {
+        contentType: "application/json",
+      });
+    } catch (e) {
+      return json(500, {
+        ok: false,
+        error: "failed to persist anchor JSON",
+        detail: String(e?.message || e),
+        id,
+        anchorKey,
+        state,
+        txid,
+      });
+    }
 
     return json(200, {
       ok: true,
