@@ -1,28 +1,32 @@
+"use strict";
+
 // netlify/functions/verify_page.js
-// Serves the HTML Verify UI and calls JSON endpoints:
+// Serves the Verify UI and calls JSON endpoints:
 // - /.netlify/functions/anchor_status?id=...
 // - /.netlify/functions/download_receipt?id=...
 // - /.netlify/functions/download_receipt_json?id=...
-// - /.netlify/functions/verify?id=...
+// - /.netlify/functions/verify (optional hash check via POST)
 
 exports.handler = async (event) => {
-  const url = new URL(event.rawUrl || "http://x/");
-  const qsId = (url.searchParams.get("id") || "").trim();
+  const rawUrl = event.rawUrl || "http://x/";
+  let initialId = "";
 
-  // Allow /v/<id> style paths as a fallback
-  const pathId = (event.path || "")
-    .split("/")
-    .slice(-1)[0]
-    .includes("?")
-      ? ""
-      : (event.path || "").split("/").slice(-1)[0];
+  try {
+    const url = new URL(rawUrl);
+    const qsId = (url.searchParams.get("id") || "").trim();
+    if (qsId) initialId = qsId;
+  } catch (_) {
+    // ignore
+  }
 
-  const id = (qsId || pathId || "").trim();
+  // Also support /v/:id form
+  if (!initialId && event.path) {
+    const parts = event.path.split("/").filter(Boolean);
+    const last = parts[parts.length - 1] || "";
+    if (last && !last.includes("?")) initialId = last;
+  }
 
-  const html = TEMPLATE_HTML
-    .replace("__ID__", escapeHtml(id || ""))
-    .replace(/__HAS_ID__/g, id ? "true" : "false");
-
+  const html = buildHtml(initialId);
   return {
     statusCode: 200,
     headers: {
@@ -33,473 +37,838 @@ exports.handler = async (event) => {
   };
 };
 
-const TEMPLATE_HTML = String.raw`<!doctype html>
+function esc(s) {
+  return String(s || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function buildHtml(initialId) {
+  const safeId = esc(initialId);
+
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8" />
+  <title>Verify a Proof • docuProof</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #050609;
+      --bg-elevated: #0d1016;
+      --border-subtle: #242633;
+      --accent: #16ff70;
+      --accent-soft: rgba(22, 255, 112, 0.08);
+      --accent-strong: rgba(22, 255, 112, 0.16);
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --text-soft: #6b7280;
+      --danger: #f97373;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --radius-lg: 16px;
+      --radius-pill: 999px;
+      --shadow-soft: 0 24px 60px rgba(0, 0, 0, 0.8);
+    }
 
-<title>Verify Proof — docuProof</title>
-<meta name="description" content="Verify a Bitcoin-anchored proof-of-existence created with docuProof.">
+    * {
+      box-sizing: border-box;
+    }
 
-<link rel="icon" href="/docuproof-logo.png">
-<meta name="theme-color" content="#0b0f14">
-<style>
-  :root{
-    --bg:#0b0f14;--ink:#eaeaea;--muted:#a7b0ba;--accent:#22C55E;
-    --card:#151b22;--border:#1e2630;--link:#9cc1ff;
-    --danger:#ffb4b4;--danger-bg:#1a0b0b;
-    --neutral-bg:#151821;--neutral-border:#303749;--neutral-text:#cbd3e1;
-    --warn-bg:#231c12;--warn-border:#5f461f;--warn-text:#f4d28a;
-    --err-bg:#241313;--err-border:#6b2626;--err-text:#ffb4b4;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0;
-    background:var(--bg);
-    color:var(--ink);
-    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-  }
-  a{color:var(--link)}
-  header,main,footer{max-width:1100px;margin:auto;padding:16px 20px}
-  .header{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    border-bottom:1px solid var(--border);
-  }
-  .brand{display:flex;gap:10px;align-items:center;text-decoration:none;color:var(--ink)}
-  .brand img{height:32px}
-  h1{font-size:28px;margin:16px 0}
-  .card{
-    background:var(--card);
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:18px;
-  }
-  .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-  input,button{
-    border-radius:10px;
-    border:1px solid var(--border);
-    background:#0f141a;
-    color:var(--ink);
-    padding:10px 12px;
-  }
-  .btn{
-    background:var(--accent);
-    color:#071109;
-    border:none;
-    font-weight:800;
-    cursor:pointer;
-  }
-  .btn[disabled]{
-    opacity:0.45;
-    cursor:default;
-    box-shadow:none;
-  }
-  .btn.secondary{background:transparent;color:var(--ink)}
-  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
-  .badge{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    border-radius:999px;
-    padding:6px 12px;
-    font-weight:600;
-    font-size:13px;
-  }
-  .badge.neutral{
-    border:1px solid var(--neutral-border);
-    color:var(--neutral-text);
-    background:var(--neutral-bg);
-  }
-  .badge.ok{
-    border:1px solid #1e5131;
-    color:#9af3b4;
-    background:#0d1912;
-  }
-  .badge.warn{
-    border:1px solid var(--warn-border);
-    color:var(--warn-text);
-    background:var(--warn-bg);
-  }
-  .badge.err{
-    border:1px solid var(--err-border);
-    color:var(--err-text);
-    background:var(--err-bg);
-  }
-  .grid{
-    display:grid;
-    gap:16px;
-    grid-template-columns:1fr 380px;
-  }
-  @media (max-width:1000px){
-    .grid{grid-template-columns:1fr}
-  }
-  .small{font-size:13px;color:#b9c2cc}
-  .kv{
-    display:grid;
-    grid-template-columns:140px 1fr;
-    gap:6px 12px;
-  }
-  .kv div{
-    padding:6px 0;
-    border-bottom:1px dashed #223;
-  }
-  .helper{
-    font-size:12px;
-    color:var(--muted);
-    margin-top:4px;
-  }
-  footer{
-    color:var(--muted);
-    text-align:center;
-    border-top:1px solid var(--border);
-    margin-top:24px;
-    padding:24px 20px;
-  }
-</style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #101520 0, #050609 52%, #030304 100%);
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      padding: 24px;
+    }
+
+    .frame {
+      width: 100%;
+      max-width: 1080px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: radial-gradient(circle at 30% 30%, var(--accent) 0, #0bff47 18%, #012e14 45%, #010509 100%);
+      box-shadow: 0 0 0 1px rgba(22, 255, 112, 0.3), 0 0 32px rgba(22, 255, 112, 0.4);
+    }
+
+    .brand-text-main {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .brand-text-sub {
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    .header-cta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--accent-soft);
+      color: var(--accent);
+      background: var(--accent-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent);
+    }
+
+    .btn-outline {
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .btn-outline:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .shell {
+      border-radius: 24px;
+      background: radial-gradient(circle at top left, rgba(22, 255, 112, 0.06) 0, rgba(1, 4, 9, 0.96) 48%, #020409 100%);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      box-shadow: var(--shadow-soft);
+      padding: 20px 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+      gap: 18px;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 880px) {
+      body {
+        padding: 16px;
+      }
+      .shell {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .header-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .header-cta {
+        align-self: stretch;
+        justify-content: space-between;
+        width: 100%;
+      }
+    }
+
+    .panel {
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9) 0, rgba(15, 23, 42, 0.72) 45%, rgba(15, 23, 42, 0.88) 100%);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65);
+    }
+
+    .panel-heading {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      color: var(--text-soft);
+      margin-bottom: 4px;
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .panel-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      max-width: 30rem;
+    }
+
+    .form-row {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 11px;
+      color: var(--text-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .input {
+      flex: 1 1 auto;
+      min-width: 0;
+      padding: 9px 11px;
+      font-size: 13px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.85);
+      color: var(--text-main);
+      font-family: var(--mono);
+      outline: none;
+    }
+
+    .input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(22, 255, 112, 0.3);
+    }
+
+    .btn-primary {
+      flex: 0 0 auto;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: var(--radius-pill);
+      border: none;
+      background: linear-gradient(135deg, var(--accent), #5bff9c);
+      color: #020617;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.05);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.65;
+      cursor: default;
+    }
+
+    .btn-primary-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #020617;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    .hint code {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 1px 5px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      color: var(--text-muted);
+    }
+
+    .status-badge-row {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--text-muted);
+      background: rgba(15, 23, 42, 0.85);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill-anchored {
+      border-color: rgba(22, 255, 112, 0.7);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .pill-pending {
+      border-color: rgba(234, 179, 8, 0.7);
+      background: rgba(234, 179, 8, 0.07);
+      color: #facc15;
+    }
+
+    .pill-failed {
+      border-color: rgba(248, 113, 113, 0.7);
+      background: rgba(248, 113, 113, 0.07);
+      color: var(--danger);
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+    }
+
+    .dot-anchored {
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+    }
+
+    .dot-pending {
+      background: #facc15;
+      box-shadow: 0 0 10px #facc15;
+    }
+
+    .dot-failed {
+      background: var(--danger);
+      box-shadow: 0 0 10px var(--danger);
+    }
+
+    .status-table {
+      margin-top: 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: radial-gradient(circle at top, #020617, #020617 42%, #020617 100%);
+      overflow: hidden;
+    }
+
+    .status-row {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr);
+      padding: 7px 11px;
+      align-items: center;
+      column-gap: 8px;
+    }
+
+    .status-row:nth-child(odd) {
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .status-row:nth-child(even) {
+      background: rgba(17, 24, 39, 0.9);
+    }
+
+    .status-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-soft);
+    }
+
+    .status-value {
+      font-size: 13px;
+      color: var(--text-main);
+      word-break: break-all;
+    }
+
+    .status-value-muted {
+      color: var(--text-soft);
+    }
+
+    .status-mono {
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .link {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 12px;
+    }
+
+    .link:hover {
+      text-decoration: underline;
+    }
+
+    .dl-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .dl-pill {
+      font-size: 12px;
+      padding: 4px 9px;
+      border-radius: var(--radius-pill);
+      border: 1px dashed rgba(148, 163, 184, 0.6);
+      color: var(--accent);
+      background: rgba(22, 255, 112, 0.04);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dl-pill:hover {
+      border-style: solid;
+      background: rgba(22, 255, 112, 0.08);
+    }
+
+    .dl-pill span {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--text-soft);
+    }
+
+    .verify-note {
+      margin-top: 12px;
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    .verify-note strong {
+      color: var(--text-muted);
+    }
+
+    .error-box {
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--danger);
+    }
+
+    .secondary-panel {
+      padding: 16px 18px;
+      border-radius: 18px;
+      border: 1px dashed rgba(148, 163, 184, 0.55);
+      background: radial-gradient(circle at top right, rgba(22, 255, 112, 0.03), rgba(15, 23, 42, 0.96));
+    }
+
+    .secondary-title {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .secondary-body {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    ul {
+      padding-left: 18px;
+      margin: 0;
+      margin-bottom: 8px;
+    }
+
+    li {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .badge-mini {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--text-soft);
+    }
+
+    .badge-mini-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.8);
+    }
+  </style>
 </head>
 <body>
-  <header class="header">
-    <a class="brand" href="/" aria-label="docuProof home">
-      <img src="/docuproof-logo.png" alt="docuProof">
-      <strong>docuProof</strong>
-    </a>
-    <nav>
-      <a href="/start.html">Start</a> · <a href="/app">Generate</a>
-    </nav>
-  </header>
-
-  <main>
-    <h1>Verify Proof</h1>
-
-    <div class="card" style="margin:12px 0 18px">
-      <div class="row">
-        <input id="idIn" class="mono" placeholder="Enter Proof ID from your certificate" style="min-width:320px;flex:1">
-        <button id="goBtn" class="btn">Open</button>
+  <main class="frame">
+    <header class="header-row">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div>
+          <div class="brand-text-main">docuProof</div>
+          <div class="brand-text-sub">Proof you can point to.</div>
+        </div>
       </div>
-      <div class="small" style="margin-top:6px">
-        Your Proof ID appears on your docuProof certificate and in your email.  
-        If you downloaded a <code>.ots</code> file, you can also verify independently with
-        <code class="mono">ots verify yourfile.ots</code>.
+      <div class="header-cta">
+        <div class="badge">
+          <div class="badge-dot"></div>
+          Verify on the Bitcoin blockchain
+        </div>
+        <a href="/start" class="btn-outline">← Back to Start</a>
       </div>
-    </div>
+    </header>
 
-    <div class="grid">
-      <section class="card">
-        <div id="statusBadges" class="row" style="margin-bottom:4px"></div>
-        <div id="statusHelp" class="helper"></div>
+    <section class="shell">
+      <!-- Left: Verify controls + status -->
+      <div class="panel">
+        <div class="panel-heading">Verify</div>
+        <div class="panel-title">Check a timestamped proof</div>
+        <p class="panel-sub">
+          Paste the <strong>Proof ID</strong> from your docuProof certificate.  
+          You&#8217;ll see its anchor status on the Bitcoin blockchain and can download the underlying timestamp receipt.
+        </p>
 
-        <div class="kv small mono" id="kv">
-          <div>ID</div><div id="kv_id">—</div>
-          <div>State</div><div id="kv_state">—</div>
-          <div>TxID</div><div id="kv_txid">—</div>
-          <div>Confirmations</div><div id="kv_conf">—</div>
-          <div>Anchor JSON</div><div id="kv_anchor">—</div>
-          <div>Receipt</div><div id="kv_receipt">—</div>
-        </div>
-      </section>
-
-      <aside class="card">
-        <h3 style="margin-top:0">Downloads</h3>
-
-        <div class="row" style="margin:10px 0">
-          <button id="dlOts" class="btn" disabled>Download OTS receipt</button>
-          <button id="dlCert" class="btn secondary" disabled>View verification JSON</button>
-        </div>
-        <div class="small" style="margin-bottom:14px">
-          The <code>.ots</code> file is your raw timestamp proof.  
-          Keep it together with your original file so future verification is trivial.
-        </div>
-
-        <div class="small" style="margin-top:4px">
-          <strong>Shareable QR</strong>
-          <div style="margin-top:8px;display:flex;justify-content:center;">
-            <canvas id="qrCanvas" width="180" height="180"
-                    style="border-radius:12px;background:#111516;"></canvas>
+        <div class="form-row">
+          <label for="proof-id-input">Proof ID</label>
+          <div class="input-row">
+            <input
+              id="proof-id-input"
+              class="input"
+              placeholder="e.g. anchor-demo-001"
+              autocomplete="off"
+              value="${safeId}"
+            />
+            <button id="btn-check" class="btn-primary">
+              <span class="btn-primary-dot"></span>
+              <span id="btn-check-label">Check status</span>
+            </button>
           </div>
-          <div id="qrCaption" class="small" style="text-align:center;margin-top:6px;">
-            Scan to open this verification page on another device.
+          <div class="hint">
+            You can also bookmark links like
+            <code>/v/&lt;id&gt;</code> or <code>/verify?id=&lt;id&gt;</code>.
           </div>
         </div>
-      </aside>
-    </div>
+
+        <div class="status-badge-row">
+          <div id="status-pill" class="pill status-value-muted">
+            <div id="status-pill-dot" class="dot"></div>
+            <span id="status-pill-text">Waiting for a Proof ID…</span>
+          </div>
+          <div id="status-extra" class="pill status-value-muted" style="display:none;"></div>
+        </div>
+
+        <div class="status-table" id="status-table">
+          <div class="status-row">
+            <div class="status-label">Proof ID</div>
+            <div class="status-value status-mono" id="field-proof-id">—</div>
+          </div>
+          <div class="status-row">
+            <div class="status-label">Anchor state</div>
+            <div class="status-value" id="field-state">—</div>
+          </div>
+          <div class="status-row">
+            <div class="status-label">Bitcoin txid</div>
+            <div class="status-value status-mono" id="field-txid">
+              <span class="status-value-muted">—</span>
+            </div>
+          </div>
+          <div class="status-row">
+            <div class="status-label">Confirmations</div>
+            <div class="status-value status-mono" id="field-conf">
+              <span class="status-value-muted">—</span>
+            </div>
+          </div>
+          <div class="status-row">
+            <div class="status-label">Receipt</div>
+            <div class="status-value">
+              <div class="dl-links">
+                <a id="receipt-ots-link" class="dl-pill" href="#" style="display:none;">
+                  <span>OTS</span> anchor receipt
+                </a>
+                <a id="receipt-json-link" class="dl-pill" href="#" style="display:none;">
+                  <span>JSON</span> anchor metadata
+                </a>
+                <span id="receipt-missing" class="status-value-muted">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="error-box" class="error-box" style="display:none;"></div>
+
+        <div class="verify-note">
+          <strong>What you&#8217;re seeing:</strong> docuProof stores your receipt and anchor metadata,
+          and independently you can verify the txid and Merkle inclusion on any Bitcoin blockchain explorer.
+        </div>
+      </div>
+
+      <!-- Right: Explanation panel -->
+      <div class="secondary-panel">
+        <div class="secondary-title">How this verification works</div>
+        <p class="secondary-body">
+          docuProof keeps your file private in your browser.  
+          What we store is a cryptographic fingerprint (SHA-256 hash) and an
+          OpenTimestamps receipt anchored to the Bitcoin blockchain.
+        </p>
+        <ul>
+          <li><strong>Anchor state</strong> tells you whether your proof has been committed into a Bitcoin block.</li>
+          <li>
+            <strong>Bitcoin txid</strong> is the transaction you can inspect on any public Bitcoin blockchain explorer.
+          </li>
+          <li>
+            <strong>OTS receipt</strong> is the portable proof file.  
+            You can independently verify it with the open-source OpenTimestamps tools.
+          </li>
+        </ul>
+        <p class="secondary-body">
+          For strict evidentiary use, keep these together:
+        </p>
+        <ul>
+          <li>Your original file (unchanged)</li>
+          <li>Your docuProof PDF certificate</li>
+          <li>The downloaded <code>.ots</code> receipt file</li>
+        </ul>
+        <div class="badge-mini">
+          <div class="badge-mini-dot"></div>
+          The closer you are to the original anchor date, the harder it is to dispute when the file existed.
+        </div>
+      </div>
+    </section>
   </main>
 
-  <footer>
-    © <span id="year"></span> docuProof.io — Bitcoin-anchored proof of existence.
-  </footer>
+  <script>
+    (function () {
+      const idInput = document.getElementById("proof-id-input");
+      const btn = document.getElementById("btn-check");
+      const btnLabel = document.getElementById("btn-check-label");
 
-<!-- Load QRious -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+      const pill = document.getElementById("status-pill");
+      const pillDot = document.getElementById("status-pill-dot");
+      const pillText = document.getElementById("status-pill-text");
+      const pillExtra = document.getElementById("status-extra");
 
-<script>
-(function () {
-  function $(id) { return document.getElementById(id); }
+      const fieldId = document.getElementById("field-proof-id");
+      const fieldState = document.getElementById("field-state");
+      const fieldTxid = document.getElementById("field-txid");
+      const fieldConf = document.getElementById("field-conf");
 
-  function htmlEscape(s) {
-    return s.replace(/[&<>]/g, function (c) {
-      if (c === "&") return "&amp;";
-      if (c === "<") return "&lt;";
-      return "&gt;";
-    });
-  }
+      const receiptOts = document.getElementById("receipt-ots-link");
+      const receiptJson = document.getElementById("receipt-json-link");
+      const receiptMissing = document.getElementById("receipt-missing");
 
-  document.getElementById("year").textContent = new Date().getFullYear();
+      const errorBox = document.getElementById("error-box");
 
-  var idFromServer = "__ID__";
-  var hasId = __HAS_ID__;
+      function setPillState(kind, text) {
+        pill.classList.remove("pill-anchored", "pill-pending", "pill-failed");
+        pillDot.classList.remove("dot-anchored", "dot-pending", "dot-failed");
 
-  var idIn   = $("idIn");
-  var goBtn  = $("goBtn");
-  var dlOts  = $("dlOts");
-  var dlCert = $("dlCert");
-
-  var kv = {
-    id: $("kv_id"),
-    state: $("kv_state"),
-    txid: $("kv_txid"),
-    conf: $("kv_conf"),
-    anchor: $("kv_anchor"),
-    receipt: $("kv_receipt")
-  };
-
-  var badges     = $("statusBadges");
-  var statusHelp = $("statusHelp");
-  var qrCanvas   = $("qrCanvas");
-  var qrCaption  = $("qrCaption");
-
-  if (hasId && idFromServer) {
-    idIn.value = idFromServer;
-  }
-
-  goBtn.addEventListener("click", function () {
-    var v = (idIn.value || "").trim();
-    if (!v) return;
-    var qs = new URLSearchParams({ id: v }).toString();
-    location.href = "/verify?" + qs;
-  });
-
-  if (dlCert) {
-    dlCert.addEventListener("click", async function () {
-      var v = (idIn.value || "").trim();
-      if (!v) return;
-
-      try {
-        var resp = await fetch(
-          "/.netlify/functions/verify?id=" + encodeURIComponent(v),
-          { cache: "no-store" }
-        );
-        if (!resp.ok) throw new Error("HTTP " + resp.status);
-
-        var data = await resp.json();
-        var pretty = JSON.stringify(data, null, 2);
-
-        var win = window.open("", "_blank");
-        if (!win) return;
-
-        var html =
-          "<!doctype html><html><head>" +
-            "<meta charset='utf-8'>" +
-            "<title>Verification JSON – " + htmlEscape(v) + "</title>" +
-            "<style>" +
-              "body{background:#0b0f14;color:#eaeaea;" +
-              "font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;" +
-              "padding:16px;margin:0;}" +
-              "pre{white-space:pre-wrap;word-break:break-word;}" +
-            "</style>" +
-          "</head><body>" +
-            "<pre>" + htmlEscape(pretty) + "</pre>" +
-          "</body></html>";
-
-        win.document.write(html);
-        win.document.close();
-      } catch (e) {
-        alert("Could not load verification JSON. Please try again.");
+        switch (kind) {
+          case "anchored":
+            pill.classList.add("pill-anchored");
+            pillDot.classList.add("dot-anchored");
+            break;
+          case "pending":
+            pill.classList.add("pill-pending");
+            pillDot.classList.add("dot-pending");
+            break;
+          case "failed":
+            pill.classList.add("pill-failed");
+            pillDot.classList.add("dot-failed");
+            break;
+          default:
+            // neutral
+            break;
+        }
+        pillText.textContent = text;
       }
-    });
-  }
 
-  function clearBadge() {
-    badges.innerHTML = "";
-    statusHelp.textContent = "";
-  }
+      function resetOutputs() {
+        fieldId.textContent = "—";
+        fieldState.textContent = "—";
 
-  function setBadge(kind, title, detail) {
-    badges.innerHTML = "";
-    var pill = document.createElement("span");
-    pill.className = "badge " + kind;
-    pill.textContent = title;
-    badges.appendChild(pill);
-    statusHelp.textContent = detail || "";
-  }
+        fieldTxid.innerHTML = '<span class="status-value-muted">—</span>';
+        fieldConf.innerHTML = '<span class="status-value-muted">—</span>';
 
-  function resetUI() {
-    clearBadge();
-    for (var k in kv) {
-      if (Object.prototype.hasOwnProperty.call(kv, k)) {
-        kv[k].textContent = "—";
+        receiptOts.style.display = "none";
+        receiptJson.style.display = "none";
+        receiptOts.removeAttribute("href");
+        receiptJson.removeAttribute("href");
+        receiptMissing.style.display = "inline";
+
+        pillExtra.style.display = "none";
+        pillExtra.textContent = "";
+
+        errorBox.style.display = "none";
+        errorBox.textContent = "";
+
+        setPillState(null, "Waiting for a Proof ID…");
       }
-    }
-    if (dlOts) dlOts.disabled = true;
-    if (dlCert) dlCert.disabled = true;
 
-    if (qrCanvas && qrCanvas.getContext) {
-      var ctx = qrCanvas.getContext("2d");
-      ctx.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
-    }
-    if (qrCaption) {
-      qrCaption.textContent = "Scan to open this verification page on another device.";
-    }
-  }
-
-  function renderQrForId(v) {
-    if (!qrCanvas || !window.QRious) return;
-    var publicUrl = location.origin + "/verify?id=" + encodeURIComponent(v);
-    new QRious({
-      element: qrCanvas,
-      value: publicUrl,
-      size: 180,
-      level: "M"
-    });
-  }
-
-  async function fetchStatus(id) {
-    var url = "/.netlify/functions/anchor_status?id=" + encodeURIComponent(id);
-    var r = await fetch(url, { cache: "no-store" });
-    var data = {};
-    try {
-      data = await r.json();
-    } catch (e) {
-      data = {};
-    }
-
-    if (r.status === 404) {
-      if (!data || typeof data !== "object") data = {};
-      if (!data.state) data.state = "NOT_FOUND";
-      if (data.confirmations == null) data.confirmations = 0;
-      return data;
-    }
-
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    return data;
-  }
-
-  async function load() {
-    var v = (idIn.value || "").trim();
-
-    resetUI();
-
-    if (!v) return;
-
-    kv.id.textContent = v;
-    if (dlCert) dlCert.disabled = false;
-    renderQrForId(v);
-
-    var status;
-    try {
-      status = await fetchStatus(v);
-    } catch (e) {
-      setBadge(
-        "err",
-        "Status lookup failed",
-        "We could not retrieve status for this ID. Try again in a moment, or confirm the ID exactly as printed on your certificate."
-      );
-      return;
-    }
-
-    var state = status.state || "";
-    var displayState = state === "NOT_FOUND" ? "Pending" : (state || "—");
-    kv.state.textContent = displayState;
-
-    if (status.txid) {
-      var mempoolUrl = "https://mempool.space/tx/" + encodeURIComponent(status.txid);
-      kv.txid.innerHTML =
-        '<a class="mono" href="' + mempoolUrl + '" target="_blank" rel="noopener">' +
-        status.txid +
-        "</a>";
-    } else {
-      kv.txid.textContent = "—";
-    }
-
-    kv.conf.textContent = status.confirmations != null ? status.confirmations : 0;
-    kv.anchor.textContent = status.anchorKey || "—";
-
-    if (state === "NOT_FOUND") {
-      setBadge(
-        "neutral",
-        "Queued for anchoring",
-        "We have your proof record but do not yet see a Bitcoin receipt or anchor for this ID. If you just created this proof, allow time for batching and anchoring, then check back using the same Proof ID."
-      );
-      return;
-    }
-
-    if (state === "OTS_RECEIPT") {
-      setBadge(
-        "ok",
-        "Receipt available — awaiting anchor",
-        "Your proof has been committed to the OpenTimestamps calendar and is waiting to be included in a Bitcoin transaction. Download the .ots receipt on the right and keep it with your original file."
-      );
-    } else if (state === "ANCHORED") {
-      var conf = status.confirmations != null ? status.confirmations : 0;
-      var msg;
-      if (conf > 0) {
-        msg = "Your proof is anchored in a Bitcoin transaction with " +
-              conf +
-              " confirmation" +
-              (conf === 1 ? "" : "s") +
-              ". You can independently verify using the .ots receipt and your original file.";
-      } else {
-        msg = "Your proof is anchored in a Bitcoin transaction. Additional confirmations will accumulate over time.";
+      async function fetchAnchorStatus(id) {
+        const url = "/.netlify/functions/anchor_status?id=" + encodeURIComponent(id);
+        const res = await fetch(url, { method: "GET", cache: "no-store" });
+        if (!res.ok) {
+          throw new Error("anchor_status HTTP " + res.status);
+        }
+        return res.json();
       }
-      setBadge("ok", "Anchored on Bitcoin", msg);
-    } else if (state) {
-      setBadge("ok", displayState, "Proof status returned by the verification service.");
-    }
 
-    if (state === "OTS_RECEIPT") {
-      try {
-        var djResponse = await fetch(
-          "/.netlify/functions/download_receipt_json?id=" + encodeURIComponent(v),
-          { cache: "no-store" }
-        );
-        var dj;
+      /*
+        Optional strict check: POST /.netlify/functions/verify
+        with { id, hash } if/when you want to plug a local hash comparison into the UI.
+        For now we leave this as a placeholder.
+      */
+      async function runCheck() {
+        const id = (idInput.value || "").trim();
+        if (!id) {
+          resetOutputs();
+          setPillState(null, "Please enter a Proof ID.");
+          return;
+        }
+
+        btn.disabled = true;
+        btnLabel.textContent = "Checking…";
+
         try {
-          dj = await djResponse.json();
-        } catch (e2) {
-          dj = null;
-        }
+          resetOutputs();
+          fieldId.textContent = id;
 
-        if (dj && dj.base64 && dj.base64.length) {
-          kv.receipt.textContent = dj.key || (v + ".ots");
-          if (dlOts) {
-            dlOts.disabled = false;
-            dlOts.onclick = function () {
-              window.location.href =
-                "/.netlify/functions/download_receipt?id=" + encodeURIComponent(v);
-            };
+          setPillState("pending", "Querying anchor status…");
+
+          const anchor = await fetchAnchorStatus(id);
+
+          if (!anchor || anchor.ok !== true) {
+            throw new Error("Unexpected anchor_status payload");
           }
-        } else {
-          kv.receipt.textContent = "—";
+
+          const state = anchor.state || "UNKNOWN";
+          const txid = anchor.txid || null;
+          const confirmations =
+            typeof anchor.confirmations === "number" ? anchor.confirmations : null;
+
+          // --- State badge & text ---
+          fieldState.textContent = state;
+
+          if (state === "ANCHORED") {
+            setPillState("anchored", "Anchored on the Bitcoin blockchain.");
+          } else if (state === "OTS_RECEIPT" || state === "PENDING") {
+            setPillState(
+              "pending",
+              "Receipt present – still upgrading to a confirmed Bitcoin anchor."
+            );
+          } else if (state === "NOT_FOUND") {
+            setPillState("failed", "No anchor found for that Proof ID.");
+          } else {
+            setPillState("pending", "Status: " + state);
+          }
+
+          // --- txid display + explorer link ---
+          if (txid) {
+            const short = txid.slice(0, 12) + "…" + txid.slice(-8);
+            const explorerUrl =
+              "https://mempool.space/tx/" + encodeURIComponent(txid);
+
+            fieldTxid.innerHTML =
+              '<a class="link status-mono" href="' +
+              explorerUrl +
+              '" target="_blank" rel="noopener noreferrer">' +
+              short +
+              "</a>";
+          } else {
+            fieldTxid.innerHTML =
+              '<span class="status-value-muted">—</span>';
+          }
+
+          // --- confirmations ---
+          if (confirmations !== null && confirmations >= 0) {
+            fieldConf.textContent = String(confirmations);
+          } else {
+            fieldConf.innerHTML =
+              '<span class="status-value-muted">—</span>';
+          }
+
+          // --- receipt links ---
+          // As long as the receipt exists in your blob store, these will work
+          // independently of whether the txid has enough confirmations.
+          const base = "/.netlify/functions";
+          const otsHref =
+            base + "/download_receipt?id=" + encodeURIComponent(id);
+          const jsonHref =
+            base + "/download_receipt_json?id=" + encodeURIComponent(id);
+
+          receiptOts.href = otsHref;
+          receiptJson.href = jsonHref;
+
+          receiptOts.style.display = "inline-flex";
+          receiptJson.style.display = "inline-flex";
+          receiptMissing.style.display = "none";
+
+          // Optional extra chip for ANCHORED with txid
+          if (state === "ANCHORED" && txid) {
+            pillExtra.style.display = "inline-flex";
+            pillExtra.textContent = "Anchor ID: " + txid.slice(0, 8) + "…";
+          } else {
+            pillExtra.style.display = "none";
+          }
+        } catch (err) {
+          console.error("verify_page runCheck error:", err);
+          errorBox.style.display = "block";
+          errorBox.textContent =
+            "Could not look up this proof. If the ID is correct, try again in a minute.";
+          setPillState("failed", "Unable to fetch anchor status.");
+        } finally {
+          btn.disabled = false;
+          btnLabel.textContent = "Check status";
         }
-      } catch (e3) {
-        kv.receipt.textContent = "—";
       }
-    }
-  }
 
-  if (hasId && idFromServer) {
-    load();
-  }
-})();
-</script>
+      btn.addEventListener("click", function (evt) {
+        evt.preventDefault();
+        runCheck();
+      });
 
+      idInput.addEventListener("keydown", function (evt) {
+        if (evt.key === "Enter") {
+          evt.preventDefault();
+          runCheck();
+        }
+      });
+
+      // Auto-run when the page is loaded with an id in the URL
+      if (idInput.value.trim()) {
+        runCheck();
+      } else {
+        resetOutputs();
+      }
+    })();
+  </script>
 </body>
 </html>`;
-
-function escapeHtml(s){
-  return s.replace(/[&<>"']/g, function (c) {
-    return { "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c];
-  });
 }
