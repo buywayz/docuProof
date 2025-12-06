@@ -202,7 +202,14 @@ function buildHtml(initialId) {
       box-shadow: 0 0 24px rgba(22,255,112,0.5);
       transform: translateY(-0.5px);
     }
+.btn-outline:hover {
+  background: rgba(22,255,112,0.15);
+}
 
+.pill:hover {
+  background: var(--accent) !important;
+  color: #020513 !important;
+}
     .layout {
       display: grid;
       grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
