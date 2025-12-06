@@ -3,28 +3,31 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  # Disable Netlify's build-time secrets scanner for this site.
+  # This stops the false positives from .netlify/state.json and cached google-cloud-sdk files.
+  SECRETS_SCAN_ENABLED = "false"
 
 [functions]
-  node_bundler = "esbuild"
+  node_bundler   = "esbuild"
   included_files = [
     "netlify/functions/assets/**",
     "netlify/functions/data/**"
   ]
 
-# Keep functions uncached while iterating
+# Keep functions uncached while we iterate
 [[headers]]
   for = "/.netlify/functions/*"
   [headers.values]
     Cache-Control = "no-store, no-cache, must-revalidate"
 
-# Rewrite /verify → serverless function (no force flag allowed with status 200)
 [[redirects]]
   from = "/verify"
   to = "/.netlify/functions/verify_page"
   status = 200
+  force = true
 
-# Rewrite /v/:id → serverless function (no force flag allowed with status 200)
 [[redirects]]
   from = "/v/:id"
   to = "/.netlify/functions/verify_page?id=:id"
   status = 200
+  force = true
