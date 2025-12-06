@@ -467,7 +467,48 @@ function buildHtml(initialId) {
         padding-top: 22px;
       }
     }
-  </style>
+/* ----- docuProof UI green fixes ----- */
+.badge-success,
+.status-success {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.pill {
+  background: var(--bg-panel-soft);
+  border: 1px solid var(--border-subtle);
+}
+
+.pill.active,
+.pill:hover {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.btn-ghost {
+  color: var(--text);
+  border-color: var(--border-subtle);
+}
+
+.btn-ghost:hover {
+  background: var(--accent-soft);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+ 
+ </style>
 </head>
 <body>
   <div class="page">
