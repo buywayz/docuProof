@@ -150,11 +150,11 @@ function buildHtml(initialId) {
         gap: 2px;
       }
 
-      .logo-title {
+          .logo-title {
         font-weight: 650;
         font-size: 16px;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        /* no text-transform here so "docuProof" keeps its case */
       }
 
       .logo-sub {
