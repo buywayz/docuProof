@@ -1,7 +1,6 @@
 
 
 
-]
 "use strict";
 
 // netlify/functions/verify_page.js
