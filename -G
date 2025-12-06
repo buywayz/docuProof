@@ -1,0 +1,14 @@
+HTTP/2 200 
+age: 2
+cache-control: no-store,no-cache,must-revalidate
+cache-status: "Netlify Durable"; fwd=bypass
+cache-status: "Netlify Edge"; fwd=method
+content-disposition: inline; filename="Launch-Test.pdf"
+content-type: application/pdf
+date: Tue, 11 Nov 2025 21:31:15 GMT
+netlify-vary: query
+server: Netlify
+strict-transport-security: max-age=31536000
+x-docuproof-version: proof_pdf v5.3.0 layout-match
+x-nf-request-id: 01K9TD8YVQQTC5V1YE15V5TJKH
+

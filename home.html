@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <!-- SEO / Meta for root homepage -->
+  <title>docuProof.io — Permanent Proof You Can Point To.</title>
+  <meta name="description" content="Turn any file into a permanent, Bitcoin-anchored proof of existence. Simple web app, no crypto required, court-friendly certificate in under 60 seconds.">
+
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://docuproof.io/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://docuproof.io/">
+  <meta property="og:title" content="docuProof.io — Permanent Proof You Can Point To.">
+  <meta property="og:description" content="Timestamp any file on Bitcoin in under a minute. Independent, tamper-evident proof-of-existence for creators, professionals, and teams.">
+  <meta property="og:image" content="https://docuproof.io/assets/meta/og-start.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Twitter (X) -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="docuProof.io — Permanent Proof You Can Point To.">
+  <meta name="twitter:description" content="Create a cryptographic receipt for any file. Bitcoin-anchored, verifiable, and simple enough for non-technical users.">
+  <meta name="twitter:image" content="https://docuproof.io/assets/meta/og-start.png">
+
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="icon" href="/docuproof-logo.png">
+  <link rel="shortcut icon" href="/docuproof-logo.png">
+  <link rel="apple-touch-icon" href="/docuproof-logo.png">
+  <meta name="theme-color" content="#0B0F14">
+
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --ink:#eaeaea;
+      --muted:#a7b0ba;
+      --accent:#22C55E;
+      --card:#151b22;
+      --border:#1e2630;
+      --link:#9cc1ff;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      background:var(--bg);
+      color:var(--ink);
+      font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    }
+    a{color:var(--link);text-decoration:none}
+    a:hover{text-decoration:underline}
+    header,section,footer{padding:64px 20px;max-width:1100px;margin:auto}
+    header{padding-top:72px}
+    h1,h2{color:var(--ink);font-weight:700;margin-bottom:12px;line-height:1.2}
+    h1{font-size:34px}
+    h2{font-size:26px}
+    h3{margin-bottom:6px;font-size:18px}
+    p{margin-bottom:16px;color:#c9d2db}
+    .muted{color:var(--muted)}
+    .eyebrow{
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      font-size:12px;
+      color:var(--accent);
+      font-weight:600;
+      margin-bottom:10px;
+    }
+    .btn{
+      display:inline-block;
+      padding:13px 24px;
+      border-radius:999px;
+      font-weight:600;
+      border:1px solid transparent;
+      background:transparent;
+      color:var(--ink);
+      cursor:pointer;
+      transition:background .12s ease,transform .08s ease,box-shadow .12s ease,opacity .12s ease;
+      text-decoration:none;
+      font-size:15px;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn-primary{
+      background:var(--accent);
+      color:#020617;
+      box-shadow:0 14px 35px rgba(34,197,94,0.25);
+    }
+    .btn-primary:hover{opacity:.92}
+    .btn-ghost{
+      border-color:#2a3542;
+      background:#0f1620;
+    }
+    .hero{
+      display:grid;
+      grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);
+      gap:40px;
+      align-items:center;
+    }
+    .hero-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 12px;
+      border-radius:999px;
+      background:#08101a;
+      border:1px solid #1e2630;
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:16px;
+    }
+    .hero-badge span.tag{
+      background:rgba(34,197,94,0.1);
+      color:var(--accent);
+      padding:2px 8px;
+      border-radius:999px;
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      font-weight:600;
+    }
+    .hero-cta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      margin-top:20px;
+      align-items:center;
+    }
+    .hero-note{
+      font-size:13px;
+      color:var(--muted);
+      margin-top:6px;
+    }
+    .hero-card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:20px;
+      font-size:14px;
+    }
+    .hero-kv{
+      display:grid;
+      grid-template-columns:auto 1fr;
+      gap:6px 12px;
+      align-items:baseline;
+      margin-top:12px;
+    }
+    .hero-kv span.label{
+      color:var(--muted);
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.14em;
+    }
+    .hero-kv span.value{
+      font-weight:600;
+      font-size:14px;
+    }
+
+    .grid{display:grid;gap:22px}
+    .grid-3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+    .grid-4{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:20px;
+    }
+
+    .pill{
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      background:#0f1722;
+      border:1px solid #283341;
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      color:var(--muted);
+      margin-bottom:10px;
+    }
+
+    .list{list-style:none;margin:0;padding:0}
+    .list li{
+      position:relative;
+      padding-left:20px;
+      margin-bottom:8px;
+      font-size:14px;
+    }
+    .list li::before{
+      content:"•";
+      position:absolute;
+      left:6px;
+      top:0;
+      color:var(--accent);
+    }
+
+    footer{
+      padding-top:32px;
+      padding-bottom:48px;
+      text-align:center;
+      font-size:13px;
+      color:var(--muted);
+    }
+    footer a{color:var(--muted)}
+    footer a:hover{color:var(--ink)}
+
+    /* Responsive */
+    @media (max-width:880px){
+      header{padding-top:56px}
+      .hero{
+        grid-template-columns:1fr;
+      }
+      .hero-card{order:-1}
+      h1{font-size:28px}
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="hero">
+    <div>
+      <div class="hero-badge">
+        <span class="tag">New</span>
+        <span>Permanent proof-of-existence for any file</span>
+      </div>
+      <h1>Proof you can point to — without hiring a lawyer or learning crypto.</h1>
+      <p>docuProof turns any file into a permanent, Bitcoin-anchored certificate that proves it existed, unchanged, at a specific moment in time. No accounts, no seed phrases — just upload, pay, and keep your receipt.</p>
+      <p class="muted">If you can send an email attachment, you can create a cryptographic proof.</p>
+
+      <div class="hero-cta">
+        <a href="/start.html" class="btn btn-primary">Get Started in &lt;60 seconds</a>
+        <a href="#how-it-works" class="btn btn-ghost">See how it works</a>
+      </div>
+      <div class="hero-note">
+        No document storage · Your file never leaves your device · Bitcoin-anchored
+      </div>
+    </div>
+
+    <aside class="hero-card">
+      <div class="pill">A glimpse at your proof receipt</div>
+      <p class="muted" style="font-size:13px;margin-bottom:10px;">
+        Every timestamp includes a PDF certificate plus a link anyone can verify independently.
+      </p>
+      <div class="hero-kv">
+        <span class="label">Proof ID</span><span class="value">qr_fix01</span>
+        <span class="label">Quick Verify ID</span><span class="value">0a18e826</span>
+        <span class="label">Created (UTC)</span><span class="value">2025-11-11T14:21:29Z</span>
+        <span class="label">Public Verify URL</span>
+        <span class="value">https://docuproof.io/verify?id=qr_fix01</span>
+      </div>
+      <p class="muted" style="font-size:12px;margin-top:14px;">
+        The certificate also includes a scannable QR code and a Bitcoin anchor reference once confirmed on-chain.
+      </p>
+    </aside>
+  </div>
+</header>
+
+<section id="why">
+  <div class="eyebrow">Why this exists</div>
+  <h2>You don’t need “blockchain,” you need evidence that holds up.</h2>
+  <p>
+    Until now, proving you had something first usually meant emailing it to yourself,
+    mailing a sealed envelope, or trusting a platform that might disappear.
+    docuProof gives you a cryptographic receipt anchored to Bitcoin’s public ledger —
+    a neutral third-party record that does not depend on docuProof continuing to exist.
+  </p>
+
+  <div class="grid grid-3">
+    <div class="card">
+      <h3>Creators & writers</h3>
+      <p>Timestamp manuscripts, scripts, songs, treatments, or artwork before you pitch, collaborate, or publish.</p>
+    </div>
+    <div class="card">
+      <h3>Professionals & businesses</h3>
+      <p>Protect contracts, policy updates, statements of work, and internal memos with a verifiable timeline.</p>
+    </div>
+    <div class="card">
+      <h3>Researchers & builders</h3>
+      <p>Anchor lab notes, datasets, prototypes, or model versions to secure your priority and reproducibility.</p>
+    </div>
+  </div>
+</section>
+
+<section id="how-it-works">
+  <div class="eyebrow">How it works</div>
+  <h2>From file to permanent proof in three steps.</h2>
+
+  <div class="grid grid-3">
+    <div class="card">
+      <h3>1. You choose a file</h3>
+      <p>Your browser computes a SHA-256 fingerprint locally. The file itself is never uploaded or stored.</p>
+    </div>
+    <div class="card">
+      <h3>2. We queue your fingerprint on Bitcoin</h3>
+      <p>docuProof batches many fingerprints into a single Bitcoin transaction, creating a permanent, tamper-evident record.</p>
+    </div>
+    <div class="card">
+      <h3>3. You keep the receipt</h3>
+      <p>You receive a PDF certificate with a Proof ID, Quick Verify ID, and public verify URL. Anyone can check it independently at any time.</p>
+    </div>
+  </div>
+
+  <p style="margin-top:18px">
+    <a href="/start.html" class="btn btn-primary">Create your first proof</a>
+    <a href="/start.html#pricing" class="btn btn-ghost" style="margin-left:8px">View detailed pricing</a>
+  </p>
+</section>
+
+<section id="benefits">
+  <div class="eyebrow">What each proof gives you</div>
+  <h2>Every timestamp buys you more than “some blockchain thing.”</h2>
+
+  <div class="grid grid-4">
+    <div class="card">
+      <h3>Independent verification</h3>
+      <ul class="list">
+        <li>Verify through docuProof or any compatible OTS/Bitcoin tool.</li>
+        <li>No exclusive dependence on our servers.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Cryptographic integrity</h3>
+      <ul class="list">
+        <li>Any change to the file breaks the match instantly.</li>
+        <li>No ambiguous “similar” matches — it’s binary.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Clear human-readable receipt</h3>
+      <ul class="list">
+        <li>PDF certificate designed for lawyers, judges, and non-technical reviewers.</li>
+        <li>Readable timeline; QR code for quick verification.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Low, predictable cost</h3>
+      <ul class="list">
+        <li>Single proofs for occasional use.</li>
+        <li>Starter and Pro plans if you’re timestamping regularly.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="safety">
+  <div class="eyebrow">Safety & boundaries</div>
+  <h2>What docuProof is — and what it is not.</h2>
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>docuProof <em>is</em>…</h3>
+      <ul class="list">
+        <li>A way to prove a specific file existed at a specific time.</li>
+        <li>A Bitcoin-anchored, tamper-evident record.</li>
+        <li>A complement to, not a replacement for, legal advice.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>docuProof is <em>not</em>…</h3>
+      <ul class="list">
+        <li>A notary or legal opinion.</li>
+        <li>Cloud storage or backup for your documents.</li>
+        <li>A magic shield against all possible disputes.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="muted" style="font-size:13px;margin-top:14px;">
+    You keep custody of your original file. docuProof gives you an independently verifiable timestamp that strengthens your story when you need to show what existed, when.
+  </p>
+</section>
+
+<section id="cta">
+  <div class="eyebrow">Start in under a minute</div>
+  <h2>Upload a file, pay once, keep the proof forever.</h2>
+  <p>When future-you has to prove “I had this then,” you’ll be glad you spent the extra minute today.</p>
+  <p style="margin-top:18px">
+    <a href="/start.html" class="btn btn-primary">Go to the timestamping app</a>
+    <a href="/start.html#pricing" class="btn btn-ghost" style="margin-left:8px">See pricing & plans</a>
+  </p>
+</section>
+
+<footer>
+  © <span id="year"></span> docuProof.io — Proof of existence on the Bitcoin blockchain ·
+  <a href="/start.html">Start</a> ·
+  <a href="/.netlify/functions/verify_page">Verify a proof</a> ·
+  <a href="/contact.html">Contact</a>
+</footer>
+
+<script>
+  // Year stamp
+  document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+
+</body>
+</html>

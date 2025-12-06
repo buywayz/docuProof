@@ -1,0 +1,15 @@
+{
+  "name": "docuproof-ots-sidecar",
+  "version": "0.1.0",
+  "description": "OpenTimestamps sidecar service for docuProof.io",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "morgan": "^1.10.0",
+    "opentimestamps": "^0.4.6"
+  }
+}

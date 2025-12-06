@@ -1,0 +1,119 @@
+functionsDirectory = "/Users/jamesross/Documents/Documents - James’s MacBook Air (2)/BuyWayz LLC/Project 1/docuProof-clean/netlify/functions"
+functionsDirectoryOrigin = "config-v1"
+headersOrigin = "config"
+redirectsOrigin = "config"
+plugins = []
+
+[build]
+publish = "/Users/jamesross/Documents/Documents - James’s MacBook Air (2)/BuyWayz LLC/Project 1/docuProof-clean"
+publishOrigin = "ui"
+functions = "/Users/jamesross/Documents/Documents - James’s MacBook Air (2)/BuyWayz LLC/Project 1/docuProof-clean/netlify/functions"
+
+[build.environment]
+NODE_VERSION = "18"
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
+
+[functions]
+
+[functions."*"]
+included_files = ["netlify/functions/assets/**", "netlify/functions/data/**"]
+node_bundler = "esbuild"
+
+[[headers]]
+for = "/*"
+
+[headers.values]
+Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+X-Content-Type-Options = "nosniff"
+Referrer-Policy = "strict-origin-when-cross-origin"
+Permissions-Policy = "camera=(), microphone=(), geolocation=(), usb=(), payment=()"
+X-Frame-Options = "DENY"
+
+[[headers]]
+for = "/.netlify/functions/*"
+
+[headers.values]
+Cache-Control = "no-store, no-cache, must-revalidate"
+
+[[redirects]]
+from = "/app"
+to = "/index.html"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/verify"
+to = "/.netlify/functions/verify_page"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/v/:id"
+to = "/.netlify/functions/verify_page?id=:id"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/launch"
+to = "/marketing/pages/landing-hybrid.html"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/verify"
+to = "/.netlify/functions/verify_page"
+status = 200.0
+force = true
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]
+
+[[redirects]]
+from = "/v/:id"
+to = "/.netlify/functions/verify_page?id=:id"
+status = 200.0
+force = true
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]

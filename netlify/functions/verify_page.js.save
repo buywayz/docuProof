@@ -1,0 +1,840 @@
+
+
+
+
+]
+"use strict";
+
+// netlify/functions/verify_page.js
+// Serves the Verify UI and calls JSON endpoints:
+// - /.netlify/functions/anchor_status?id=...
+// - /.netlify/functions/download_receipt?id=...
+// - /.netlify/functions/download_receipt_json?id=...
+// - /.netlify/functions/verify (optional hash check via POST)
+
+exports.handler = async (event) => {
+  const rawUrl = event.rawUrl || "http://x/";
+  let initialId = "";
+
+  try {
+    const url = new URL(rawUrl);
+    const qsId = (url.searchParams.get("id") || "").trim();
+    if (qsId) initialId = qsId;
+  } catch {
+    // ignore
+  }
+
+  const html = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Verify · docuProof</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #020713;
+      --panel: #050b1c;
+      --panel-soft: #050b1f;
+      --border-soft: rgba(255,255,255,0.06);
+      --border-strong: rgba(22,255,112,0.7);
+      --text-main: #f9fbff;
+      --text-muted: #9ca4c2;
+      --text-soft: #6d7391;
+      --accent: #16ff70;
+      --accent-soft: rgba(22,255,112,0.09);
+      --danger: #ff4b81;
+      --danger-soft: rgba(255,75,129,0.12);
+      --radius-xl: 24px;
+      --radius-pill: 999px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at top left, #041630 0, #020713 45%, #000000 100%);
+      color: var(--text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      font-size: 18px; /* slightly larger overall */
+    }
+
+    body {
+      min-height: 100vh;
+      padding: 32px 24px 40px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      gap: 16px;
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-glyph {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: radial-gradient(circle at 30% 10%, #16ff70 0, #00a84b 42%, #001a0d 100%);
+      box-shadow: 0 0 24px rgba(22,255,112,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #020713;
+      font-weight: 800;
+      font-size: 15px;
+    }
+
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .logo-title {
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      font-size: 19px;
+    }
+
+    .logo-sub {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-soft);
+    }
+
+    .header-actions {
+      display: inline-flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-ghost,
+    .btn-primary {
+      border-radius: var(--radius-pill);
+      padding: 7px 14px;
+      font-size: 13px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(3,8,23,0.8);
+      color: var(--text-main);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      outline: none;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent-soft);
+      border-color: rgba(22,255,112,0.7);
+      color: var(--accent);
+    }
+
+    .btn-primary::before {
+      content: "●";
+      font-size: 11px;
+    }
+
+    .btn-ghost:hover,
+    .btn-primary:hover {
+      border-color: rgba(255,255,255,0.35);
+      background: rgba(6,13,35,0.95);
+      transform: translateY(-0.5px);
+    }
+
+    .btn-primary:hover {
+      background: rgba(22,255,112,0.14);
+      border-color: rgba(22,255,112,0.9);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 28px;
+    }
+
+    .panel {
+      background: radial-gradient(circle at top left, #071227 0, #050b1f 50%, #020712 100%);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-soft);
+      padding: 22px 22px 20px;
+      box-shadow:
+        0 28px 60px rgba(0,0,0,0.75),
+        0 0 0 1px rgba(255,255,255,0.03);
+    }
+
+    .panel + .panel {
+      background: linear-gradient(140deg, #050b1f 0, #04091a 40%, #020613 100%);
+    }
+
+    .panel-title {
+      font-size: 1.25rem; /* bigger */
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      margin-bottom: 6px;
+    }
+
+    .panel-subtitle {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      max-width: 36rem;
+    }
+
+    .verify-header {
+      margin-bottom: 18px;
+    }
+
+    .field-label {
+      font-size: 0.8rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+      margin-bottom: 6px;
+    }
+
+    .field-row {
+      margin-bottom: 14px;
+    }
+
+    .id-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .id-input {
+      flex: 1 1 220px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(255,255,255,0.16);
+      padding: 9px 14px;
+      background: rgba(3,8,23,0.8);
+      color: var(--text-main);
+      font-size: 0.95rem;
+      outline: none;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35);
+    }
+
+    .id-input::placeholder {
+      color: var(--text-soft);
+    }
+
+    .check-btn {
+      border-radius: var(--radius-pill);
+      padding: 8px 18px;
+      border: none;
+      background: var(--accent);
+      color: #020713;
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 24px rgba(22,255,112,0.5);
+      transition: background 0.12s ease, transform 0.08s ease, box-shadow 0.12s ease;
+      white-space: nowrap;
+    }
+
+    .check-btn:hover {
+      background: #45ff90;
+      transform: translateY(-1px);
+      box-shadow: 0 0 32px rgba(22,255,112,0.7);
+    }
+
+    .check-btn-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: #020713;
+    }
+
+    .status-chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .status-pill {
+      border-radius: var(--radius-pill);
+      padding: 5px 11px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(6,13,35,0.9);
+      color: var(--text-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-pill__dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.4);
+    }
+
+    .status-pill--anchored {
+      border-color: var(--border-strong);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .status-pill--anchored .status-pill__dot {
+      background: var(--accent);
+      box-shadow: 0 0 10px rgba(22,255,112,0.9);
+    }
+
+    .status-pill--pending {
+      border-color: rgba(255,204,102,0.7);
+      background: rgba(255,204,102,0.08);
+      color: #ffcc66;
+    }
+
+    .status-pill--pending .status-pill__dot {
+      background: #ffcc66;
+    }
+
+    .status-pill--error {
+      border-color: var(--danger);
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .status-pill--error .status-pill__dot {
+      background: var(--danger);
+    }
+
+    .status-pill--idle {
+      border-style: dashed;
+    }
+
+    .field-value {
+      font-size: 0.95rem; /* slightly bigger */
+      color: var(--text-main);
+      word-break: break-all;
+    }
+
+    .field-value a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .field-value a:hover {
+      text-decoration: underline;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .pill {
+      border-radius: var(--radius-pill);
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(3,8,23,0.85);
+      color: var(--text-main);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      outline: none;
+      transition: background 0.12s ease, border-color 0.12s ease, transform 0.08s ease;
+    }
+
+    .pill[disabled] {
+      opacity: 0.45;
+      cursor: default;
+    }
+
+    .pill:not([disabled]):hover {
+      border-color: rgba(255,255,255,0.4);
+      background: rgba(8,16,39,0.95);
+      transform: translateY(-0.5px);
+    }
+
+    .pill-pill {
+      border-radius: var(--radius-pill);
+    }
+
+    .pill-secondary {
+      border-color: rgba(22,255,112,0.6);
+      color: var(--accent);
+    }
+
+    .pill-secondary-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+
+    .pill-qr {
+      border-color: rgba(255,255,255,0.2);
+      background: rgba(6,13,35,0.9);
+      color: var(--text-main);
+    }
+
+    .pill-qr::before {
+      content: "▢";
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+
+    .meta-note {
+      margin-top: 10px;
+      font-size: 0.8rem;
+      color: var(--text-soft);
+      max-width: 30rem;
+    }
+
+    .meta-note strong {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .panel-right-title {
+      font-size: 1.2rem; /* larger */
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .panel-right-text {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 36rem;
+    }
+
+    .bullet-list {
+      margin: 16px 0 8px;
+      padding-left: 18px;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .bullet-list li + li {
+      margin-top: 6px;
+    }
+
+    .hint-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border-radius: var(--radius-pill);
+      padding: 5px 10px;
+      border: 1px dashed rgba(255,255,255,0.25);
+      background: rgba(4,9,26,0.9);
+      color: var(--text-soft);
+      font-size: 0.78rem;
+      margin-top: 12px;
+    }
+
+    .hint-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(22,255,112,0.8);
+      box-shadow: 0 0 10px rgba(22,255,112,0.7);
+    }
+
+    .footer {
+      margin-top: 26px;
+      font-size: 0.78rem;
+      color: var(--text-soft);
+      text-align: center;
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 920px) {
+      body {
+        padding: 20px 16px 28px;
+      }
+      .layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .panel {
+        padding: 18px 16px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="header">
+      <div class="logo-row">
+        <div class="logo-glyph">dp</div>
+        <div class="logo-text">
+          <div class="logo-title">docuProof</div>
+          <div class="logo-sub">Proof you can point to.</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="/verify" class="btn-ghost">Verify</a>
+        <a href="/start" class="btn-primary">Start · Generate</a>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel">
+        <div class="verify-header">
+          <div class="panel-title">Check a timestamped proof</div>
+          <div class="panel-subtitle">
+            Paste the <strong>Proof ID</strong> from your docuProof certificate. You’ll see its anchor
+            status on the Bitcoin blockchain and can download the underlying timestamp receipt.
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-label">PROOF ID</div>
+          <div class="id-row">
+            <input
+              id="proof-id-input"
+              class="id-input"
+              type="text"
+              spellcheck="false"
+              autocomplete="off"
+              placeholder="e.g. e2e-demo-001"
+              value="${initialId.replace(/"/g, "&quot;")}"
+            />
+            <button id="check-btn" class="check-btn">
+              <span class="check-btn-dot"></span>
+              <span>Check status</span>
+            </button>
+          </div>
+          <div class="status-chip-row">
+            <div id="status-pill" class="status-pill status-pill--idle">
+              <div class="status-pill__dot"></div>
+              <span id="status-pill-label">Waiting for a proof ID</span>
+            </div>
+            <div class="status-pill">
+              <div class="status-pill__dot"></div>
+              <span>Anchor ID: <span id="anchor-id-pill">—</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-label">ANCHOR STATE</div>
+          <div class="field-value" id="anchor-state">—</div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-label">BITCOIN TXID</div>
+          <div class="field-value" id="bitcoin-txid">—</div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-label">CONFIRMATIONS</div>
+          <div class="field-value" id="confirmations">—</div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-label">RECEIPT</div>
+          <div class="pill-row">
+            <button id="btn-ots" class="pill pill-pill" disabled>OTS</button>
+            <button id="btn-anchor-receipt" class="pill pill-pill" disabled>anchor receipt</button>
+            <button id="btn-anchor-json" class="pill pill-pill" disabled>anchor metadata</button>
+            <a
+              id="btn-qr-view"
+              class="pill pill-pill pill-qr"
+              href="#"
+              style="display:none"
+            >
+              shareable QR view
+            </a>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-label">WHAT YOU'RE SEEING</div>
+          <div class="meta-note">
+            docuProof stores your receipt and anchor metadata, and independently you can verify the
+            txid and Merkle inclusion on any Bitcoin blockchain explorer.
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-right-title">How this verification works</div>
+        <div class="panel-right-text">
+          docuProof keeps your file private in your browser. What we store is a cryptographic
+          fingerprint (SHA-256 hash) and an OpenTimestamps receipt anchored to the Bitcoin blockchain.
+        </div>
+
+        <ul class="bullet-list">
+          <li><strong>Anchor state</strong> tells you whether your proof has been committed into a Bitcoin block.</li>
+          <li><strong>Bitcoin txid</strong> is the transaction you can inspect on any public Bitcoin blockchain explorer.</li>
+          <li><strong>OTS receipt</strong> is the portable proof file. You can independently verify it with the open-source OpenTimestamps tools.</li>
+        </ul>
+
+        <div class="panel-right-text">
+          For strict evidentiary use, keep these together:
+          <ul class="bullet-list">
+            <li>Your original file (unchanged).</li>
+            <li>Your docuProof PDF certificate.</li>
+            <li>The downloaded <code>.ots</code> receipt file.</li>
+          </ul>
+        </div>
+
+        <div class="hint-badge">
+          <div class="hint-dot"></div>
+          <div>
+            The closer you are to the original anchor date, the harder it is to dispute when the
+            file existed.
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      © 2025 docuProof.io — Bitcoin-anchored proof of existence.
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      const proofIdInput = document.getElementById("proof-id-input");
+      const checkBtn = document.getElementById("check-btn");
+      const statusPill = document.getElementById("status-pill");
+      const statusPillLabel = document.getElementById("status-pill-label");
+      const anchorIdPill = document.getElementById("anchor-id-pill");
+      const anchorStateEl = document.getElementById("anchor-state");
+      const txidEl = document.getElementById("bitcoin-txid");
+      const confirmationsEl = document.getElementById("confirmations");
+      const btnOts = document.getElementById("btn-ots");
+      const btnAnchorReceipt = document.getElementById("btn-anchor-receipt");
+      const btnAnchorJson = document.getElementById("btn-anchor-json");
+      const btnQrView = document.getElementById("btn-qr-view");
+
+      function setStatusIdle() {
+        statusPill.className = "status-pill status-pill--idle";
+        statusPillLabel.textContent = "Waiting for a proof ID";
+      }
+
+      function setStatusChecking() {
+        statusPill.className = "status-pill";
+        statusPillLabel.textContent = "Checking...";
+      }
+
+      function setStatusError(msg) {
+        statusPill.className = "status-pill status-pill--error";
+        statusPillLabel.textContent = msg || "Error querying status";
+      }
+
+      function setStatusState(state) {
+        const s = (state || "").toUpperCase();
+        if (s === "ANCHORED") {
+          statusPill.className = "status-pill status-pill--anchored";
+          statusPillLabel.textContent = "Anchored on the Bitcoin blockchain";
+        } else if (s === "OTS_RECEIPT" || s === "PENDING") {
+          statusPill.className = "status-pill status-pill--pending";
+          statusPillLabel.textContent = "Receipt available — awaiting anchor";
+        } else if (s === "NOT_FOUND") {
+          statusPill.className = "status-pill status-pill--error";
+          statusPillLabel.textContent = "No proof found for this ID";
+        } else {
+          statusPill.className = "status-pill";
+          statusPillLabel.textContent = s || "Unknown state";
+        }
+      }
+
+      function resetFields() {
+        anchorIdPill.textContent = "—";
+        anchorStateEl.textContent = "—";
+        txidEl.textContent = "—";
+        confirmationsEl.textContent = "—";
+
+        btnOts.disabled = true;
+        btnAnchorReceipt.disabled = true;
+        btnAnchorJson.disabled = true;
+
+        btnOts.onclick = null;
+        btnAnchorReceipt.onclick = null;
+        btnAnchorJson.onclick = null;
+
+        btnQrView.style.display = "none";
+        btnQrView.href = "#";
+      }
+
+      async function refreshStatus(id) {
+        id = (id || "").trim();
+        if (!id) {
+          resetFields();
+          setStatusIdle();
+          return;
+        }
+
+        resetFields();
+        setStatusChecking();
+
+        // Keep ?id=<id> in the URL
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.set("id", id);
+          window.history.replaceState({}, "", url.toString());
+        } catch {
+          // ignore
+        }
+
+        let data;
+        try {
+          const res = await fetch(
+            "/.netlify/functions/anchor_status?id=" + encodeURIComponent(id),
+            { headers: { "cache-control": "no-cache" } }
+          );
+          data = await res.json();
+        } catch (e) {
+          console.error("anchor_status error", e);
+          setStatusError("Network error");
+          return;
+        }
+
+        if (!data || data.ok === false) {
+          setStatusError((data && data.error) || "Lookup failed");
+          anchorStateEl.textContent =
+            (data && data.state) || (data && data.error) || "—";
+          return;
+        }
+
+        const state = data.state || "UNKNOWN";
+        const txid = data.txid || null;
+        const confirmations =
+          typeof data.confirmations === "number" ? data.confirmations : null;
+        const anchorKey = data.anchorKey || data.anchor || null;
+
+        setStatusState(state);
+
+        anchorStateEl.textContent = state;
+        anchorIdPill.textContent = anchorKey || "—";
+
+        if (txid) {
+          const link = document.createElement("a");
+          link.href =
+            "https://mempool.space/tx/" + encodeURIComponent(txid);
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent =
+            txid.slice(0, 12) + "…" + txid.slice(-8);
+          txidEl.innerHTML = "";
+          txidEl.appendChild(link);
+        } else {
+          txidEl.textContent = "—";
+        }
+
+        if (confirmations !== null) {
+          confirmationsEl.textContent = String(confirmations);
+        } else {
+          confirmationsEl.textContent = "0";
+        }
+
+        // Enable receipt buttons; all are optional downloads
+        const base = "/.netlify/functions";
+        btnOts.disabled = false;
+        btnOts.onclick = () => {
+          window.open(
+            base +
+              "/download_receipt?id=" +
+              encodeURIComponent(id),
+            "_blank"
+          );
+        };
+
+        btnAnchorReceipt.disabled = false;
+        btnAnchorReceipt.onclick = () => {
+          window.open(
+            base +
+              "/download_receipt?id=" +
+              encodeURIComponent(id),
+            "_blank"
+          );
+        };
+
+        btnAnchorJson.disabled = false;
+        btnAnchorJson.onclick = () => {
+          window.open(
+            base +
+              "/download_receipt_json?id=" +
+              encodeURIComponent(id),
+            "_blank"
+          );
+        };
+
+        // Shareable QR view button → /v/<id>
+        const shareUrl =
+          window.location.origin + "/v/" + encodeURIComponent(id);
+        btnQrView.href = shareUrl;
+        btnQrView.style.display = "inline-flex";
+      }
+
+      checkBtn.addEventListener("click", () => {
+        const id = proofIdInput.value;
+        refreshStatus(id);
+      });
+
+      proofIdInput.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter") {
+          ev.preventDefault();
+          refreshStatus(proofIdInput.value);
+        }
+      });
+
+      const initial = proofIdInput.value.trim();
+      if (initial) {
+        refreshStatus(initial);
+      } else {
+        resetFields();
+        setStatusIdle();
+      }
+    })();
+  </script>
+</body>
+</html>`;
+
+  return {
+    statusCode: 200,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "cache-control": "no-store",
+    },
+    body: html,
+  };
+};
+
