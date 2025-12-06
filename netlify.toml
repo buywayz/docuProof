@@ -11,41 +11,20 @@
     "netlify/functions/data/**"
   ]
 
-# Keep functions uncached while we iterate
+# Keep functions uncached while iterating
 [[headers]]
   for = "/.netlify/functions/*"
   [headers.values]
     Cache-Control = "no-store, no-cache, must-revalidate"
 
-###############################################
-# FIX: Prevent secret scanner from scanning
-# Google SDK + .netlify/state.json (false positives)
-###############################################
-[build.processing]
-  skip_processing = true
-
-[build]
-  # Add smart secret-scan omits
-  # These paths match EXACTLY what your failing build reports
-  SECRETS_SCAN_OMIT_PATHS = """
-    .netlify/state.json,
-    **/google-cloud-sdk/**,
-    **/google-cloud-sdk/platform/gsutil/gslib/**
-  """
-
-# OR: alternative omits (more aggressive)
-# SECRETS_SCAN_OMIT_VALUES = "AIZa***"
-
-###############################################
-
+# Rewrite /verify → serverless function (no force flag allowed with status 200)
 [[redirects]]
   from = "/verify"
   to = "/.netlify/functions/verify_page"
   status = 200
-  force = true
 
+# Rewrite /v/:id → serverless function (no force flag allowed with status 200)
 [[redirects]]
   from = "/v/:id"
   to = "/.netlify/functions/verify_page?id=:id"
   status = 200
-  force = true
