@@ -120,28 +120,17 @@ function buildHtml(initialId) {
         gap: 12px;
       }
 
-      .logo-glyph {
+           .logo-glyph {
         width: 32px;
         height: 32px;
-        border-radius: 10px;
-        background: radial-gradient(
-          circle at 30% 10%,
-          #7bffb1 0,
-          #16ff70 25%,
-          #00c854 65%,
-          #006634 100%
-        );
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #020513 !important;
-        text-shadow: none !important;
-        font-weight: 800;
-        font-size: 15px;
-        letter-spacing: 0.03em;
-        box-shadow:
-          0 0 20px rgba(22, 255, 112, 0.6),
-          0 0 60px rgba(22, 255, 112, 0.45);
+        border-radius: 8px;
+        background:
+          center / contain no-repeat
+          url("/.netlify/functions/logo_static");
+        display: inline-block;
+        /* Hide any stray text inside, just in case */
+        font-size: 0;
+        color: transparent;
       }
 
       .logo-text {
@@ -563,7 +552,7 @@ function buildHtml(initialId) {
     <div class="shell">
       <header class="header">
         <div class="logo-row">
-          <div class="logo-glyph">dp</div>
+                    <div class="logo-glyph" aria-hidden="true"></div>
           <div class="logo-text">
             <div class="logo-title">docuProof</div>
             <div class="logo-sub">Proof you can point to.</div>
