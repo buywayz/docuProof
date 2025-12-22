@@ -6,12 +6,16 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-06-20',
 });
 
+// Map of plan-billing combinations to Stripe price IDs.
+// NOTE: For one-time, billing is treated as "none".
 const PRICE_MAP = {
-  'one-time':         process.env.STRIPE_PRICE_ID,                  // single proof
-  'starter-monthly':  process.env.STRIPE_STARTER_MONTHLY_PRICE_ID,
-  'starter-annual':   process.env.STRIPE_STARTER_ANNUAL_PRICE_ID,
-  'pro-monthly':      process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
-  'pro-annual':       process.env.STRIPE_PRO_ANNUAL_PRICE_ID,
+  'one-time':            process.env.STRIPE_PRICE_ID,                     // single proof
+
+  'starter-monthly':     process.env.STRIPE_STARTER_MONTHLY_PRICE_ID,
+  'starter-annual':      process.env.STRIPE_STARTER_ANNUAL_PRICE_ID,
+
+  'pro-monthly':         process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
+  'pro-annual':          process.env.STRIPE_PRO_ANNUAL_PRICE_ID,
 };
 
 // Small helper: derive a compact id from a hex hash (no external deps)
@@ -19,6 +23,31 @@ function shortIdFromHash(h) {
   if (!h || typeof h !== 'string') return undefined;
   const m = h.toLowerCase().match(/[0-9a-f]{12,}/);
   return m ? m[0].slice(0, 12) : undefined;
+}
+
+// Resolve the effective Stripe price ID based on plan + billing.
+function resolvePriceId(plan, billing) {
+  const normalizedPlan = (plan || '').trim();
+
+  // One-time ignores billing in the key
+  if (normalizedPlan === 'one-time') {
+    const priceId = PRICE_MAP['one-time'];
+    if (!priceId) {
+      throw new Error('Missing Stripe price ID for one-time plan');
+    }
+    return { priceId, isSubscription: false, key: 'one-time' };
+  }
+
+  const normalizedBilling = (billing || '').trim().toLowerCase();
+  const comboKey = `${normalizedPlan}-${normalizedBilling}`; // e.g. "starter-monthly"
+
+  const priceId = PRICE_MAP[comboKey];
+
+  if (!priceId) {
+    throw new Error(`Unknown plan/billing combination: ${comboKey}`);
+  }
+
+  return { priceId, isSubscription: true, key: comboKey };
 }
 
 async function createStripeSession(payload) {
@@ -31,12 +60,9 @@ async function createStripeSession(payload) {
     billing = 'none',
   } = payload;
 
-  const priceId = PRICE_MAP[plan];
-  if (!priceId) {
-    throw new Error(`Unknown plan: ${plan}`);
-  }
+  // Will throw a useful error if plan/billing is not recognized
+  const { priceId, isSubscription, key: planKey } = resolvePriceId(plan, billing);
 
-  const isSubscription = plan !== 'one-time';
   const shortId = shortIdFromHash(hash) || undefined;
 
   const session = await stripe.checkout.sessions.create({
@@ -53,6 +79,7 @@ async function createStripeSession(payload) {
     metadata: {
       plan,
       billing,
+      planKey,        // e.g. "starter-monthly"
       email,
       hash,
       filename,
@@ -107,6 +134,9 @@ exports.handler = async (event) => {
     const queryParams = event.queryStringParameters || {};
     if (!bodyData.plan && queryParams.plan) {
       bodyData.plan = queryParams.plan;
+    }
+    if (!bodyData.billing && queryParams.billing) {
+      bodyData.billing = queryParams.billing;
     }
 
     // ---- Allow GET or POST. Others rejected. ----
