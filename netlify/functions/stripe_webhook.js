@@ -1,19 +1,11 @@
 // netlify/functions/stripe_webhook.js
-// CommonJS runtime (Node 18)
+// CommonJS runtime (Node 18 on Netlify)
 const Stripe = require("stripe");
+const crypto = require("crypto");
 const { sendEmail } = require("./_email");
 const { saveProof, appendToFeeds, getProof } = require("./_db");
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2024-06-20",
-});
-
-/** Derive a stable-ish short id from hash (12 hex chars). */
-function shortIdFromHash(h) {
-  if (!h || typeof h !== "string") return null;
-  const m = h.toLowerCase().match(/[0-9a-f]{12,}/);
-  return m ? m[0].slice(0, 12) : null;
-}
+// --- helpers ---------------------------------------------------------------
 
 /** Get site origin for self-calling functions (proof_pdf, submit_proof) */
 function siteOrigin(event) {
@@ -31,48 +23,93 @@ async function arrayBufferToBase64(ab) {
   return Buffer.from(new Uint8Array(ab)).toString("base64");
 }
 
+/**
+ * Canonical Proof ID strategy:
+ * 1) Prefer metadata.canonicalId (set by create_checkout_session)
+ * 2) Else derive a stable 12-hex id from the Stripe session id (deterministic)
+ */
+function canonicalIdFromSession(sessionId, md = {}) {
+  const fromMd =
+    md.canonicalId ||
+    md.canonical_id ||
+    md.proofId ||
+    md.proof_id ||
+    md.pid ||
+    null;
+
+  if (fromMd && typeof fromMd === "string" && fromMd.trim()) {
+    return fromMd.trim();
+  }
+
+  // deterministic fallback (stable across retries)
+  if (sessionId && typeof sessionId === "string") {
+    return crypto.createHash("sha256").update(sessionId).digest("hex").slice(0, 12);
+  }
+
+  // last-resort (should never happen)
+  return crypto.randomBytes(6).toString("hex");
+}
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2024-06-20",
+});
+
+// --- handler ---------------------------------------------------------------
+
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
-  // NOTE: Signature verification is assumed external in your current setup.
-  // We accept the JSON as-is.
+  // NOTE: Stripe signature verification is handled externally in your setup.
   let payload;
   try {
     payload = JSON.parse(event.body || "{}");
-  } catch (e) {
+  } catch {
     return { statusCode: 400, body: "Invalid JSON" };
   }
 
   const type = payload?.type;
   const obj = payload?.data?.object || {};
 
-  // Only care about completed Checkout Sessions
+  // We only care about completed Checkout Sessions
   if (type !== "checkout.session.completed") {
     return {
       statusCode: 200,
-      body: JSON.stringify({ ok: true, ignored: type }),
+      body: JSON.stringify({ ok: true, ignored: type || null }),
     };
   }
 
-  const sessionId = obj.id; // cs_live_... or cs_test_...
+  const stripeSessionId = obj.id; // cs_live_... or cs_test_...
+  const md = obj.metadata || {};
+
+  const canonicalId = canonicalIdFromSession(stripeSessionId, md);
+  const origin = siteOrigin(event);
+  if (!origin) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ ok: false, error: "Could not determine site origin" }),
+    };
+  }
 
   try {
-    const origin = siteOrigin(event);
-    if (!origin) throw new Error("Could not determine site origin");
-
-    // --- 1) Idempotency based on the Stripe session id alias record ---
-    // We store an alias record keyed by sessionId.
-    const existingAlias = sessionId
-      ? await getProof(sessionId).catch(() => null)
-      : null;
-
-    if (existingAlias && existingAlias.emailSentAt) {
-      console.log("stripe_webhook: duplicate event, already emailed", sessionId);
+    // --- 1) Idempotency is now keyed on canonicalId (NOT Stripe session id) ---
+    const existing = canonicalId ? await getProof(canonicalId).catch(() => null) : null;
+    if (existing && existing.emailSentAt) {
+      console.log("stripe_webhook: duplicate event, already emailed", {
+        canonicalId,
+        stripeSessionId,
+      });
       return {
         statusCode: 200,
-        body: JSON.stringify({ ok: true, duplicate: true, id: sessionId }),
+        body: JSON.stringify({
+          ok: true,
+          duplicate: true,
+          id: stripeSessionId,
+          canonicalId,
+          verifyUrl: `${origin}/v/${canonicalId}`,
+          livemode: !!obj.livemode,
+        }),
       };
     }
 
@@ -80,121 +117,73 @@ exports.handler = async (event) => {
     if (!to) throw new Error("Missing customer_email in Stripe session");
 
     // Metadata from create_checkout_session
-    const md = obj.metadata || {};
-    const displayName = (md.displayName || "").trim() || "Document Proof";
+    const displayName = md.displayName || "Document Proof";
     const filename =
-      (md.filename || "").trim() || "DocuProof-Certificate.pdf";
+      md.filename && md.filename.trim()
+        ? md.filename.trim()
+        : "DocuProof-Certificate.pdf";
     const hash = md.hash || null;
 
-    // Canonical id: shortId (what your Blobs already uses for /v/<id>)
-    // Fallback to a random-ish id if hash missing.
-    const canonicalId =
-      shortIdFromHash(hash) ||
-      Math.random().toString(36).slice(2, 14);
+    // Preserve original createdAt if record already exists; otherwise now.
+    const nowIso =
+      existing?.createdAt && typeof existing.createdAt === "string"
+        ? existing.createdAt
+        : new Date().toISOString();
 
-    const nowIso = new Date().toISOString();
+    // Email idempotency markers
     const emailMarkTime = new Date().toISOString();
+    const emailCount =
+      typeof existing?.emailCount === "number" ? existing.emailCount + 1 : 1;
 
-    // Stripe details
-    const stripeInfo = {
-      session_id: sessionId,
-      payment_status: obj.payment_status,
-      mode: obj.mode,
-      amount_total: obj.amount_total,
-      currency: obj.currency,
-      livemode: !!obj.livemode,
-    };
-
-    // Canonical verify URL (shortId-based)
-    const verifyUrl = `${origin}/v/${canonicalId}`;
-
-    // --- 2) Persist TWO records ---
-    // (A) Canonical proof record keyed by canonicalId (shortId)
-    // (B) Alias record keyed by sessionId (cs_live...) pointing to canonicalId
-    //
-    // This allows:
-    // - everything that updates proof state (submit_proof/anchor jobs) to target canonicalId
-    // - UI inputs that paste cs_live... to still resolve (by looking up alias -> canonical)
-    //
-    // IMPORTANT: We mark emailSentAt on the alias record BEFORE sending email.
-    let canonicalRecord = null;
-    let aliasRecord = null;
-
+    // --- 2) Persist / update proof metadata (Blobs) + history feeds ----------
+    // IMPORTANT: write emailSentAt BEFORE sending email to stop Stripe retries
+    let record = null;
     try {
-      canonicalRecord = await saveProof({
+      record = await saveProof({
+        // Canonical identity
         id: canonicalId,
-        hash,
+
+        // User/content metadata
         filename,
-        email: to,
-        customerEmail: to, // keep backward compatibility if your _db expects this
         displayName,
-        logoUrl: md.logoUrl || "https://docuproof.io/apple-touch-icon.png",
+        hash,
+        customerEmail: to,
         createdAt: nowIso,
-        verifyUrl,
-        stripe: stripeInfo,
-        source: "stripe_webhook",
-        // helpful linkage
-        aliasSessionId: sessionId,
-      });
 
-      // Alias record stored under cs_live... (or cs_test...) so idempotency works and mapping exists
-      aliasRecord = await saveProof({
-        id: sessionId,
-        type: "alias",
-        createdAt:
-          (existingAlias?.createdAt && typeof existingAlias.createdAt === "string")
-            ? existingAlias.createdAt
-            : nowIso,
+        // Operational metadata
+        source: "stripe_webhook",
         emailSentAt: emailMarkTime,
-        emailCount:
-          typeof existingAlias?.emailCount === "number"
-            ? existingAlias.emailCount + 1
-            : 1,
-        // pointer to canonical proof
-        canonicalId,
-        verifyUrl,
-        stripe: stripeInfo,
-        source: "stripe_webhook",
+        emailCount,
+
+        // Stripe metadata (stored as attributes, not identity)
+        stripe: {
+          session_id: stripeSessionId,
+          payment_status: obj.payment_status || null,
+          mode: obj.mode || null,
+          amount_total: obj.amount_total ?? null,
+          currency: obj.currency || null,
+        },
       });
 
-      // Keep feeds updated (best effort)
-      try {
-        if (canonicalRecord) await appendToFeeds(canonicalRecord);
-      } catch (e) {
-        console.error("appendToFeeds(canonical) error (non-fatal):", e);
-      }
-      try {
-        if (aliasRecord) await appendToFeeds(aliasRecord);
-      } catch (e) {
-        console.error("appendToFeeds(alias) error (non-fatal):", e);
-      }
-
-      console.log("stripe_webhook: saved canonical+alias", {
-        sessionId,
-        canonicalId,
-        livemode: stripeInfo.livemode,
-      });
+      await appendToFeeds(record);
     } catch (dbErr) {
-      // If persistence fails, we still return 200? No.
-      // Here we DO fail so you see it immediately and Stripe retries (but alias idempotency prevents dup email).
-      console.error("stripe_webhook: saveProof failed:", dbErr);
-      throw new Error(`Persistence failed: ${dbErr.message || dbErr}`);
+      console.error("saveProof/appendToFeeds error (non-fatal):", dbErr);
+      // Do not fail webhook on persistence hiccups
     }
 
-    // --- 3) Kick off anchoring job via submit_proof (best effort) ---
-    // We send canonicalId as id so anchor/receipt updates land on the canonical proof record.
+    // --- 3) Fire-and-forget anchoring job via submit_proof (non-blocking) ---
+    // CRITICAL: submit_proof must be keyed by canonicalId so verify works by canonicalId.
     try {
       if (hash) {
         const submitUrl = `${origin}/.netlify/functions/submit_proof`;
         const body = {
-          id: canonicalId,
+          id: canonicalId, // <-- canonical id is the proof identity
           hash,
           filename,
           displayName,
           customerEmail: to,
           source: "stripe_webhook",
-          // linkage back to Stripe session (optional; useful for debugging)
-          stripeSessionId: sessionId,
+          stripeSessionId, // optional for debugging
         };
 
         fetch(submitUrl, {
@@ -202,27 +191,30 @@ exports.handler = async (event) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         })
-          .then(async (res) => {
+          .then((res) => {
             if (!res.ok) {
-              const txt = await res.text().catch(() => "");
-              console.error("submit_proof non-2xx:", res.status, txt);
-            } else {
-              console.log("submit_proof scheduled OK for", canonicalId);
+              console.error(
+                "submit_proof returned non-2xx:",
+                res.status,
+                res.statusText
+              );
             }
           })
           .catch((err) => {
             console.error("submit_proof fire-and-forget error:", err);
           });
       } else {
-        console.warn(`No hash in session metadata for ${sessionId}; skipping submit_proof.`);
+        console.warn(
+          `No hash in session metadata for ${stripeSessionId}; skipping submit_proof.`
+        );
       }
     } catch (submitErr) {
       console.error("submit_proof scheduling error (non-fatal):", submitErr);
     }
 
-    // --- 4) Generate PDF certificate via proof_pdf (best effort) ---
+    // --- 4) Generate PDF certificate via proof_pdf (use canonical quickId) ---
     const qs = new URLSearchParams({
-      id: canonicalId, // IMPORTANT: canonicalId for certificate/QR
+      id: canonicalId, // <-- canonical id on the certificate
       filename,
       displayName,
       quickId: canonicalId,
@@ -230,7 +222,6 @@ exports.handler = async (event) => {
 
     const pdfUrl = `${origin}/.netlify/functions/proof_pdf?${qs}`;
     let pdfB64 = null;
-
     try {
       const pdfRes = await fetch(pdfUrl, { method: "GET" });
       if (!pdfRes.ok) {
@@ -243,7 +234,7 @@ exports.handler = async (event) => {
       console.error("Error calling proof_pdf:", e);
     }
 
-    // --- 5) Email (best effort; do not throw) ---
+    // --- 5) Email certificate via Postmark (best-effort) --------------------
     try {
       const attachments = [];
       if (pdfB64) {
@@ -254,43 +245,38 @@ exports.handler = async (event) => {
         });
       }
 
-      // Email: emphasize canonical verify URL (shortId-based) so users can always verify.
+      const verifyUrl = `${origin}/v/${canonicalId}`;
+
       await sendEmail({
         to,
         subject: `Your Proof Certificate: ${displayName}`,
         htmlBody: `
           <p>Thanks for using docuProof.io.</p>
           <p>Your proof certificate is attached as a PDF.</p>
-
-          <p><strong>Verify link:</strong> <a href="${verifyUrl}">${verifyUrl}</a></p>
-
-          <p><strong>Proof ID (for verify):</strong> <code>${canonicalId}</code></p>
-          <p><strong>Stripe Session:</strong> <code>${sessionId}</code></p>
-
-          <p>You can also visit <a href="${origin}/verify">${origin}/verify</a> and paste your Proof ID.</p>
+          <p><strong>Proof ID:</strong> <code>${canonicalId}</code></p>
+          <p>Verify any time at <a href="${verifyUrl}">${verifyUrl}</a></p>
         `,
         textBody:
           `Thanks for using docuProof.io.\n\n` +
-          `Verify link: ${verifyUrl}\n` +
-          `Proof ID (for verify): ${canonicalId}\n` +
-          `Stripe Session: ${sessionId}\n\n` +
-          `You can also visit ${origin}/verify and paste your Proof ID.\n`,
+          `Your proof certificate is attached (PDF).\n` +
+          `Proof ID: ${canonicalId}\n` +
+          `Verify any time at ${verifyUrl}\n`,
         attachments,
       });
-
-      console.log("stripe_webhook: email sent OK", { sessionId, canonicalId });
     } catch (emailErr) {
+      // Log but DO NOT throw (avoid Stripe retry storms / dupes)
       console.error("Postmark sendEmail error (non-fatal):", emailErr);
     }
 
+    // --- response (useful for Stripe dashboard delivery logs) ---------------
     return {
       statusCode: 200,
       body: JSON.stringify({
         ok: true,
-        id: sessionId,
-        canonicalId,
-        verifyUrl,
-        livemode: stripeInfo.livemode,
+        id: stripeSessionId,          // keep for Stripe/debug
+        canonicalId,                  // your real Proof ID
+        verifyUrl: `${origin}/v/${canonicalId}`,
+        livemode: !!obj.livemode,
       }),
     };
   } catch (err) {
