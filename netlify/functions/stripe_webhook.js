@@ -1,18 +1,19 @@
 // netlify/functions/stripe_webhook.js
-// CommonJS runtime
+// CommonJS runtime (Node 18)
 const Stripe = require("stripe");
 const { sendEmail } = require("./_email");
-function shortIdFromHash(h) {
-  if (!h || typeof h !== "string") return "----------";
-  const m = h.toLowerCase().match(/[0-9a-f]{12,}/);
-  return m ? m[0].slice(0, 12) : "----------";
-}
-
 const { saveProof, appendToFeeds, getProof } = require("./_db");
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2024-06-20",
 });
+
+/** Derive a stable-ish short id from hash (12 hex chars). */
+function shortIdFromHash(h) {
+  if (!h || typeof h !== "string") return null;
+  const m = h.toLowerCase().match(/[0-9a-f]{12,}/);
+  return m ? m[0].slice(0, 12) : null;
+}
 
 /** Get site origin for self-calling functions (proof_pdf, submit_proof) */
 function siteOrigin(event) {
@@ -35,7 +36,8 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: "Method Not Allowed" };
   }
 
-  // We accept the JSON as-is; Stripe signature verification is external.
+  // NOTE: Signature verification is assumed external in your current setup.
+  // We accept the JSON as-is.
   let payload;
   try {
     payload = JSON.parse(event.body || "{}");
@@ -46,184 +48,256 @@ exports.handler = async (event) => {
   const type = payload?.type;
   const obj = payload?.data?.object || {};
 
-  // We only care about completed Checkout Sessions
-  if (type === "checkout.session.completed") {
-    const proofId = obj.id;
-
-    try {
-      // --- 1) Idempotency: bail out if we've already marked email for this id ---
-      const existing = proofId ? await getProof(proofId).catch(() => null) : null;
-      if (existing && existing.emailSentAt) {
-        console.log("stripe_webhook: duplicate event, already emailed", proofId);
-        return {
-          statusCode: 200,
-          body: JSON.stringify({ ok: true, duplicate: true, id: proofId }),
-        };
-      }
-
-      const to = obj.customer_email;
-      if (!to) throw new Error("Missing customer_email in Stripe session");
-
-      // Metadata from create_checkout_session
-      const md = obj.metadata || {};
-      const displayName = md.displayName || "Document Proof";
-      const filename =
-        md.filename && md.filename.trim()
-          ? md.filename.trim()
-          : "DocuProof-Certificate.pdf";
-      const hash = md.hash || null;
-      const shortId = hash ? shortIdFromHash(hash) : "----------";
-
-      const origin = siteOrigin(event);
-      if (!origin) throw new Error("Could not determine site origin");
-
-      const nowIso =
-        existing?.createdAt && typeof existing.createdAt === "string"
-          ? existing.createdAt
-          : new Date().toISOString();
-
-      const emailMarkTime = new Date().toISOString();
-      const emailCount =
-        typeof existing?.emailCount === "number"
-          ? existing.emailCount + 1
-          : 1;
-
-      // --- 2) Persist / update proof metadata (Blobs) + history feeds
-      //       IMPORTANT: we write emailSentAt BEFORE sending the email
-      //       so any retry of this event sees it and short-circuits.
-      let record = null;
-      try {
-        record = await saveProof({
-          id: proofId,
-          filename,
-          displayName,
-          hash,
-          customerEmail: to,
-          source: "stripe_webhook",
-          createdAt: nowIso,
-          emailSentAt: emailMarkTime,
-          emailCount,
-        });
-
-        await appendToFeeds(record);
-      } catch (dbErr) {
-        console.error("saveProof/appendToFeeds error (non-fatal):", dbErr);
-        // Do not fail the webhook if persistence has a transient problem
-      }
-
-      // --- 3) Fire-and-forget anchoring job via submit_proof (non-blocking) ---
-      try {
-        if (hash) {
-          const submitUrl = `${origin}/.netlify/functions/submit_proof`;
-          const body = {
-            id: proofId,
-            hash,
-            filename,
-            displayName,
-            customerEmail: to,
-            shortId,
-            source: "stripe_webhook",
-          };
-
-          fetch(submitUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-          })
-            .then((res) => {
-              if (!res.ok) {
-                console.error(
-                  "submit_proof returned non-2xx:",
-                  res.status,
-                  res.statusText
-                );
-              }
-            })
-            .catch((err) => {
-              console.error("submit_proof fire-and-forget error:", err);
-            });
-        } else {
-          console.warn(
-            `No hash in session metadata for ${proofId}; skipping submit_proof.`
-          );
-        }
-      } catch (submitErr) {
-        console.error("submit_proof scheduling error (non-fatal):", submitErr);
-        // Still continue with PDF + email
-      }
-
-      // --- 4) Generate PDF certificate via proof_pdf (now with quickId) ---
-      const qs = new URLSearchParams({
-        id: proofId,
-        filename,
-        displayName,
-        quickId: shortId,
-      }).toString();
-
-      const pdfUrl = `${origin}/.netlify/functions/proof_pdf?${qs}`;
-      let pdfB64 = null;
-      try {
-        const pdfRes = await fetch(pdfUrl, { method: "GET" });
-        if (!pdfRes.ok) {
-          const errText = await pdfRes.text().catch(() => "");
-          console.error(`proof_pdf failed ${pdfRes.status}: ${errText}`);
-        } else {
-          pdfB64 = await arrayBufferToBase64(await pdfRes.arrayBuffer());
-        }
-      } catch (e) {
-        console.error("Error calling proof_pdf:", e);
-      }
-
-      // --- 5) Email certificate via Postmark (best-effort) ---
-      try {
-        const attachments = [];
-        if (pdfB64) {
-          attachments.push({
-            Name: filename.endsWith(".pdf") ? filename : `${filename}.pdf`,
-            Content: pdfB64,
-            ContentType: "application/pdf",
-          });
-        }
-
-        await sendEmail({
-          to,
-          subject: `Your Proof Certificate: ${displayName}`,
-          htmlBody: `
-            <p>Thanks for using docuProof.io.</p>
-            <p>Your proof certificate is attached as a PDF.</p>
-            <p>Reference: <code>${proofId}</code></p>
-            <p>You can always verify later at <a href="${origin}/verify">${origin}/verify</a>
-            using your Proof ID.</p>
-          `,
-          textBody:
-            `Thanks for using docuProof.io.\n\n` +
-            `Your proof certificate is attached (PDF).\n` +
-            `Reference: ${proofId}\n` +
-            `You can always verify later at ${origin}/verify using your Proof ID.\n`,
-          attachments,
-        });
-      } catch (emailErr) {
-        // We log but DO NOT throw, so Stripe doesn't keep retrying and cause duplicates.
-        console.error("Postmark sendEmail error (non-fatal):", emailErr);
-      }
-
-      // We already wrote emailSentAt/emailCount above, so nothing more to persist.
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ ok: true, emailed: true, id: proofId }),
-      };
-    } catch (err) {
-      console.error("stripe_webhook error:", err);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ ok: false, error: err.message }),
-      };
-    }
+  // Only care about completed Checkout Sessions
+  if (type !== "checkout.session.completed") {
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ ok: true, ignored: type }),
+    };
   }
 
-  // Non-target events: succeed no-op
-  return {
-    statusCode: 200,
-    body: JSON.stringify({ ok: true, ignored: type }),
-  };
+  const sessionId = obj.id; // cs_live_... or cs_test_...
+
+  try {
+    const origin = siteOrigin(event);
+    if (!origin) throw new Error("Could not determine site origin");
+
+    // --- 1) Idempotency based on the Stripe session id alias record ---
+    // We store an alias record keyed by sessionId.
+    const existingAlias = sessionId
+      ? await getProof(sessionId).catch(() => null)
+      : null;
+
+    if (existingAlias && existingAlias.emailSentAt) {
+      console.log("stripe_webhook: duplicate event, already emailed", sessionId);
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ ok: true, duplicate: true, id: sessionId }),
+      };
+    }
+
+    const to = obj.customer_email;
+    if (!to) throw new Error("Missing customer_email in Stripe session");
+
+    // Metadata from create_checkout_session
+    const md = obj.metadata || {};
+    const displayName = (md.displayName || "").trim() || "Document Proof";
+    const filename =
+      (md.filename || "").trim() || "DocuProof-Certificate.pdf";
+    const hash = md.hash || null;
+
+    // Canonical id: shortId (what your Blobs already uses for /v/<id>)
+    // Fallback to a random-ish id if hash missing.
+    const canonicalId =
+      shortIdFromHash(hash) ||
+      Math.random().toString(36).slice(2, 14);
+
+    const nowIso = new Date().toISOString();
+    const emailMarkTime = new Date().toISOString();
+
+    // Stripe details
+    const stripeInfo = {
+      session_id: sessionId,
+      payment_status: obj.payment_status,
+      mode: obj.mode,
+      amount_total: obj.amount_total,
+      currency: obj.currency,
+      livemode: !!obj.livemode,
+    };
+
+    // Canonical verify URL (shortId-based)
+    const verifyUrl = `${origin}/v/${canonicalId}`;
+
+    // --- 2) Persist TWO records ---
+    // (A) Canonical proof record keyed by canonicalId (shortId)
+    // (B) Alias record keyed by sessionId (cs_live...) pointing to canonicalId
+    //
+    // This allows:
+    // - everything that updates proof state (submit_proof/anchor jobs) to target canonicalId
+    // - UI inputs that paste cs_live... to still resolve (by looking up alias -> canonical)
+    //
+    // IMPORTANT: We mark emailSentAt on the alias record BEFORE sending email.
+    let canonicalRecord = null;
+    let aliasRecord = null;
+
+    try {
+      canonicalRecord = await saveProof({
+        id: canonicalId,
+        hash,
+        filename,
+        email: to,
+        customerEmail: to, // keep backward compatibility if your _db expects this
+        displayName,
+        logoUrl: md.logoUrl || "https://docuproof.io/apple-touch-icon.png",
+        createdAt: nowIso,
+        verifyUrl,
+        stripe: stripeInfo,
+        source: "stripe_webhook",
+        // helpful linkage
+        aliasSessionId: sessionId,
+      });
+
+      // Alias record stored under cs_live... (or cs_test...) so idempotency works and mapping exists
+      aliasRecord = await saveProof({
+        id: sessionId,
+        type: "alias",
+        createdAt:
+          (existingAlias?.createdAt && typeof existingAlias.createdAt === "string")
+            ? existingAlias.createdAt
+            : nowIso,
+        emailSentAt: emailMarkTime,
+        emailCount:
+          typeof existingAlias?.emailCount === "number"
+            ? existingAlias.emailCount + 1
+            : 1,
+        // pointer to canonical proof
+        canonicalId,
+        verifyUrl,
+        stripe: stripeInfo,
+        source: "stripe_webhook",
+      });
+
+      // Keep feeds updated (best effort)
+      try {
+        if (canonicalRecord) await appendToFeeds(canonicalRecord);
+      } catch (e) {
+        console.error("appendToFeeds(canonical) error (non-fatal):", e);
+      }
+      try {
+        if (aliasRecord) await appendToFeeds(aliasRecord);
+      } catch (e) {
+        console.error("appendToFeeds(alias) error (non-fatal):", e);
+      }
+
+      console.log("stripe_webhook: saved canonical+alias", {
+        sessionId,
+        canonicalId,
+        livemode: stripeInfo.livemode,
+      });
+    } catch (dbErr) {
+      // If persistence fails, we still return 200? No.
+      // Here we DO fail so you see it immediately and Stripe retries (but alias idempotency prevents dup email).
+      console.error("stripe_webhook: saveProof failed:", dbErr);
+      throw new Error(`Persistence failed: ${dbErr.message || dbErr}`);
+    }
+
+    // --- 3) Kick off anchoring job via submit_proof (best effort) ---
+    // We send canonicalId as id so anchor/receipt updates land on the canonical proof record.
+    try {
+      if (hash) {
+        const submitUrl = `${origin}/.netlify/functions/submit_proof`;
+        const body = {
+          id: canonicalId,
+          hash,
+          filename,
+          displayName,
+          customerEmail: to,
+          source: "stripe_webhook",
+          // linkage back to Stripe session (optional; useful for debugging)
+          stripeSessionId: sessionId,
+        };
+
+        fetch(submitUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        })
+          .then(async (res) => {
+            if (!res.ok) {
+              const txt = await res.text().catch(() => "");
+              console.error("submit_proof non-2xx:", res.status, txt);
+            } else {
+              console.log("submit_proof scheduled OK for", canonicalId);
+            }
+          })
+          .catch((err) => {
+            console.error("submit_proof fire-and-forget error:", err);
+          });
+      } else {
+        console.warn(`No hash in session metadata for ${sessionId}; skipping submit_proof.`);
+      }
+    } catch (submitErr) {
+      console.error("submit_proof scheduling error (non-fatal):", submitErr);
+    }
+
+    // --- 4) Generate PDF certificate via proof_pdf (best effort) ---
+    const qs = new URLSearchParams({
+      id: canonicalId, // IMPORTANT: canonicalId for certificate/QR
+      filename,
+      displayName,
+      quickId: canonicalId,
+    }).toString();
+
+    const pdfUrl = `${origin}/.netlify/functions/proof_pdf?${qs}`;
+    let pdfB64 = null;
+
+    try {
+      const pdfRes = await fetch(pdfUrl, { method: "GET" });
+      if (!pdfRes.ok) {
+        const errText = await pdfRes.text().catch(() => "");
+        console.error(`proof_pdf failed ${pdfRes.status}: ${errText}`);
+      } else {
+        pdfB64 = await arrayBufferToBase64(await pdfRes.arrayBuffer());
+      }
+    } catch (e) {
+      console.error("Error calling proof_pdf:", e);
+    }
+
+    // --- 5) Email (best effort; do not throw) ---
+    try {
+      const attachments = [];
+      if (pdfB64) {
+        attachments.push({
+          Name: filename.endsWith(".pdf") ? filename : `${filename}.pdf`,
+          Content: pdfB64,
+          ContentType: "application/pdf",
+        });
+      }
+
+      // Email: emphasize canonical verify URL (shortId-based) so users can always verify.
+      await sendEmail({
+        to,
+        subject: `Your Proof Certificate: ${displayName}`,
+        htmlBody: `
+          <p>Thanks for using docuProof.io.</p>
+          <p>Your proof certificate is attached as a PDF.</p>
+
+          <p><strong>Verify link:</strong> <a href="${verifyUrl}">${verifyUrl}</a></p>
+
+          <p><strong>Proof ID (for verify):</strong> <code>${canonicalId}</code></p>
+          <p><strong>Stripe Session:</strong> <code>${sessionId}</code></p>
+
+          <p>You can also visit <a href="${origin}/verify">${origin}/verify</a> and paste your Proof ID.</p>
+        `,
+        textBody:
+          `Thanks for using docuProof.io.\n\n` +
+          `Verify link: ${verifyUrl}\n` +
+          `Proof ID (for verify): ${canonicalId}\n` +
+          `Stripe Session: ${sessionId}\n\n` +
+          `You can also visit ${origin}/verify and paste your Proof ID.\n`,
+        attachments,
+      });
+
+      console.log("stripe_webhook: email sent OK", { sessionId, canonicalId });
+    } catch (emailErr) {
+      console.error("Postmark sendEmail error (non-fatal):", emailErr);
+    }
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        ok: true,
+        id: sessionId,
+        canonicalId,
+        verifyUrl,
+        livemode: stripeInfo.livemode,
+      }),
+    };
+  } catch (err) {
+    console.error("stripe_webhook error:", err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ ok: false, error: err.message }),
+    };
+  }
 };
