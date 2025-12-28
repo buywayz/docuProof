@@ -174,6 +174,7 @@
 
   <section class="layout">
     <article class="main-card">
+      <!-- Proof ID -->
       <div class="field-row">
         <div class="label">Proof ID</div>
         <div class="row">
@@ -183,6 +184,7 @@
         </div>
       </div>
 
+      <!-- Status -->
       <div class="field-row">
         <div class="label">Status</div>
         <div id="statusPill" class="status-pill neutral">
@@ -191,11 +193,13 @@
         </div>
       </div>
 
+      <!-- Txid -->
       <div class="field-row">
         <div class="label">Bitcoin txid</div>
         <div id="txidValue" class="value">—</div>
       </div>
 
+      <!-- Actions -->
       <div class="actions">
         <button id="openVerify" class="primary" disabled>Open Verify Page</button>
         <button id="dlOts" disabled>Download OTS Receipt</button>
@@ -264,10 +268,12 @@
     if (helper) helperText.textContent = helper;
   }
 
-  function setVerifyLinks(canonicalId) {
+  function wireForCanonicalId(canonicalId) {
+    proofIdEl.textContent = canonicalId;
+
     const verifyUrl = "/v/" + encodeURIComponent(canonicalId);
     statusLink.href = verifyUrl;
-    viewLive.href   = verifyUrl;
+    viewLive.href = verifyUrl;
 
     openVerify.disabled = false;
     openVerify.onclick = function () { window.location.href = verifyUrl; };
@@ -277,6 +283,13 @@
       window.location.href =
         "/.netlify/functions/proof_pdf_meta?id=" + encodeURIComponent(canonicalId);
     };
+
+    // normalize URL for reload/share
+    try {
+      const u = new URL(location.href);
+      if (!u.searchParams.get("id")) u.searchParams.set("id", canonicalId);
+      history.replaceState({}, "", u.toString());
+    } catch {}
   }
 
   async function fetchJson(url) {
@@ -288,79 +301,80 @@
   }
 
   async function resolveCanonicalId() {
-    if (explicitId) return { canonicalId: explicitId, sessionId: null };
-    if (!sessionId) return { canonicalId: null, sessionId: null };
+    if (explicitId) return explicitId;
+    if (!sessionId) return null;
 
-    // Your deployed lookup function:
+    // canonical mapping is NOT in Stripe metadata; use our lookup function
     const url = "/.netlify/functions/stripe_session_info?session_id=" + encodeURIComponent(sessionId);
     const { ok, json } = await fetchJson(url);
-    if (ok && json && json.canonicalId) {
-      return { canonicalId: String(json.canonicalId).trim(), sessionId };
-    }
-    return { canonicalId: null, sessionId };
+    if (ok && json && json.canonicalId) return String(json.canonicalId).trim();
+    return null;
   }
 
   async function loadAnchorStatus(canonicalId) {
-    try {
-      const { ok, json } = await fetchJson(
-        "/.netlify/functions/anchor_status?id=" + encodeURIComponent(canonicalId)
-      );
-      if (!ok || !json) return;
+    const { ok, json } = await fetchJson(
+      "/.netlify/functions/anchor_status?id=" + encodeURIComponent(canonicalId)
+    );
 
-      const state = json.state || "NOT_FOUND";
-
-      if (state === "ANCHORED") {
-        setStatus(
-          "ok",
-          "Anchored on Bitcoin",
-          "Your proof has been anchored in a Bitcoin transaction. Confirmations will accumulate over time."
-        );
-        if (json.txid) {
-          const mempoolUrl = "https://mempool.space/tx/" + encodeURIComponent(json.txid);
-          txidValue.innerHTML =
-            '<a class="value" href="' + mempoolUrl + '" target="_blank" rel="noopener">' +
-            json.txid +
-            "</a>";
-        }
-        dlOts.disabled = false;
-        dlOts.onclick = function () {
-          window.location.href =
-            "/.netlify/functions/download_receipt?id=" + encodeURIComponent(canonicalId);
-        };
-        return;
-      }
-
-      if (state === "OTS_RECEIPT") {
-        setStatus(
-          "warn",
-          "Receipt created — awaiting anchor",
-          "Your OpenTimestamps receipt is available and will be batched into a Bitcoin transaction shortly."
-        );
-        dlOts.disabled = false;
-        dlOts.onclick = function () {
-          window.location.href =
-            "/.netlify/functions/download_receipt?id=" + encodeURIComponent(canonicalId);
-        };
-        return;
-      }
-
+    if (!ok || !json) {
       setStatus(
         "neutral",
         "Queued for anchoring",
         "We do not yet see a receipt or Bitcoin anchor for this ID. If you just created this proof, allow time for batching and anchoring. You can always check back via the Verify page."
       );
-    } catch (e) {
-      console.error("success status load error:", e);
+      return;
     }
+
+    const state = json.state || "NOT_FOUND";
+
+    if (state === "ANCHORED") {
+      setStatus(
+        "ok",
+        "Anchored on Bitcoin",
+        "Your proof has been anchored in a Bitcoin transaction. Confirmations will accumulate over time."
+      );
+      if (json.txid) {
+        const mempoolUrl = "https://mempool.space/tx/" + encodeURIComponent(json.txid);
+        txidValue.innerHTML =
+          '<a class="value" href="' + mempoolUrl + '" target="_blank" rel="noopener">' +
+          json.txid +
+          "</a>";
+      }
+      dlOts.disabled = false;
+      dlOts.onclick = function () {
+        window.location.href =
+          "/.netlify/functions/download_receipt?id=" + encodeURIComponent(canonicalId);
+      };
+      return;
+    }
+
+    if (state === "OTS_RECEIPT") {
+      setStatus(
+        "warn",
+        "Receipt created — awaiting anchor",
+        "Your OpenTimestamps receipt is available and will be batched into a Bitcoin transaction shortly."
+      );
+      dlOts.disabled = false;
+      dlOts.onclick = function () {
+        window.location.href =
+          "/.netlify/functions/download_receipt?id=" + encodeURIComponent(canonicalId);
+      };
+      return;
+    }
+
+    setStatus(
+      "neutral",
+      "Queued for anchoring",
+      "We do not yet see a receipt or Bitcoin anchor for this ID. If you just created this proof, allow time for batching and anchoring. You can always check back via the Verify page."
+    );
   }
 
-  // Default UI while resolving
+  // initial message
   setStatus(
     "neutral",
     "Queued for anchoring",
     "We are preparing your proof ID and live status. This may take a moment."
   );
-  proofIdEl.textContent = "—";
 
   if (!sessionId && !explicitId) {
     proofIdEl.textContent = "Missing session_id";
@@ -368,16 +382,9 @@
   }
 
   // Resolve canonical
-  let canonicalId = null;
-  try {
-    const r = await resolveCanonicalId();
-    canonicalId = r.canonicalId || null;
-  } catch (e) {
-    console.error("resolve canonical error:", e);
-  }
+  const canonicalId = await resolveCanonicalId();
 
   if (!canonicalId) {
-    // Fall back: show session id and provide guidance
     proofIdEl.textContent = sessionId || explicitId || "—";
     setStatus(
       "neutral",
@@ -387,18 +394,7 @@
     return;
   }
 
-  // Show canonical
-  proofIdEl.textContent = canonicalId;
-  setVerifyLinks(canonicalId);
-
-  // Normalize URL to include canonical id for reload/share
-  try {
-    const u = new URL(location.href);
-    if (!u.searchParams.get("id")) u.searchParams.set("id", canonicalId);
-    history.replaceState({}, "", u.toString());
-  } catch {}
-
-  // Load live anchor status
+  wireForCanonicalId(canonicalId);
   await loadAnchorStatus(canonicalId);
 })();
 </script>
