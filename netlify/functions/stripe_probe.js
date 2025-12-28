@@ -1,24 +1,19 @@
 // netlify/functions/stripe_probe.js
-exports.handler = async () => {
-  try {
-    // Just prove the module loads; no package.json access
-    const stripe = require('stripe');
-    const ok = typeof stripe === 'function' || typeof stripe === 'object';
-    return {
-      statusCode: 200,
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ ok, loaded: !!stripe })
-    };
-  } catch (e) {
-    return {
-      statusCode: 500,
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        ok: false,
-        error: String(e),
-        cwd: process.cwd(),
-        requirePaths: module.paths
-      })
-    };
-  }
+exports.handler = async (event) => {
+  const VERSION = "stripe_probe_v2_beacon_2025-12-27_2217ET";
+
+  // Also attempt logs (nice-to-have), but the beacon is the real proof.
+  console.log("stripe_probe beacon version:", VERSION);
+  console.log("queryStringParameters:", event.queryStringParameters);
+
+  return {
+    statusCode: 200,
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      ok: true,
+      loaded: true,
+      version: VERSION,
+      query: event.queryStringParameters || {},
+    }),
+  };
 };
