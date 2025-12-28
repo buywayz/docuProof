@@ -1,19 +1,45 @@
 // netlify/functions/stripe_probe.js
+const Stripe = require("stripe");
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2024-06-20",
+});
+
 exports.handler = async (event) => {
-  const VERSION = "stripe_probe_v2_beacon_2025-12-27_2217ET";
+  const sessionId =
+    (event.queryStringParameters?.id ||
+      event.queryStringParameters?.session_id ||
+      "").trim();
 
-  // Also attempt logs (nice-to-have), but the beacon is the real proof.
-  console.log("stripe_probe beacon version:", VERSION);
-  console.log("queryStringParameters:", event.queryStringParameters);
+  if (!sessionId) {
+    return {
+      statusCode: 400,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ok: false, error: "Missing id/session_id" }),
+    };
+  }
 
-  return {
-    statusCode: 200,
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      ok: true,
-      loaded: true,
-      version: VERSION,
-      query: event.queryStringParameters || {},
-    }),
-  };
+  try {
+    const s = await stripe.checkout.sessions.retrieve(sessionId);
+
+    return {
+      statusCode: 200,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        ok: true,
+        session_id: s.id,
+        livemode: !!s.livemode,
+        payment_status: s.payment_status || null,
+        mode: s.mode || null,
+        customer_email: s.customer_email || null,
+        metadata: s.metadata || {},
+      }),
+    };
+  } catch (e) {
+    return {
+      statusCode: 500,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ok: false, error: e.message }),
+    };
+  }
 };
