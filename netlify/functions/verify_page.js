@@ -8,7 +8,8 @@
 
 exports.handler = async (event) => {
   const rawUrl =
-    event.rawUrl || ("https://docuproof.local" + (event.path || "/verify"));
+    event.rawUrl ||
+    ("https://docuproof.local" + (event.path || "/verify"));
 
   let initialId = "";
 
@@ -70,7 +71,11 @@ function buildHtml(initialId) {
 
       * { box-sizing: border-box; }
 
-      html, body { margin: 0; padding: 0; height: 100%; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
 
       body {
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
@@ -80,7 +85,11 @@ function buildHtml(initialId) {
         -webkit-font-smoothing: antialiased;
       }
 
-      a { color: inherit; text-decoration: none; }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
       button { font-family: inherit; }
 
       .shell {
@@ -110,9 +119,7 @@ function buildHtml(initialId) {
         width: 32px;
         height: 32px;
         border-radius: 8px;
-        background:
-          center / contain no-repeat
-          url("/.netlify/functions/logo_static");
+        background: center / contain no-repeat url("/.netlify/functions/logo_static");
         display: inline-block;
         font-size: 0;
         color: transparent;
@@ -188,6 +195,18 @@ function buildHtml(initialId) {
         transform: none;
       }
 
+      .btn-ghost {
+        composes: btn-base;
+        background: transparent;
+        border-color: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+      }
+
+      .btn-ghost:hover {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(255, 255, 255, 0.14);
+      }
+
       .btn-check { min-width: 140px; }
 
       .layout {
@@ -203,11 +222,7 @@ function buildHtml(initialId) {
       }
 
       .panel {
-        background: linear-gradient(
-          145deg,
-          var(--bg-panel) 0,
-          var(--bg-panel-soft) 62%
-        );
+        background: linear-gradient(145deg, var(--bg-panel) 0, var(--bg-panel-soft) 62%);
         border-radius: 22px;
         padding: 22px 22px 20px;
         border: 1px solid var(--border-subtle);
@@ -299,11 +314,7 @@ function buildHtml(initialId) {
       }
 
       .pill-success {
-        background: linear-gradient(
-          135deg,
-          rgba(22, 255, 112, 0.9),
-          rgba(22, 255, 171, 0.98)
-        );
+        background: linear-gradient(135deg, rgba(22, 255, 112, 0.9), rgba(22, 255, 171, 0.98));
         border-color: transparent;
         color: #020513;
         box-shadow:
@@ -352,7 +363,12 @@ function buildHtml(initialId) {
 
       .field-row-value-soft { color: var(--text-muted); }
 
-      .field-row-value-link a { color: #7bf8b9; }
+      .field-row-value-link a {
+        color: #7bf8b9;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+
       .field-row-value-link a:hover { text-decoration: underline; }
 
       .receipt-row { margin-top: 6px; }
@@ -422,67 +438,8 @@ function buildHtml(initialId) {
 
       .what-youre-seeing-body { max-width: 560px; }
 
-      /* Court-facing panel (left column, below receipts) */
-      .court-panel {
-        margin-top: 16px;
-        border-radius: 18px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        background: radial-gradient(
-          circle at 0 0,
-          rgba(22, 255, 112, 0.08),
-          rgba(6, 13, 30, 0.94)
-        );
-        padding: 14px 14px 12px;
-      }
-
-      .court-title {
-        font-size: 12px;
-        letter-spacing: 0.16em;
-        text-transform: uppercase;
-        color: var(--text);
-        margin: 0 0 8px 0;
-      }
-
-      .court-body {
-        font-size: 13px;
-        color: var(--text-muted);
-        line-height: 1.55;
-      }
-
-      .court-body strong { color: var(--text); }
-
-      .court-list {
-        margin: 8px 0 10px 0;
-        padding-left: 18px;
-        color: var(--text-muted);
-      }
-
-      .court-list li { margin-bottom: 6px; }
-
-      .court-mini {
-        margin-top: 10px;
-        padding-top: 10px;
-        border-top: 1px dashed rgba(255, 255, 255, 0.12);
-        font-size: 12px;
-        color: rgba(154, 164, 196, 0.88);
-      }
-
-      .explorer-fallbacks {
-        margin-top: 6px;
-        font-size: 11px;
-        color: rgba(154, 164, 196, 0.88);
-        letter-spacing: 0.02em;
-      }
-
-      .explorer-fallbacks a {
-        color: #7bf8b9;
-      }
-
-      .explorer-fallbacks a:hover {
-        text-decoration: underline;
-      }
-
       /* Right side panel */
+
       .how-panel { position: relative; overflow: hidden; }
 
       .how-title {
@@ -511,11 +468,7 @@ function buildHtml(initialId) {
         border-radius: 999px;
         padding: 8px 16px;
         border: 1px dashed rgba(255, 255, 255, 0.18);
-        background: radial-gradient(
-          circle at 0 0,
-          rgba(22, 255, 112, 0.14),
-          rgba(3, 13, 32, 0.9)
-        );
+        background: radial-gradient(circle at 0 0, rgba(22, 255, 112, 0.14), rgba(3, 13, 32, 0.9));
         font-size: 13px;
         color: var(--text);
         display: flex;
@@ -537,6 +490,18 @@ function buildHtml(initialId) {
         color: rgba(154, 164, 196, 0.75);
         text-align: center;
       }
+
+      /* ✅ Hard wrap for long identifiers inside court-facing panel */
+      .court-txid {
+        display: block;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+      .court-panel a,
+      .court-panel code {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
     </style>
   </head>
   <body>
@@ -557,129 +522,91 @@ function buildHtml(initialId) {
       <main class="layout">
         <section class="panel">
           <div class="verify-header">
-            <div class="panel-title">Check a timestamped record</div>
+            <div class="panel-title">Check a timestamped proof</div>
             <div class="panel-subtitle">
               Paste the <strong>Proof ID</strong> from your docuProof certificate.
-              This page displays whether a corresponding OpenTimestamps receipt
-              has been anchored into the Bitcoin blockchain, and provides the
-              underlying receipt artifacts for independent verification.
+              You'll see its anchor status on the Bitcoin blockchain and can
+              download the underlying timestamp receipt.
             </div>
           </div>
 
           <div class="field-group">
             <div class="field-label">Proof ID</div>
             <div class="field-input-row">
-              <input
-                id="proof-id"
-                class="input"
-                placeholder="e.g. 2dd51d24daff"
-                autocomplete="off"
-              />
-              <button
-                id="btn-check"
-                class="btn-primary btn-base btn-check"
-                type="button"
-              >
-                Check status
-              </button>
+              <input id="proof-id" class="input" placeholder="e.g. e2e-demo-001" autocomplete="off" />
+              <button id="btn-check" class="btn-primary btn-base btn-check" type="button">Check status</button>
             </div>
           </div>
 
           <div class="pill-row">
-            <div id="pill-state" class="pill pill-soft pill-state">
-              Waiting for a proof id
-            </div>
-            <div id="pill-anchor-id" class="pill pill-soft pill-anchor-id">
-              Anchor ID: —
-            </div>
+            <div id="pill-state" class="pill pill-soft pill-state">Waiting for a proof id</div>
+            <div id="pill-anchor-id" class="pill pill-soft pill-anchor-id">Anchor ID: —</div>
           </div>
 
           <div class="fields-stack">
             <div class="field-row">
               <div class="field-row-label">Anchor state</div>
-              <div id="anchor-state" class="field-row-value field-row-value-soft">
-                —
-              </div>
+              <div id="anchor-state" class="field-row-value field-row-value-soft">—</div>
             </div>
 
             <div class="field-row">
               <div class="field-row-label">Bitcoin TXID</div>
-              <div id="bitcoin-txid" class="field-row-value field-row-value-link">
-                —
-              </div>
+              <div id="bitcoin-txid" class="field-row-value field-row-value-link">—</div>
             </div>
 
             <div class="field-row">
               <div class="field-row-label">Confirmations</div>
-              <div id="confirmations" class="field-row-value field-row-value-soft">
-                —
-              </div>
+              <div id="confirmations" class="field-row-value field-row-value-soft">—</div>
             </div>
 
             <div class="field-row receipt-row">
               <div class="field-row-label">Receipt</div>
               <div class="field-row-value">
                 <div class="pill-button-row">
-                  <button id="btn-ots" type="button" class="pill-btn" disabled>
-                    OTS
-                  </button>
-                  <button id="btn-anchor-receipt" type="button" class="pill-btn" disabled>
-                    Anchor receipt
-                  </button>
-                  <button id="btn-anchor-metadata" type="button" class="pill-btn" disabled>
-                    Anchor metadata
-                  </button>
+                  <button id="btn-ots" type="button" class="pill-btn" disabled>OTS</button>
+                  <button id="btn-anchor-receipt" type="button" class="pill-btn" disabled>Anchor receipt</button>
+                  <button id="btn-anchor-metadata" type="button" class="pill-btn" disabled>Anchor metadata</button>
                 </div>
               </div>
             </div>
           </div>
 
-          <section class="court-panel" id="court-panel" style="display:none;">
-            <div class="court-title">Court-facing verification</div>
-            <div class="court-body" id="court-body">
-              <!-- populated by JS -->
-            </div>
-          </section>
-
           <div class="what-youre-seeing">
-            <div class="what-youre-seeing-title">Interpretation (scope)</div>
+            <div class="what-youre-seeing-title">What you're seeing</div>
             <div class="what-youre-seeing-body">
-              A Bitcoin-anchored OpenTimestamps receipt supports that a file with a specific SHA-256 hash
-              existed no later than the time a block containing the anchor transaction was mined
-              (subject to standard Bitcoin/OpenTimestamps security assumptions).
-              This does <strong>not</strong> by itself establish authorship, intent, or authenticity of the file contents.
+              docuProof stores your receipt and anchor metadata, and independently
+              you can verify the txid and Merkle inclusion on any Bitcoin
+              blockchain explorer.
             </div>
           </div>
+
+          <!-- Court-facing panel (already in your version) -->
+          <div id="court-panel" class="court-panel" style="margin-top:16px;"></div>
         </section>
 
         <section class="panel how-panel">
-          <div class="how-title">How verification works (technical)</div>
+          <div class="how-title">How this verification works</div>
           <div class="how-body">
-            docuProof keeps your file private in your browser. What is stored is a
+            docuProof keeps your file private in your browser. What we store is a
             cryptographic fingerprint (SHA-256 hash) and an OpenTimestamps
-            receipt that is eventually anchored into the Bitcoin blockchain.
+            receipt anchored to the Bitcoin blockchain.
             <ul class="how-list">
-              <li>
-                <strong>Anchor state</strong> indicates whether the receipt has been anchored into a Bitcoin block.
-              </li>
-              <li>
-                <strong>Bitcoin txid</strong> is the public transaction you can inspect in a block explorer.
-              </li>
-              <li>
-                <strong>OTS receipt</strong> is the portable proof artifact. It can be verified independently using open-source OpenTimestamps tools.
-              </li>
+              <li><strong>Anchor state</strong> tells you whether your proof has been committed into a Bitcoin block.</li>
+              <li><strong>Bitcoin txid</strong> is the transaction you can inspect on any public Bitcoin explorer.</li>
+              <li><strong>OTS receipt</strong> is the portable proof file. You can independently verify it with the open-source OpenTimestamps tools.</li>
             </ul>
-            For evidentiary workflows, preserve these together:
+            For strict evidentiary use, keep these together:
             <ul class="how-list">
-              <li>The original file (unchanged).</li>
-              <li>The docuProof PDF certificate.</li>
+              <li>Your original file (unchanged).</li>
+              <li>Your docuProof PDF certificate.</li>
               <li>The downloaded <code>.ots</code> receipt file.</li>
             </ul>
           </div>
           <div class="how-footnote-pill">
             <div class="how-footnote-pill-dot"></div>
             <div>
-              Independent verification is strongest when you keep the original file and its receipt together.
+              The closer you are to the original anchor date, the harder it is
+              to dispute when the file existed.
             </div>
           </div>
         </section>
@@ -705,7 +632,6 @@ function buildHtml(initialId) {
         const btnAnchorReceipt = document.getElementById("btn-anchor-receipt");
         const btnAnchorMeta = document.getElementById("btn-anchor-metadata");
         const courtPanel = document.getElementById("court-panel");
-        const courtBody = document.getElementById("court-body");
 
         let currentId = initialId || "";
 
@@ -724,73 +650,48 @@ function buildHtml(initialId) {
           fieldState.textContent = "—";
           fieldTxid.textContent = "—";
           fieldConf.textContent = "—";
+
           fieldTxid.innerHTML = "—";
 
-          if (courtPanel) courtPanel.style.display = "none";
-          if (courtBody) courtBody.innerHTML = "";
+          if (courtPanel) courtPanel.innerHTML = "";
 
           [btnOts, btnAnchorReceipt, btnAnchorMeta].forEach(function (btn) {
             if (btn) btn.disabled = true;
           });
         }
 
-        function explorerLinks(txid) {
-          const safe = encodeURIComponent(String(txid));
-          return [
-            { name: "mempool.space", url: "https://mempool.space/tx/" + safe },
-            { name: "blockstream.info", url: "https://blockstream.info/tx/" + safe },
-            { name: "blockchain.com", url: "https://www.blockchain.com/btc/tx/" + safe },
-          ];
-        }
+        function renderCourtPanel(opts) {
+          if (!courtPanel) return;
 
-        function renderTxid(txid) {
-          const safeTxid = String(txid);
-          const short =
-            safeTxid.length > 18
-              ? safeTxid.slice(0, 12) + "…" + safeTxid.slice(-6)
-              : safeTxid;
-
-          const links = explorerLinks(safeTxid);
-          const primary = links[0];
-
-          const fallbacks = links
-            .slice(1)
-            .map(function (l) {
-              return '<a href="' + l.url + '" target="_blank" rel="noopener noreferrer">' + l.name + "</a>";
-            })
-            .join(" · ");
-
-          return (
-            '<div>' +
-              '<a href="' + primary.url + '" target="_blank" rel="noopener noreferrer">' + short + "</a>" +
-              '<div class="explorer-fallbacks">Also view on: ' + fallbacks + "</div>" +
-            "</div>"
-          );
-        }
-
-        function setCourtPanel(opts) {
-          if (!courtPanel || !courtBody) return;
           const proofId = opts.proofId || "—";
-          const state = opts.state || "UNKNOWN";
-          const confirmations = opts.confirmationsText || "—";
+          const state = opts.state || "—";
+          const confirmations = typeof opts.confirmations === "number" ? opts.confirmations : 0;
           const txid = opts.txid || null;
 
-          const txLine = txid
-            ? ('Bitcoin transaction (txid): <span style="color:#7bf8b9;">' + txid + "</span>")
-            : "Bitcoin transaction (txid): —";
+          // ✅ txid wrapped in span.court-txid so it breaks safely
+          const txidLine = txid
+            ? '<span class="court-txid">' + txid + '</span>'
+            : "—";
 
-          courtBody.innerHTML =
-            "<p><strong>What this supports:</strong> The receipt indicates a SHA-256 hash was timestamped and anchored into Bitcoin. This supports that a file with that hash existed no later than the time the anchor transaction was mined (subject to standard assumptions).</p>" +
-            "<ul class='court-list'>" +
-              "<li><strong>Proof ID:</strong> <code>" + proofId + "</code></li>" +
-              "<li><strong>Anchor state:</strong> <code>" + state + "</code></li>" +
-              "<li><strong>Confirmations:</strong> <code>" + confirmations + "</code></li>" +
-              "<li><strong>" + txLine + "</strong></li>" +
-            "</ul>" +
-            "<p><strong>Preserve as the evidence bundle:</strong> original file (unchanged) + <code>.ots</code> receipt + docuProof PDF certificate.</p>" +
-            "<div class='court-mini'><strong>Scope note:</strong> This is evidence of existence/timestamp of a hash, not proof of authorship, intent, or authenticity of contents.</div>";
-
-          courtPanel.style.display = "block";
+          courtPanel.innerHTML =
+            '<div style="margin-top:18px;border-radius:18px;border:1px solid rgba(255,255,255,0.08);background:rgba(7,15,34,0.7);padding:16px 16px 14px;">' +
+              '<div style="font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:rgba(154,164,196,0.9);margin-bottom:10px;">Court-facing verification</div>' +
+              '<div style="color:rgba(154,164,196,0.9);font-size:13px;line-height:1.55;margin-bottom:10px;">' +
+                '<strong style="color:var(--text);">What this supports:</strong> The receipt indicates a SHA-256 hash was timestamped and anchored into Bitcoin. This supports that a file with that hash existed no later than the time the anchor transaction was mined (subject to standard assumptions).' +
+              '</div>' +
+              '<ul style="margin:0;padding-left:18px;color:rgba(247,249,255,0.92);font-size:14px;line-height:1.6;">' +
+                '<li><strong>Proof ID:</strong> ' + proofId + '</li>' +
+                '<li><strong>Anchor state:</strong> ' + state + '</li>' +
+                '<li><strong>Confirmations:</strong> ' + confirmations + '</li>' +
+                '<li><strong>Bitcoin transaction (txid):</strong> ' + txidLine + '</li>' +
+              '</ul>' +
+              '<div style="margin-top:12px;color:rgba(154,164,196,0.9);font-size:13px;line-height:1.55;">' +
+                '<strong style="color:var(--text);">Preserve as the evidence bundle:</strong> original file (unchanged) + <code>.ots</code> receipt + docuProof PDF certificate.' +
+              '</div>' +
+              '<div style="margin-top:12px;padding-top:12px;border-top:1px dashed rgba(255,255,255,0.10);color:rgba(154,164,196,0.85);font-size:12.5px;line-height:1.55;">' +
+                '<strong style="color:rgba(247,249,255,0.92);">Scope note:</strong> This is evidence of existence/timestamp of a hash, not proof of authorship, intent, or authenticity of contents.' +
+              '</div>' +
+            '</div>';
         }
 
         async function runCheck(id) {
@@ -801,9 +702,7 @@ function buildHtml(initialId) {
           setLoading(true);
           resetOutputs();
 
-          const url =
-            "/.netlify/functions/anchor_status?id=" +
-            encodeURIComponent(trimmed);
+          const url = "/.netlify/functions/anchor_status?id=" + encodeURIComponent(trimmed);
 
           try {
             const resp = await fetch(url, { cache: "no-store" });
@@ -822,36 +721,31 @@ function buildHtml(initialId) {
             const state = data.state || "UNKNOWN";
             const txid = data.txid || null;
             const anchorKey = data.anchorKey || data.anchorId || null;
+            const confirmations =
+              typeof data.confirmations === "number" ? data.confirmations : 0;
 
-            // confirmations: if number, show it; if absent, show "—"
-            const confirmationsText =
-              typeof data.confirmations === "number"
-                ? String(data.confirmations)
-                : "—";
-
-            // Pills
             pillState.classList.add("pill-success", "pill-success-dot");
             pillState.textContent =
-              state === "ANCHORED"
-                ? "Anchored on the Bitcoin blockchain"
-                : state;
+              state === "ANCHORED" ? "Anchored on the Bitcoin blockchain" : state;
 
-            pillAnchorId.textContent = anchorKey
-              ? "Anchor ID: " + anchorKey
-              : "Anchor ID: —";
-
-            // Detail fields
+            pillAnchorId.textContent = anchorKey ? "Anchor ID: " + anchorKey : "Anchor ID: —";
             fieldState.textContent = state;
 
             if (txid) {
-              fieldTxid.innerHTML = renderTxid(txid);
+              const safeTxid = String(txid);
+              const short =
+                safeTxid.length > 18
+                  ? safeTxid.slice(0, 12) + "…" + safeTxid.slice(-6)
+                  : safeTxid;
+              const href = "https://mempool.space/tx/" + encodeURIComponent(safeTxid);
+              fieldTxid.innerHTML =
+                '<a href="' + href + '" target="_blank" rel="noopener noreferrer">' + short + "</a>";
             } else {
               fieldTxid.textContent = "—";
             }
 
-            fieldConf.textContent = confirmationsText;
+            fieldConf.textContent = String(confirmations);
 
-            // Enable downloads when we have at least an anchor key (receipt should exist by then)
             if (anchorKey) {
               if (btnOts) {
                 btnOts.disabled = false;
@@ -879,15 +773,12 @@ function buildHtml(initialId) {
               }
             }
 
-            // Court panel: show when anchored or receipt exists
-            if (state === "ANCHORED" || state === "OTS_RECEIPT") {
-              setCourtPanel({
-                proofId: currentId,
-                state: state,
-                confirmationsText: confirmationsText,
-                txid: txid,
-              });
-            }
+            renderCourtPanel({
+              proofId: trimmed,
+              state,
+              confirmations,
+              txid,
+            });
 
             setLoading(false);
           } catch (e) {
@@ -916,7 +807,6 @@ function buildHtml(initialId) {
           });
         }
 
-        // Seed from initialId (querystring or /v/:id)
         if (initialId && input) {
           input.value = initialId;
           runCheck(initialId);
