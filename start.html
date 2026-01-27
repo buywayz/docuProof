@@ -1,320 +1,847 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>docuProof — Proof You Can Point To</title>
+<meta name="description" content="In an age of AI fakes, create immutable proof your files existed. Blockchain-anchored timestamps in under 60 seconds.">
+<link rel="icon" href="/docuproof-logo.png">
+<link rel="apple-touch-icon" href="/docuproof-logo.png">
+<meta name="theme-color" content="#0B0F14">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0d10;--bg-card:#12161c;--bg-elevated:#1a1f27;--ink:#e8eaed;--muted:#8b949e;--accent:#22c55e;--accent-glow:rgba(34,197,94,0.15);--border:#21262d}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 'Outfit',sans-serif}
+a{color:var(--accent);text-decoration:none}
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,13,16,0.95);border-bottom:1px solid var(--border)}
+.nav-inner{max-width:1200px;margin:0 auto;padding:14px 24px;display:flex;justify-content:space-between;align-items:center}
+.nav-brand{display:flex;align-items:center;gap:10px;color:var(--ink)}
+.nav-brand img{height:32px}
+.nav-brand span{font-weight:700;font-size:18px}
+.nav-links{display:flex;gap:24px;align-items:center}
+.nav-links a{color:var(--muted);font-size:14px}
+.nav-cta{background:var(--accent);color:#000!important;padding:8px 18px;border-radius:8px;font-weight:700}
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:120px 24px 80px;position:relative}
+.hero::after{content:'';position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;background:radial-gradient(circle,var(--accent-glow),transparent 70%);pointer-events:none}
+.hero-content{position:relative;z-index:1;max-width:900px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--bg-elevated);border:1px solid var(--border);padding:8px 16px;border-radius:100px;font-size:13px;color:var(--muted);margin-bottom:32px}
+.hero-badge .dot{width:8px;height:8px;background:var(--accent);border-radius:50%}
+.hero h1{font-size:clamp(40px,7vw,68px);font-weight:800;line-height:1.1;margin-bottom:24px}
+.hero h1 .accent{color:var(--accent)}
+.hero-sub{font-size:clamp(18px,2.5vw,22px);color:var(--muted);max-width:700px;margin:0 auto 16px}
+.hero-tagline{font-size:16px;color:#6b7280;font-style:italic;margin-bottom:40px}
+.hero-cta{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.hero-why{margin-top:24px}
+.hero-why a{display:inline-flex;align-items:center;gap:8px;padding:16px 32px;border-radius:12px;font-weight:700;font-size:16px;background:#6366f1;color:#fff!important;text-decoration:none}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:16px 32px;border-radius:12px;font-weight:700;font-size:16px}
+.btn-primary{background:var(--accent);color:#000!important}
+.btn-secondary{background:var(--bg-elevated);color:var(--ink);border:1px solid var(--border)}
+.btn-sm{padding:12px 20px;font-size:14px}
+.section{padding:100px 24px}
+.section-inner{max-width:1100px;margin:0 auto}
+.section-header{text-align:center;margin-bottom:60px}
+.section-header h2{font-size:clamp(28px,4vw,40px);font-weight:800;margin-bottom:16px}
+.section-header h2 .accent{color:var(--accent)}
+.section-header p{font-size:18px;color:var(--muted)}
+.demo-label{text-align:center;color:#6b7280;font-size:13px;margin:60px 0 16px;text-transform:uppercase;letter-spacing:0.1em}
+.demo-container{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:650px;margin:0 auto}
+.demo-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.demo-icon{width:44px;height:44px;background:var(--accent-glow);border:2px solid var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.demo-title{font-weight:700}
+.demo-subtitle{font-size:13px;color:var(--muted)}
+.demo-steps{display:flex;flex-direction:column;gap:12px}
+.demo-step{display:flex;align-items:center;gap:14px;padding:10px 14px;background:var(--bg);border-radius:8px}
+.step-icon{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.step-icon.file{background:#1e3a5f}
+.step-icon.hash{background:#3b2f5c}
+.step-icon.chain{background:#2d4a3e}
+.step-icon.check{background:var(--accent);color:#000}
+.step-content{flex:1}
+.step-label{font-size:13px;font-weight:600}
+.step-value{font-size:11px;color:var(--accent);font-family:monospace}
+.step-status{font-size:11px;padding:3px 8px;border-radius:100px;background:#0d2818;color:var(--accent)}
+.problem-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.problem-content h2{font-size:clamp(28px,4vw,40px);font-weight:800;margin-bottom:24px;line-height:1.2}
+.problem-content h2 .danger{color:#f87171}
+.problem-content p{font-size:18px;color:var(--muted);margin-bottom:20px;line-height:1.7}
+.problem-stats{display:flex;gap:48px;margin-top:32px}
+.stat{text-align:center}
+.stat-number{font-size:48px;font-weight:800;color:var(--accent);line-height:1}
+.stat-label{font-size:14px;color:var(--muted);margin-top:8px}
+.threat-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.threat-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:20px}
+.threat-icon{font-size:28px;margin-bottom:12px}
+.threat-title{font-weight:700;font-size:15px;margin-bottom:6px}
+.threat-desc{font-size:13px;color:var(--muted);line-height:1.5}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px}
+.card-icon{font-size:32px;margin-bottom:16px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:8px}
+.card p{font-size:14px;color:var(--muted);line-height:1.6}
+.how-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:28px;text-align:center}
+.how-number{width:48px;height:48px;background:var(--accent-glow);border:2px solid var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;color:var(--accent);margin:0 auto 20px}
+.price-card{background:var(--bg-card);border:1px solid var(--border);border-radius:20px;padding:32px;display:flex;flex-direction:column}
+.price-card.featured{border-color:var(--accent);box-shadow:0 0 60px var(--accent-glow)}
+.price-value{font-size:42px;font-weight:800;color:var(--accent)}
+.price-period{font-size:16px;color:var(--muted)}
+.price-meta{font-size:13px;color:var(--muted);margin-bottom:16px}
+.price-annual{font-size:13px;color:var(--muted);margin-bottom:24px}
+.price-features{list-style:none;margin-bottom:24px;flex:1}
+.price-features li{font-size:14px;color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border)}
+.price-features li::before{content:'✓ ';color:var(--accent);font-weight:700}
+.price-cta{display:flex;flex-direction:column;gap:10px}
+.faq-grid{max-width:800px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.faq-item{background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.faq-q{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;cursor:pointer;font-weight:600;font-size:16px}
+.faq-q:hover{color:var(--accent)}
+.faq-chevron{font-size:20px;color:var(--muted);transition:transform 0.3s}
+.faq-item.open .faq-chevron{transform:rotate(180deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height 0.3s ease}
+.faq-item.open .faq-a{max-height:500px}
+.faq-a-inner{padding:0 24px 20px;font-size:15px;color:var(--muted);line-height:1.7}
+.final-cta{text-align:center;padding:100px 24px}
+.final-cta h2{font-size:clamp(32px,5vw,48px);font-weight:800;margin-bottom:16px}
+.final-cta h2 .accent{color:var(--accent)}
+.final-cta p{font-size:18px;color:var(--muted);margin-bottom:32px}
+.btn-group{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.footer{padding:48px 24px;background:var(--bg-card);border-top:1px solid var(--border)}
+.footer-inner{max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:24px}
+.footer-brand{display:flex;align-items:center;gap:10px;color:var(--ink)}
+.footer-brand img{height:28px}
+.footer-links{display:flex;gap:24px}
+.footer-links a{color:var(--muted);font-size:14px}
+.footer-copy{font-size:13px;color:var(--muted);text-align:center;width:100%;margin-top:24px;padding-top:24px;border-top:1px solid var(--border)}
+@media(max-width:900px){.grid-4,.grid-3{grid-template-columns:repeat(2,1fr)}.problem-grid{grid-template-columns:1fr}.nav-links a:not(.nav-cta){display:none}}
+@media(max-width:600px){.grid-4,.grid-3{grid-template-columns:1fr}.problem-stats{flex-direction:column;gap:24px}}
 
-  <!-- START SEO BLOCK (unchanged) -->
-  <title>docuProof — Timestamp any file on Bitcoin in &lt;60 seconds</title>
-  <meta name="description" content="Generate a cryptographic proof-of-existence for any file. $2.89 single proof, or subscribe for volume. Court-friendly certificate, Bitcoin-anchored.">
-
-  <!-- Canonical URL -->
-  <link rel="canonical" href="https://docuproof.io/start.html">
-
-  <!-- Open Graph -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://docuproof.io/start.html">
-  <meta property="og:title" content="docuProof — Timestamp any file on Bitcoin in &lt;60 seconds">
-  <meta property="og:description" content="Generate a cryptographic proof-of-existence for any file. $2.89 single proof, Starter $7.50/mo, Pro $19/mo.">
-  <meta property="og:image" content="https://docuproof.io/assets/meta/og-start.png">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-
-  <!-- Twitter (X) -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="docuProof — Bitcoin-backed proof-of-existence">
-  <meta name="twitter:description" content="One-minute timestamping. Court-friendly certificate. $2.89 single proof.">
-  <meta name="twitter:image" content="https://docuproof.io/assets/meta/og-start.png">
-  <!-- END SEO BLOCK -->
-
-  <link rel="manifest" href="/site.webmanifest">
-  <link rel="icon" href="/docuproof-logo.png">               <!-- immediate favicon -->
-  <link rel="shortcut icon" href="/docuproof-logo.png">       <!-- legacy fallback -->
-  <link rel="apple-touch-icon" href="/docuproof-logo.png">    <!-- iOS home screen -->
-  <meta name="theme-color" content="#0B0F14">
-
-  <style>
-    :root{
-      --bg:#0b0f14;--ink:#eaeaea;--muted:#a7b0ba;--accent:#22C55E;
-      --card:#151b22;--border:#1e2630;--link:#9cc1ff;--danger:#ffb4b4;
+    /* New "What actually holds up as proof" section styles */
+    .proof-section {
+      padding: 60px 0;
     }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
-    a{color:var(--link)}
-    header,section,footer{padding:64px 20px;max-width:1100px;margin:auto}
-    header{text-align:center;padding-top:84px}
-    h1,h2{color:var(--accent);font-weight:700;margin-bottom:12px;line-height:1.2}
-    h3{margin-bottom:8px}
-    p{margin-bottom:18px;color:#c9d2db}
-    .btn{display:inline-block;padding:14px 26px;border-radius:10px;font-weight:700;text-decoration:none;border:1px solid transparent;transition:transform .08s ease, box-shadow .12s ease, opacity .12s ease}
-    .btn:active{transform:translateY(1px)}
-    .btn-primary{background:var(--accent);color:var(--bg)}
-    .btn-primary:hover{opacity:.9}
-    .btn-ghost{background:transparent;color:var(--ink);border-color:#2a3542}
-    .grid{display:grid;gap:24px}
-    .grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
-    .grid-3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
-    .grid-4{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px}
-    .card.tight{padding:20px}
-    .center{text-align:center}
-    img.logo{height:64px;width:auto;margin-bottom:24px}
-    .muted{color:var(--muted)}
-    .small{font-size:13px}
-    .tiny{font-size:12px}
-
-    /* reveal effect (unchanged behavior) */
-    .reveal{opacity:0;transform:translateY(12px);transition:opacity .5s ease, transform .6s ease}
-    .reveal.in{opacity:1;transform:none}
-
-    /* FAQ accordion (unchanged) */
-    .faq-item{border:1px solid var(--border);border-radius:12px;background:var(--card);overflow:hidden}
-    .faq-q{display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;padding:16px 18px;font-weight:700}
-    .faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease;padding:0 18px}
-    .faq-item.open .faq-a{max-height:420px;padding:0 18px 18px}
-    .chev{transition:transform .25s ease}
-    .faq-item.open .chev{transform:rotate(180deg)}
-
-    /* Pricing (unchanged) */
-    .price{font-size:32px;font-weight:800;color:var(--accent)}
-    .compare{display:flex;gap:8px;align-items:baseline}
-    .per{font-size:14px;color:#c9d2db;margin-left:6px}
-    .cta-col{display:flex;flex-direction:column;gap:10px}
-
-    footer{text-align:center;font-size:14px;color:var(--muted);padding-bottom:64px}
-    .notice{border-left:4px solid var(--accent);background:#0e141a;border-radius:8px;padding:14px 16px;margin-top:10px}
-
-    /* NEW: CTA fade-in micro-animation with accessibility guard */
-    @keyframes fadeInBtt {
-      from { opacity: 0; transform: translateY(6px); }
-      to   { opacity: 1; transform: translateY(0); }
+    .proof-header {
+      text-align: center;
+      margin-bottom: 40px;
     }
-    .btn-appear { opacity: 0; animation: fadeInBtt .6s ease-in-out forwards; }
-    .btn-appear:nth-child(1){ animation-delay:.02s; }
-    .btn-appear:nth-child(2){ animation-delay:.09s; }
-
-    /* Accessibility: honor reduced motion everywhere */
-    @media (prefers-reduced-motion: reduce) {
-      .reveal { transition: none !important; opacity: 1 !important; transform: none !important; }
-      .faq-a { transition: none !important; }
-      .chev { transition: none !important; }
-      .btn-appear { animation: none !important; opacity: 1 !important; transform: none !important; }
-      html { scroll-behavior: auto; }
+    .proof-header h2 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 12px;
     }
-  </style>
+    .proof-header p {
+      color: var(--text-muted, #8b949e);
+    }
+    .proof-bad-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .proof-bad-card {
+      background: linear-gradient(180deg, #1a1f26 0%, #14181e 100%);
+      border: 1px solid rgba(220, 38, 38, 0.4);
+      border-radius: 12px;
+      padding: 24px 20px;
+      text-align: center;
+    }
+    .proof-bad-card .proof-icon {
+      font-size: 32px;
+      color: #dc2626;
+      margin-bottom: 16px;
+      font-weight: bold;
+    }
+    .proof-bad-card h3 {
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: #fff;
+      font-weight: 600;
+    }
+    .proof-bad-card p {
+      font-size: 14px;
+      color: #8b949e;
+      line-height: 1.5;
+    }
+    .proof-good-section {
+      display: grid;
+      grid-template-columns: 1fr 260px;
+      gap: 32px;
+      background: linear-gradient(180deg, #0f1a12 0%, #0c140f 100%);
+      border: 2px solid #22c55e;
+      border-radius: 16px;
+      padding: 32px;
+      align-items: center;
+    }
+    .proof-good-content .proof-icon {
+      font-size: 36px;
+      color: #22c55e;
+      margin-bottom: 12px;
+    }
+    .proof-good-content h3 {
+      font-size: 24px;
+      margin-bottom: 12px;
+      color: #fff;
+      font-weight: 700;
+    }
+    .proof-good-content > p {
+      font-size: 15px;
+      color: #b8c5b8;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .proof-features {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .proof-feature {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: #22c55e;
+      font-weight: 500;
+    }
+        .cert-preview-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .cert-preview {
+      width: 210px;
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      padding: 10px;
+    }
+    .cert-inner {
+      border: 2px solid #2a5934;
+      border-radius: 3px;
+      padding: 8px 6px;
+      background: #fff;
+    }
+    .cert-header {
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    .cert-logo-img {
+      width: 28px;
+      height: 28px;
+      margin: 0 auto 4px;
+      background: #0b0f14;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cert-logo-img svg {
+      width: 20px;
+      height: 20px;
+    }
+    .cert-brand {
+      font-size: 9px;
+      font-weight: 700;
+      color: #22c55e;
+    }
+    .cert-tagline {
+      font-size: 5px;
+      color: #888;
+      font-style: italic;
+    }
+    .cert-divider {
+      width: 60%;
+      height: 1px;
+      background: #2a5934;
+      margin: 6px auto;
+      position: relative;
+    }
+    .cert-divider::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 4px;
+      height: 4px;
+      background: #2a5934;
+      border-radius: 50%;
+    }
+    .cert-title-section {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .cert-title-small {
+      font-size: 6px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .cert-title-main {
+      font-size: 9px;
+      font-weight: 700;
+      color: #2a5934;
+      margin-top: 2px;
+    }
+    .cert-subtitle {
+      font-size: 5px;
+      color: #888;
+      margin-top: 2px;
+    }
+    .cert-details-box {
+      background: #f8f9fa;
+      border: 1px solid #e5e5e5;
+      border-radius: 3px;
+      padding: 6px;
+      margin-bottom: 6px;
+      flex: 1;
+    }
+    .cert-details-header {
+      font-size: 5px;
+      font-weight: 700;
+      color: #2a5934;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+    .cert-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 5px;
+      margin-bottom: 3px;
+      line-height: 1.3;
+    }
+    .cert-row .label {
+      color: #666;
+      font-weight: 600;
+    }
+    .cert-row .value {
+      color: #333;
+      text-align: right;
+      max-width: 60%;
+    }
+    .cert-qr-section {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-top: 6px;
+      border-top: 1px solid #eee;
+    }
+    .cert-qr {
+      width: 32px;
+      height: 32px;
+      background: repeating-conic-gradient(#1a1a1a 0% 25%, #fff 0% 50%) 50% / 5px 5px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .cert-qr-text {
+      flex: 1;
+    }
+    .cert-qr-label {
+      font-size: 5px;
+      color: #666;
+      font-weight: 600;
+    }
+    .cert-qr-url {
+      font-size: 4px;
+      color: #888;
+      word-break: break-all;
+    }
+    .cert-footer {
+      text-align: center;
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px solid #2a5934;
+    }
+    .cert-footer-text {
+      font-size: 4px;
+      color: #888;
+    }
+    @media (max-width: 768px) {
+      .proof-bad-row {
+        grid-template-columns: 1fr;
+      }
+      .proof-good-section {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .proof-features {
+        justify-content: center;
+      }
+      .cert-preview-wrapper {
+        margin-top: 24px;
+      }
+    }
 
-  <!-- No-JS fallback so reveal sections are visible -->
-  <noscript>
-    <style>
-      .reveal { opacity: 1 !important; transform: none !important; }
-    </style>
-  </noscript>
+
+    /* ===== Free Proof Section ===== */
+    .free-proof-section {
+      padding: 80px 24px;
+      background: linear-gradient(180deg, var(--bg) 0%, var(--bg-card) 100%);
+      border-top: 1px solid var(--border, #21262d);
+    }
+    .free-proof-section .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .free-proof-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .free-proof-badge {
+      display: inline-block;
+      background: #22c55e;
+      color: #000;
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+    .free-proof-header h2 {
+      font-size: clamp(28px, 5vw, 40px);
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+    .free-proof-header p {
+      font-size: 18px;
+      color: var(--muted, #8b949e);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .free-proof-options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    .free-proof-card {
+      background: linear-gradient(180deg, #151b22 0%, #0f1318 100%);
+      border: 1px solid var(--border, #21262d);
+      border-radius: 16px;
+      padding: 28px 24px;
+      text-align: center;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .free-proof-card:hover {
+      border-color: #22c55e;
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(34, 197, 94, 0.15);
+    }
+    .free-proof-card .card-icon {
+      font-size: 40px;
+      margin-bottom: 16px;
+    }
+    .free-proof-card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+    .free-proof-card .card-tagline {
+      font-size: 13px;
+      color: #22c55e;
+      font-style: italic;
+      margin-bottom: 12px;
+    }
+    .free-proof-card p {
+      font-size: 14px;
+      color: var(--muted, #8b949e);
+      line-height: 1.6;
+      margin-bottom: 20px;
+      flex: 1;
+    }
+    .free-proof-card .card-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .free-proof-card .btn-free {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 14px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .free-proof-card .btn-free.primary {
+      background: #22c55e;
+      color: #000;
+    }
+    .free-proof-card .btn-free.primary:hover {
+      background: #1ea550;
+    }
+    .free-proof-card .btn-free.secondary {
+      background: transparent;
+      color: #22c55e;
+      border: 1px solid #22c55e;
+      padding: 10px 18px;
+      font-size: 13px;
+    }
+    .free-proof-card .btn-free.secondary:hover {
+      background: rgba(34, 197, 94, 0.1);
+    }
+    .free-proof-card .or-divider {
+      font-size: 11px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .free-proof-footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border, #21262d);
+    }
+    .free-proof-footer p {
+      font-size: 14px;
+      color: #6b7280;
+    }
+    .free-proof-footer a {
+      color: #22c55e;
+      text-decoration: none;
+    }
+    @media (max-width: 768px) {
+      .free-proof-options {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+    }
+
+</style>
 </head>
 <body>
+<nav class="nav"><div class="nav-inner"><a href="/" class="nav-brand"><img src="/docuproof-logo.png" alt=""><span>docuProof</span></a><div class="nav-links"><a href="#how">How It Works</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a><a href="/verify">Verify</a><a href="/app.html" class="nav-cta">Generate Proof</a></div></div></nav>
 
-<header class="reveal">
-  <img src="/docuproof-logo.png" alt="docuProof logo" class="logo">
-  <h1>Proof you can point to — without hiring a lawyer or becoming a blockchain expert.</h1>
-  <p>docuProof turns any file into a permanent, Bitcoin-anchored certificate that proves it existed, unchanged, at a specific moment in time. No accounts, no seed phrases — just upload, pay, and keep your receipt.</p>
-  <p class="muted">Paper burns. Theft happens. Servers crash. The Bitcoin blockchain never forgets.</p>
-  <p class="center" style="margin-top:18px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
-    <!-- Only change: add btn-appear class to enable gentle fade-in -->
-    <a href="/app" class="btn btn-primary btn-appear">Generate Proof</a>
-    <a href="#pricing" class="btn btn-ghost btn-appear">View Plans</a>
-  </p>
-</header>
-
-<section class="reveal">
-  <h2>Why docuProof Exists</h2>
-  <p>docuProof creates a secure digital fingerprint of your file—stored permanently on Bitcoin’s public ledger. Until now, proving you had something first usually meant emailing it to yourself, mailing a sealed envelope, or trusting a platform that might disappear. docuProof gives you a cryptographic receipt anchored to Bitcoin’s public ledger — a neutral third-party record that does not depend on docuProof continuing to exist.</p>
+<section class="hero">
+<div class="hero-content">
+<a href="https://www.producthunt.com/products/docuproof-blockchain-anchored-proof?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-docuproof-blockchain-anchored-proof" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-bottom:32px;"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1067616&theme=dark&t=1769294385877" alt="docuProof on Product Hunt" width="250" height="54" style="width:250px;height:54px;" /></a>
+<h1>In an age of <span class="accent">AI fakes</span>, create proof that's <span class="accent">unfakeable</span>.</h1>
+<p class="hero-sub">docuProof turns any file into a permanent, blockchain-anchored certificate that proves it existed, unchanged, at a specific moment in time.</p>
+<p class="hero-tagline">Paper burns. Servers crash. Screenshots can be faked. The blockchain never forgets.</p>
+<div class="hero-cta"><a href="/app.html" class="btn btn-primary">Generate Proof →</a><a href="#how" class="btn btn-secondary">See How It Works</a></div>
+<p class="hero-why"><a href="/scenarios.html">Not sure you need this? See 9 real scenarios →</a></p>
+</div>
+<p class="demo-label">Your Certificate</p>
+<div class="proof-good-section" style="max-width:800px;margin:0 auto;">
+        <div class="proof-good-content">
+          <div class="proof-icon">✓</div>
+          <h3>docuProof Certificate</h3>
+          <p>Anchored to an immutable blockchain. Cryptographic proof that can't be disputed, altered, or faked. Independently verifiable forever.</p>
+          <div class="proof-features">
+            <span class="proof-feature">✓ Court-ready PDF</span>
+            <span class="proof-feature">✓ QR verification</span>
+            <span class="proof-feature">✓ Blockchain anchor</span>
+          </div>
+        </div>
+        <div class="cert-preview-wrapper">
+          <div class="cert-preview">
+            <div class="cert-inner">
+              <div class="cert-header">
+                <div class="cert-logo-img">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <rect x="12" y="13" width="6" height="6" rx="1" fill="#22c55e" stroke="none"/>
+                  </svg>
+                </div>
+                <div class="cert-brand">docuProof</div>
+                <div class="cert-tagline">Proof you can point to.</div>
+              </div>
+              <div class="cert-divider"></div>
+              <div class="cert-title-section">
+                <div class="cert-title-small">Certificate of</div>
+                <div class="cert-title-main">PROOF OF EXISTENCE</div>
+                <div class="cert-subtitle">Blockchain-Anchored Timestamp</div>
+              </div>
+              <div class="cert-details-box">
+                <div class="cert-details-header">Document Details</div>
+                <div class="cert-row"><span class="label">Proof ID:</span><span class="value">a1b2c3d4e5f6</span></div>
+                <div class="cert-row"><span class="label">Document:</span><span class="value">contract_v2.pdf</span></div>
+                <div class="cert-row"><span class="label">Timestamp:</span><span class="value">Jan 26, 2026</span></div>
+                <div class="cert-row"><span class="label">Block:</span><span class="value">#932,061</span></div>
+              </div>
+              <div class="cert-qr-section">
+                <div class="cert-qr"></div>
+                <div class="cert-qr-text">
+                  <div class="cert-qr-label">SCAN TO VERIFY</div>
+                  <div class="cert-qr-url">docuproof.io/v/a1b2c3d4</div>
+                </div>
+              </div>
+              <div class="cert-footer">
+                <div class="cert-footer-text">docuProof.io • Proof of Existence on the Blockchain</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 </section>
 
-<section class="reveal">
-  <h2>Who Uses docuProof</h2>
-  <div class="grid grid-4">
-    <div class="card"><h3>Freelancers</h3><p>Timestamp work-for-hire contracts or creative drafts before sending to clients.</p></div>
-    <div class="card"><h3>Creatives</h3><p>Timestamp manuscripts, scripts, songs, treatments, or artwork before you pitch, collaborate, or publish.</p></div>
-    <div class="card"><h3>Academics & Researchers</h3><p>Protect lab results, datasets, or thesis drafts for academic priority.</p></div>
-    <div class="card"><h3>Lawyers & Businesses</h3><p>Immutable proof for contracts, NDAs, directives, and compliance records.</p></div>
+<section class="section" style="background:linear-gradient(var(--bg),var(--bg-card))">
+<div class="section-inner">
+<div class="problem-grid">
+<div class="problem-content">
+<h2>The world runs on <span class="danger">trust</span>. But trust is <span class="danger">fragile</span>.</h2>
+<p>AI can generate fake documents in seconds. Screenshots can be manipulated. Emails can be spoofed. Cloud providers go offline. When disputes arise, "I had it first" means nothing without proof.</p>
+<p>docuProof gives you cryptographic evidence anchored to the most secure, decentralized ledger ever created—the blockchain. Not stored on our servers. Not dependent on us existing. Just math and the blockchain.</p>
+<div class="problem-stats">
+<div class="stat"><div class="stat-number">60s</div><div class="stat-label">To generate proof</div></div>
+<div class="stat"><div class="stat-number">Forever</div><div class="stat-label">Proof lasts</div></div>
+</div>
+</div>
+<div class="problem-visual">
+<div class="threat-cards">
+<div class="threat-card"><div class="threat-icon">🤖</div><div class="threat-title">AI-Generated Fakes</div><div class="threat-desc">Documents, images, and contracts fabricated in seconds</div></div>
+<div class="threat-card"><div class="threat-icon">💨</div><div class="threat-title">Platforms Disappear</div><div class="threat-desc">Startups fail. Services shut down. Data vanishes.</div></div>
+<div class="threat-card"><div class="threat-icon">⚡</div><div class="threat-title">Disputed Ownership</div><div class="threat-desc">"I created it first" means nothing without proof</div></div>
+<div class="threat-card"><div class="threat-icon">🔥</div><div class="threat-title">Lost Evidence</div><div class="threat-desc">Paper burns. Drives fail. Backups get corrupted.</div></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section class="section" id="how">
+<div class="section-inner">
+<div class="section-header">
+<h2>How <span class="accent">docuProof</span> Works</h2>
+<p>Four simple steps. Under 60 seconds. Permanent proof.</p>
+</div>
+<div class="grid-4">
+<div class="how-card"><div class="how-number">1</div><h3>Select Your File</h3><p>Choose any file. It never leaves your device—we only see its digital fingerprint.</p></div>
+<div class="how-card"><div class="how-number">2</div><h3>Create Fingerprint</h3><p>Your browser generates a unique SHA-256 hash—like DNA for your document.</p></div>
+<div class="how-card"><div class="how-number">3</div><h3>Anchor to Blockchain</h3><p>The fingerprint is permanently recorded on the blockchain's immutable ledger.</p></div>
+<div class="how-card"><div class="how-number">4</div><h3>Get Your Certificate</h3><p>Receive a verifiable PDF certificate with your proof ID and verification link.</p></div>
+</div>
+</div>
+</section>
+
+<section class="section" style="background:linear-gradient(var(--bg),var(--bg-card))">
+<div class="section-inner">
+<div class="section-header">
+<h2>Who Uses docuProof</h2>
+</div>
+<div class="grid-4">
+<div class="card"><div class="card-icon">✍️</div><h3>Freelancers & Contractors</h3><p>Timestamp contracts and deliverables before sending to clients. Prove what you delivered and when.</p></div>
+<div class="card"><div class="card-icon">🎨</div><h3>Creatives & Artists</h3><p>Protect manuscripts, scripts, songs, artwork, and designs before pitching or publishing.</p></div>
+<div class="card"><div class="card-icon">🔬</div><h3>Researchers & Academics</h3><p>Establish priority for discoveries, datasets, and thesis work with immutable timestamps.</p></div>
+<div class="card"><div class="card-icon">⚖️</div><h3>Legal & Business</h3><p>Create tamper-proof records for contracts, NDAs, compliance documents, and evidence.</p></div>
+</div>
+</div>
+</section>
+
+<section class="section" id="pricing">
+<div class="section-inner">
+<div class="section-header">
+<h2>Simple, Transparent Pricing</h2>
+<p>No hidden fees. No subscriptions required. Pay per proof or save with a plan.</p>
+</div>
+<div class="grid-3" style="max-width:1000px;margin:0 auto">
+<div class="price-card featured">
+<h3>Single Proof</h3>
+<p class="price-meta">Perfect for occasional use</p>
+<div><span class="price-value">$2.89</span> <span class="price-period">per proof</span></div>
+<p class="price-annual">&nbsp;</p>
+<ul class="price-features">
+<li>One document, one proof</li>
+<li>blockchain anchor</li>
+<li>Instant PDF certificate</li>
+<li>Permanent verification link</li>
+<li>Email confirmation</li>
+</ul>
+<div class="price-cta"><a href="/app.html" class="btn btn-primary btn-sm">Generate Proof</a></div>
+</div>
+<div class="price-card">
+<h3>Starter Plan</h3>
+<p class="price-meta">Up to 30 proofs / month</p>
+<div><span class="price-value">$7.50</span> <span class="price-period">/ mo</span></div>
+<p class="price-annual">or $76 / year (save 15%)</p>
+<ul class="price-features">
+<li>30 proofs per month</li>
+<li>All single proof features</li>
+<li>Priority support</li>
+</ul>
+<div class="price-cta">
+<a href="/.netlify/functions/create_plan_session?plan=starter_monthly" class="btn btn-secondary btn-sm">Start Monthly</a>
+<a href="/.netlify/functions/create_plan_session?plan=starter_annual" class="btn btn-secondary btn-sm">Start Annual</a>
+</div>
+</div>
+<div class="price-card">
+<h3>Pro Plan</h3>
+<p class="price-meta">Up to 150 proofs / month</p>
+<div><span class="price-value">$19</span> <span class="price-period">/ mo</span></div>
+<p class="price-annual">or $193 / year (save 15%)</p>
+<ul class="price-features">
+<li>150 proofs per month</li>
+<li>All starter features</li>
+<li>Dedicated support</li>
+</ul>
+<div class="price-cta">
+<a href="/.netlify/functions/create_plan_session?plan=pro_monthly" class="btn btn-secondary btn-sm">Go Pro Monthly</a>
+<a href="/.netlify/functions/create_plan_session?plan=pro_annual" class="btn btn-secondary btn-sm">Go Pro Annual</a>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section class="section" id="faq" style="background:var(--bg-card)">
+<div class="section-inner">
+<div class="section-header">
+<h2>Frequently Asked Questions</h2>
+</div>
+<div class="faq-grid">
+<div class="faq-item"><div class="faq-q"><span>Why would an everyday person need this?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">You'd be surprised how often "prove it" comes up in everyday life. Landlords disputing move-in photos. Contractors blaming you for damage they caused. Insurance companies claiming your policy "changed." Family members fighting over a will. A $2.89 timestamp today can save you thousands in disputes tomorrow. <a href="/scenarios.html">See 9 real scenarios where proof saves the day →</a></div></div></div>
+<div class="faq-item"><div class="faq-q"><span>Is this a legal notary service?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">No. docuProof creates cryptographic proof-of-existence, not legal notarization. It provides mathematical evidence that your file existed at a specific time and hasn't changed since—evidence that can support legal claims but doesn't replace formal notarization where required.</div></div></div>
+<div class="faq-item"><div class="faq-q"><span>Does my file get uploaded anywhere?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">No. Your file never leaves your device. We hash it locally in your browser and only submit the 64-character SHA-256 fingerprint. Your document's contents remain completely private—we never see them.</div></div></div>
+<div class="faq-item"><div class="faq-q"><span>What exactly gets stored on the blockchain?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Only your file's cryptographic fingerprint (a 64-character hash). This hash cannot be reversed to reconstruct your file—it's a one-way mathematical function. Think of it as a unique digital seal that proves the file existed.</div></div></div>
+<div class="faq-item"><div class="faq-q"><span>How long does blockchain anchoring take?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Your certificate is issued instantly. Blockchain anchoring typically completes within 1-4 hours as transactions are batched for efficiency. You'll receive an email notification when anchoring is confirmed, and your certificate includes a live status link.</div></div></div>
+<div class="faq-item"><div class="faq-q"><span>What should I save after generating a proof?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Keep two things: (1) Your original file, unchanged, and (2) The PDF certificate you receive. Together, these allow anyone to independently verify your proof at any time—even if docuProof disappears.</div></div></div>
+<div class="faq-item"><div class="faq-q"><span>Can I verify my proof without docuProof?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Yes. Your certificate contains everything needed for independent verification using the OpenTimestamps protocol. docuProof is not a single point of failure—the proof exists on the blockchain regardless of our service.</div></div></div>
+<div class="faq-item"><div class="faq-q"><span>Why the Bitcoin blockchain instead of others?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">The Bitcoin blockchain is the most secure, decentralized, and time-tested blockchain in existence. It's been running continuously since 2009 and has the highest hashrate of any blockchain, making it virtually impossible to tamper with historical records.</div></div></div>
+<div class="faq-item"><div class="faq-q"><span>What happens if I lose my original file?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Without your original file, you can't prove your claim—the timestamp only proves <em>some file</em> existed. After checkout, we offer RIP (Redundant Identity Preservation) to verify your backup copies match your original, protecting you if one copy is lost.</div></div></div>
+<div class="faq-item"><div class="faq-q"><span>What can accidentally change my file?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Opening and re-saving, re-exporting, or software updating metadata—even without visible changes. Renaming is safe (it doesn't change contents). Best practice: make backup copies right after timestamping and don't open them.</div></div></div>
+<div class="faq-item"><div class="faq-q"><span>How reliable is the file verification?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">We use SHA-256—the same algorithm securing the blockchain and banking systems. Matching hashes means files are mathematically identical, bit for bit. It's not an estimate; it's cryptographic certainty.</div></div></div>
+<div class="faq-item"><div class="faq-q"><span>Is docuProof only for businesses?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Not at all. Homeowners and families use docuProof just as much—rental move-in photos, contractor quotes, home inventory for insurance, car condition before lending, even custody agreements. A $2.89 timestamp can save thousands in disputes. <a href="/personal-usecases.html">See 10 things smart homeowners timestamp →</a></div></div></div>
+<div class="faq-item"><div class="faq-q"><span>What documents should I timestamp?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Anything where proving "when it existed" might matter later. For businesses: contracts, approvals, quotes, NDAs, creative work. For individuals: rental photos, contractor agreements, valuables documentation, receipts. <a href="/usecases.html">Business use cases →</a> · <a href="/personal-usecases.html">Personal use cases →</a></div></div></div>
+</div>
+</div>
+</section>
+
+
+<!-- Try It Free Section -->
+<section class="free-proof-section" id="try-free">
+  <div class="container">
+    <div class="free-proof-header">
+      <span class="free-proof-badge">✨ Your First Proof is Free</span>
+      <h2>Try It Right Now</h2>
+      <p>No account needed. Pick any option and see blockchain-verified proof in 60 seconds.</p>
+    </div>
+    
+    <div class="free-proof-options">
+      
+      <!-- Option 1: Timestamp This Moment -->
+      <div class="free-proof-card">
+        <div class="card-icon">📍</div>
+        <h3>Timestamp This Moment</h3>
+        <p class="card-tagline">"I was here."</p>
+        <p>Take a photo of where you are right now. This is the moment you discovered docuProof — anchored forever to the blockchain.</p>
+        <div class="card-buttons">
+          <a href="#" onclick="openCamera('moment'); return false;" class="btn-free primary">Take Photo →</a>
+        </div>
+      </div>
+      
+      <!-- Option 2: Timestamp Yourself -->
+      <div class="free-proof-card">
+        <div class="card-icon">🤳</div>
+        <h3>Timestamp Yourself</h3>
+        <p class="card-tagline">"This version of me existed."</p>
+        <p>Take a selfie. Not for social media — for the blockchain. Permanent proof that you existed at this exact moment.</p>
+        <div class="card-buttons">
+          <a href="#" onclick="openCamera('selfie'); return false;" class="btn-free primary">Take Selfie →</a>
+        </div>
+      </div>
+      
+      <!-- Option 3: Timestamp Today's Headlines -->
+      <div class="free-proof-card">
+        <div class="card-icon">📰</div>
+        <h3>Timestamp Today</h3>
+        <p class="card-tagline">"Proof of this day in history."</p>
+        <p>Download our daily headlines PDF — a time capsule of today. Timestamp it for blockchain-verified proof of this date.</p>
+        <div class="card-buttons">
+          <a href="/.netlify/functions/daily_headline" class="btn-free secondary" download>Download Today's PDF</a>
+          <span class="or-divider">then</span>
+          <a href="/app.html?source=headlines" class="btn-free primary">Upload & Timestamp →</a>
+        </div>
+      </div>
+      
+      <!-- Option 4: Screenshot Anything -->
+      <div class="free-proof-card">
+        <div class="card-icon">📱</div>
+        <h3>Screenshot Anything</h3>
+        <p class="card-tagline">"My proof. My moment."</p>
+        <p>Screenshot whatever matters — a news headline, a product price, a social post, a conversation. Your personal time capsule.</p>
+        <div class="card-buttons">
+          <a href="/app.html?source=screenshot" class="btn-free primary">Upload Screenshot →</a>
+        </div>
+      </div>
+      
+    </div>
+    
+    <div class="free-proof-footer">
+      <p>Your file never leaves your device until you upload. <a href="/privacy.html">See our privacy promise →</a></p>
+    </div>
   </div>
 </section>
 
-<!-- How it works: 4 across on desktop, 2x2 on tablets -->
-<section class="reveal">
-  <h2>How It Works</h2>
-  <div class="grid grid-4">
-    <div class="card tight"><h3>1. Select Your Document</h3><p>Your file never leaves your device.</p></div>
-    <div class="card tight"><h3>2. Create a Digital Fingerprint</h3><p>We generate a unique SHA-256 code like digital DNA.</p></div>
-    <div class="card tight"><h3>3. Anchor on the Blockchain</h3><p>The fingerprint is permanently logged in Bitcoin’s immutable record.</p></div>
-    <div class="card tight"><h3>4. Pay & Get Proof</h3><p>Complete payment and receive your verifiable certificate instantly.</p></div>
-  </div>
+<section class="final-cta">
+<h2>Ready to create <span class="accent">unfakeable proof</span>?</h2>
+<p>Secure your work in under 60 seconds. No account required.</p>
+<div class="btn-group"><a href="/app.html" class="btn btn-primary">Generate Proof →</a><a href="/verify" class="btn btn-secondary">Verify Existing Proof</a></div>
 </section>
 
-<section class="reveal">
-  <h2>Why Choose docuProof</h2>
-  <div class="grid grid-3">
-    <div class="card"><h3>Instant Proof</h3><p>Timestamp files in seconds—no lawyers or waiting. Immediate certificate of existence.</p></div>
-    <div class="card"><h3>Tamper-Proof & Independent</h3><p>Your file’s fingerprint is anchored on Bitcoin. Anyone can verify it anytime—no trust required.</p></div>
-    <div class="card"><h3>Affordable Protection</h3><p>Professional-grade document security for just a few dollars per file.</p></div>
-  </div>
-</section>
-
-<section class="reveal" id="pricing">
-  <h2>Simple Pricing</h2>
-  <div class="grid grid-3">
-    <!-- Single Proof -->
-    <div class="card cta-col">
-      <h3>Single Proof</h3>
-      <div class="compare">
-        <div class="price">$2.89</div><div class="per">per proof</div>
-      </div>
-      <p class="muted small">One document, one permanent blockchain anchor, instant certificate.</p>
-      <p><a href="/app" class="btn btn-primary">Generate Proof</a></p>
-    </div>
-
-    <!-- Starter Plan -->
-    <div class="card cta-col">
-      <h3>Starter Plan</h3>
-      <p class="muted small">Up to 30 proofs / month</p>
-      <div class="compare"><div class="price">$7.50</div><div class="per">/ mo</div></div>
-      <p class="muted small">or <strong>$76</strong> / year</p>
-      <p><a class="btn btn-ghost" href="/.netlify/functions/create_plan_session?plan=starter_monthly">Start Monthly</a></p>
-      <p><a class="btn btn-ghost" href="/.netlify/functions/create_plan_session?plan=starter_annual">Start Annual</a></p>
-    </div>
-
-    <!-- Pro Plan -->
-    <div class="card cta-col">
-      <h3>Pro Plan</h3>
-      <p class="muted small">Up to 150 proofs / month</p>
-      <div class="compare"><div class="price">$19</div><div class="per">/ mo</div></div>
-      <p class="muted small">or <strong>$193</strong> / year</p>
-      <p><a class="btn btn-ghost" href="/.netlify/functions/create_plan_session?plan=pro_monthly">Go Pro Monthly</a></p>
-      <p><a class="btn btn-ghost" href="/.netlify/functions/create_plan_session?plan=pro_annual">Go Pro Annual</a></p>
-    </div>
-  </div>
-  <p class="tiny muted">Monthly plans billed monthly. Annual plans billed upfront. Proof allocations reset monthly. Unused proofs don’t roll over.
-</section>
-
-<section class="reveal">
-  <h2>FAQ</h2>
-  <div class="grid">
-
-    <div class="faq-item">
-      <div class="faq-q">
-        <span>Is this a legal notary service?</span>
-        <span class="chev">⌄</span>
-      </div>
-      <div class="faq-a">
-        <p>No. docuProof creates a cryptographic proof-of-existence, not a notarization. It verifies that your file existed at a specific time and has not changed since.</p>
-      </div>
-    </div>
-
-    <div class="faq-item">
-      <div class="faq-q">
-        <span>Does my file get uploaded or saved anywhere?</span>
-        <span class="chev">⌄</span>
-      </div>
-      <div class="faq-a">
-        <p>No. Your file never leaves your device. We hash it locally in your browser and only submit the SHA-256 fingerprint for blockchain anchoring.</p>
-      </div>
-    </div>
-
-    <div class="faq-item">
-      <div class="faq-q">
-        <span>What exactly gets stored on Bitcoin?</span>
-        <span class="chev">⌄</span>
-      </div>
-      <div class="faq-a">
-        <p>Only your file’s cryptographic fingerprint (a 64-character SHA-256 digest). It cannot be reversed or used to reconstruct the file. Your document’s contents always remain private.</p>
-      </div>
-    </div>
-
-    <div class="faq-item">
-      <div class="faq-q">
-        <span>How long does blockchain anchoring take?</span>
-        <span class="chev">⌄</span>
-      </div>
-      <div class="faq-a">
-        <p>Your certificate and Proof ID are issued instantly. Bitcoin anchoring depends on network activity and occurs asynchronously. Your certificate includes a link to live status and confirmations.</p>
-      </div>
-    </div>
-
-    <div class="faq-item">
-      <div class="faq-q">
-        <span>What should I save after generating a proof?</span>
-        <span class="chev">⌄</span>
-      </div>
-      <div class="faq-a">
-        <p>Save your original file and the PDF certificate you receive. Together they allow anyone to independently verify your proof at any time — with or without docuProof.</p>
-      </div>
-    </div>
-
-    <div class="faq-item">
-      <div class="faq-q">
-        <span>What types of files can I timestamp?</span>
-        <span class="chev">⌄</span>
-      </div>
-      <div class="faq-a">
-        <p>Almost anything: PDFs, images, videos, text files, manuscripts, contracts, research notes, artwork, audio files, and more. If it can be hashed, it can be proven.</p>
-      </div>
-    </div>
-
-    <div class="faq-item">
-      <div class="faq-q">
-        <span>Why is Bitcoin used instead of another blockchain?</span>
-        <span class="chev">⌄</span>
-      </div>
-      <div class="faq-a">
-        <p>Bitcoin provides the most secure, neutral, globally replicated ledger for proof-of-existence. Its immutability and longevity make it the preferred chain for long-term evidence.</p>
-      </div>
-    </div>
-
-    <div class="faq-item">
-      <div class="faq-q">
-        <span>Can I verify my proof without docuProof?</span>
-        <span class="chev">⌄</span>
-      </div>
-      <div class="faq-a">
-        <p>Yes. Your certificate includes everything needed to verify independently using OpenTimestamps and your original file. docuProof is not a point of failure.</p>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-<section class="reveal center">
-  <h2>Ready When You Are</h2>
-  <p>Secure your work in under 60 seconds with a permanent, independent proof.</p>
-  <p style="margin-top:16px"><a href="/app" class="btn btn-primary">Generate Proof</a></p>
-  <p style="margin-top:12px">
-    <a href="#pricing" class="btn btn-ghost">Return to Pricing</a>
-  </p>
-</section>
-
-<footer class="reveal center">
-  © <span id="year"></span> docuProof.io — Proof of Existence on the Bitcoin Blockchain
-  <br><a href="/.netlify/functions/verify_page">Verify a Proof</a> · <a href="/app">Generate Proof</a> · <a href="/contact.html">Contact</a>
+<footer class="footer">
+<div class="footer-inner">
+<a href="/" class="footer-brand"><img src="/docuproof-logo.png" alt=""><span>docuProof</span></a>
+<div class="footer-links"><a href="/verify">Verify a Proof</a><a href="/app.html">Generate Proof</a><a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a><a href="mailto:support@docuproof.io">Contact</a></div>
+</div>
+<div class="footer-copy">© <span id="yr"></span> docuProof.io — Proof of Existence on the blockchain.<br><span style="color:#9ca3af;font-size:14px">docuProof provides cryptographic proof-of-existence only. Not a notary service.</span></div>
 </footer>
 
 <script>
-  // Year
-  document.getElementById('year').textContent = new Date().getFullYear();
+document.getElementById('yr').textContent=new Date().getFullYear();
 
-  // Scroll reveal (IntersectionObserver)
-  const io = new IntersectionObserver(entries=>{
-    entries.forEach(e=>{
-      if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
-    });
-  }, { threshold: 0.08 });
-  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+// Camera capture functionality for "Take Photo" and "Take Selfie" buttons
+function openCamera(type) {
+  // Create a file input that triggers camera
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.capture = type === 'selfie' ? 'user' : 'environment'; // front or back camera
+  
+  input.onchange = function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      // Store file info and redirect to app
+      sessionStorage.setItem('docuproof_camera_file', file.name);
+      sessionStorage.setItem('docuproof_source', type);
+      
+      // Redirect to app with the file
+      window.location.href = '/app.html?source=' + type + '&hasfile=true';
+    }
+  };
+  
+  // Check if we're on desktop without camera
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if (!isMobile) {
+    alert('📱 For the best experience with camera capture, try this on your phone!\n\nOn desktop, you can upload any photo by clicking the button.');
+  }
+  
+  input.click();
+}
 
-  // FAQ accordions
-  document.querySelectorAll('.faq-item').forEach(item=>{
-    item.querySelector('.faq-q').addEventListener('click', ()=>{
-      document.querySelectorAll('.faq-item').forEach(i=>{ if(i!==item) i.classList.remove('open'); });
-      item.classList.toggle('open');
+
+// FAQ Accordion Toggle
+document.querySelectorAll('.faq-q').forEach(function(question) {
+  question.addEventListener('click', function() {
+    var item = this.parentElement;
+    // Close all other items
+    document.querySelectorAll('.faq-item').forEach(function(other) {
+      if (other !== item) {
+        other.classList.remove('open');
+      }
     });
+    // Toggle current item
+    item.classList.toggle('open');
   });
+});
 </script>
 </body>
 </html>

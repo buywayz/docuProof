@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>docuProof — Your Contract's Insurance Policy. $2.89.</title>
+  <meta name="description" content="Blockchain-anchored document timestamps for businesses. Protect contracts, approvals, and agreements. Use code BUSINESS for a free timestamp.">
+  <link rel="icon" href="/docuproof-logo.png">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #0a0d12;
+      --bg-card: #12171f;
+      --border: #1e2a3a;
+      --text: #e8eaed;
+      --text-muted: #8b95a5;
+      --accent: #22c55e;
+      --accent-glow: rgba(34, 197, 94, 0.15);
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Space Grotesk', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    
+    /* Subtle grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        linear-gradient(rgba(34, 197, 94, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 197, 94, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    /* Header */
+    header {
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .header-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text);
+    }
+    
+    .logo img {
+      width: 36px;
+      height: 36px;
+    }
+    
+    .logo-text {
+      font-weight: 700;
+      font-size: 20px;
+    }
+    
+    .logo-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+    
+    .nav-cta {
+      background: var(--accent);
+      color: #000;
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .nav-cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+    
+    /* Hero */
+    .hero {
+      padding: 80px 0 30px;
+      text-align: center;
+    }
+    
+    .hero-badge {
+      display: inline-block;
+      background: var(--accent-glow);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: var(--accent);
+      padding: 6px 16px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 24px;
+    }
+    
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 700;
+      line-height: 1.15;
+      margin-bottom: 20px;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .hero h1 .highlight {
+      color: var(--accent);
+    }
+    
+    .hero-sub {
+      font-size: 20px;
+      color: var(--text-muted);
+      max-width: 650px;
+      margin: 0 auto 16px;
+    }
+    
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin: 32px 0;
+      flex-wrap: wrap;
+    }
+    
+    .stat {
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    
+    /* Problem Section */
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    /* Use Cases */
+    .usecases {
+      padding: 60px 0;
+      border-top: 1px solid var(--border);
+    }
+    
+    .usecases h2 {
+      text-align: center;
+      font-size: 28px;
+      margin-bottom: 40px;
+    }
+    
+    .usecase-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    
+    .usecase-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      transition: border-color 0.2s;
+    }
+    
+    .usecase-item:hover {
+      border-color: var(--accent);
+    }
+    
+    .usecase-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    
+    .usecase-text h4 {
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+    
+    .usecase-text p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    
+    /* CTA Section */
+    .cta-section {
+      padding: 80px 0;
+      text-align: center;
+      border-top: 1px solid var(--border);
+    }
+    
+    .cta-box {
+      background: var(--bg-card);
+      border: 2px solid var(--accent);
+      border-radius: 20px;
+      padding: 48px;
+      max-width: 600px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .cta-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    
+    .cta-box h2 {
+      font-size: 26px;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    
+    .cta-box p {
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      position: relative;
+    }
+    
+    .promo-code {
+      display: inline-block;
+      background: var(--accent-glow);
+      border: 2px dashed rgba(34, 197, 94, 0.5);
+      color: var(--accent);
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    
+    .promo-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      position: relative;
+    }
+    
+    .cta-button {
+      display: inline-block;
+      background: var(--accent);
+      color: #000;
+      padding: 14px 32px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+    
+    .cta-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+    
+    .cta-note {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 16px;
+      position: relative;
+    }
+    
+    /* Footer */
+    footer {
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    
+    .footer-logo img {
+      width: 28px;
+      height: 28px;
+    }
+    
+    .footer-logo span {
+      font-weight: 600;
+    }
+    
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+    
+    .footer-links a:hover {
+      color: var(--accent);
+    }
+    
+    .footer-copy {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    
+    /* Mobile */
+    @media (max-width: 600px) {
+      .hero {
+        padding: 50px 0 40px;
+      }
+      
+      .hero-stats {
+        gap: 24px;
+      }
+      
+  
+      
+      .cta-box {
+        padding: 32px 24px;
+      }
+      
+      .promo-code {
+        font-size: 16px;
+        padding: 10px 18px;
+      }
+    }
+  
+    /* New "What actually holds up as proof" section styles */
+    .proof-section {
+      padding: 40px 0 60px;
+    }
+    .proof-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .proof-header h2 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .proof-header p {
+      color: var(--text-muted, #8b949e);
+    }
+    .proof-bad-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .proof-bad-card {
+      background: linear-gradient(180deg, #1a1f26 0%, #14181e 100%);
+      border: 1px solid rgba(220, 38, 38, 0.4);
+      border-radius: 12px;
+      padding: 24px 20px;
+      text-align: center;
+    }
+    .proof-bad-card .proof-icon {
+      font-size: 32px;
+      color: #dc2626;
+      margin-bottom: 16px;
+      font-weight: bold;
+    }
+    .proof-bad-card h3 {
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: #fff;
+      font-weight: 600;
+    }
+    .proof-bad-card p {
+      font-size: 14px;
+      color: #8b949e;
+      line-height: 1.5;
+    }
+    .proof-good-section {
+      display: grid;
+      grid-template-columns: 1fr 260px;
+      gap: 32px;
+      background: linear-gradient(180deg, #0f1a12 0%, #0c140f 100%);
+      border: 2px solid #22c55e;
+      border-radius: 16px;
+      padding: 32px;
+      align-items: center;
+    }
+    .proof-good-content .proof-icon {
+      font-size: 36px;
+      color: #22c55e;
+      margin-bottom: 12px;
+    }
+    .proof-good-content h3 {
+      font-size: 24px;
+      margin-bottom: 12px;
+      color: #fff;
+      font-weight: 700;
+    }
+    .proof-good-content > p {
+      font-size: 15px;
+      color: #b8c5b8;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .proof-features {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .proof-feature {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: #22c55e;
+      font-weight: 500;
+    }
+        .cert-preview-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .cert-preview {
+      width: 210px;
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      padding: 10px;
+    }
+    .cert-inner {
+      border: 2px solid #2a5934;
+      border-radius: 3px;
+      padding: 8px 6px;
+      background: #fff;
+    }
+    .cert-header {
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    .cert-logo-img {
+      width: 28px;
+      height: 28px;
+      margin: 0 auto 4px;
+      background: #0b0f14;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cert-logo-img svg {
+      width: 20px;
+      height: 20px;
+    }
+    .cert-brand {
+      font-size: 9px;
+      font-weight: 700;
+      color: #22c55e;
+    }
+    .cert-tagline {
+      font-size: 5px;
+      color: #888;
+      font-style: italic;
+    }
+    .cert-divider {
+      width: 60%;
+      height: 1px;
+      background: #2a5934;
+      margin: 6px auto;
+      position: relative;
+    }
+    .cert-divider::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 4px;
+      height: 4px;
+      background: #2a5934;
+      border-radius: 50%;
+    }
+    .cert-title-section {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .cert-title-small {
+      font-size: 6px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .cert-title-main {
+      font-size: 9px;
+      font-weight: 700;
+      color: #2a5934;
+      margin-top: 2px;
+    }
+    .cert-subtitle {
+      font-size: 5px;
+      color: #888;
+      margin-top: 2px;
+    }
+    .cert-details-box {
+      background: #f8f9fa;
+      border: 1px solid #e5e5e5;
+      border-radius: 3px;
+      padding: 6px;
+      margin-bottom: 6px;
+      flex: 1;
+    }
+    .cert-details-header {
+      font-size: 5px;
+      font-weight: 700;
+      color: #2a5934;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+    .cert-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 5px;
+      margin-bottom: 3px;
+      line-height: 1.3;
+    }
+    .cert-row .label {
+      color: #666;
+      font-weight: 600;
+    }
+    .cert-row .value {
+      color: #333;
+      text-align: right;
+      max-width: 60%;
+    }
+    .cert-qr-section {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-top: 6px;
+      border-top: 1px solid #eee;
+    }
+    .cert-qr {
+      width: 32px;
+      height: 32px;
+      background: repeating-conic-gradient(#1a1a1a 0% 25%, #fff 0% 50%) 50% / 5px 5px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .cert-qr-text {
+      flex: 1;
+    }
+    .cert-qr-label {
+      font-size: 5px;
+      color: #666;
+      font-weight: 600;
+    }
+    .cert-qr-url {
+      font-size: 4px;
+      color: #888;
+      word-break: break-all;
+    }
+    .cert-footer {
+      text-align: center;
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px solid #2a5934;
+    }
+    .cert-footer-text {
+      font-size: 4px;
+      color: #888;
+    }
+    @media (max-width: 768px) {
+      .proof-bad-row {
+        grid-template-columns: 1fr;
+      }
+      .proof-good-section {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .proof-features {
+        justify-content: center;
+      }
+      .cert-preview-wrapper {
+        margin-top: 24px;
+      }
+    }
+
+  
+    /* New "What actually holds up as proof" section styles */
+    .proof-section {
+      padding: 40px 0 60px;
+    }
+    .proof-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .proof-header h2 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .proof-header p {
+      color: var(--text-muted, #8b949e);
+    }
+    .proof-bad-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .proof-bad-card {
+      background: linear-gradient(180deg, #1a1f26 0%, #14181e 100%);
+      border: 1px solid rgba(220, 38, 38, 0.4);
+      border-radius: 12px;
+      padding: 24px 20px;
+      text-align: center;
+    }
+    .proof-bad-card .proof-icon {
+      font-size: 32px;
+      color: #dc2626;
+      margin-bottom: 16px;
+      font-weight: bold;
+    }
+    .proof-bad-card h3 {
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: #fff;
+      font-weight: 600;
+    }
+    .proof-bad-card p {
+      font-size: 14px;
+      color: #8b949e;
+      line-height: 1.5;
+    }
+    .proof-good-section {
+      display: grid;
+      grid-template-columns: 1fr 260px;
+      gap: 32px;
+      background: linear-gradient(180deg, #0f1a12 0%, #0c140f 100%);
+      border: 2px solid #22c55e;
+      border-radius: 16px;
+      padding: 32px;
+      align-items: center;
+    }
+    .proof-good-content .proof-icon {
+      font-size: 36px;
+      color: #22c55e;
+      margin-bottom: 12px;
+    }
+    .proof-good-content h3 {
+      font-size: 24px;
+      margin-bottom: 12px;
+      color: #fff;
+      font-weight: 700;
+    }
+    .proof-good-content > p {
+      font-size: 15px;
+      color: #b8c5b8;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .proof-features {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .proof-feature {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: #22c55e;
+      font-weight: 500;
+    }
+    .cert-preview-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .cert-preview {
+      width: 210px;
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      padding: 10px;
+    }
+    .cert-inner {
+      border: 2px solid #2a5934;
+      border-radius: 3px;
+      padding: 8px 6px;
+      background: #fff;
+    }
+    .cert-header {
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    .cert-logo-img {
+      width: 28px;
+      height: 28px;
+      margin: 0 auto 4px;
+      background: #0b0f14;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cert-logo-img svg {
+      width: 20px;
+      height: 20px;
+    }
+    .cert-brand {
+      font-size: 9px;
+      font-weight: 700;
+      color: #22c55e;
+    }
+    .cert-tagline {
+      font-size: 5px;
+      color: #888;
+      font-style: italic;
+    }
+    .cert-divider {
+      width: 60%;
+      height: 1px;
+      background: #2a5934;
+      margin: 6px auto;
+      position: relative;
+    }
+    .cert-divider::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 4px;
+      height: 4px;
+      background: #2a5934;
+      border-radius: 50%;
+    }
+    .cert-title-section {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .cert-title-small {
+      font-size: 6px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .cert-title-main {
+      font-size: 9px;
+      font-weight: 700;
+      color: #2a5934;
+      margin-top: 2px;
+    }
+    .cert-subtitle {
+      font-size: 5px;
+      color: #888;
+      margin-top: 2px;
+    }
+    .cert-details-box {
+      background: #f8f9fa;
+      border: 1px solid #e5e5e5;
+      border-radius: 3px;
+      padding: 6px;
+      margin-bottom: 6px;
+      flex: 1;
+    }
+    .cert-details-header {
+      font-size: 5px;
+      font-weight: 700;
+      color: #2a5934;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+    .cert-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 5px;
+      margin-bottom: 3px;
+      line-height: 1.3;
+    }
+    .cert-row .label {
+      color: #666;
+      font-weight: 600;
+    }
+    .cert-row .value {
+      color: #333;
+      text-align: right;
+      max-width: 60%;
+    }
+    .cert-qr-section {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-top: 6px;
+      border-top: 1px solid #eee;
+    }
+    .cert-qr {
+      width: 32px;
+      height: 32px;
+      background: repeating-conic-gradient(#1a1a1a 0% 25%, #fff 0% 50%) 50% / 5px 5px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .cert-qr-text {
+      flex: 1;
+    }
+    .cert-qr-label {
+      font-size: 5px;
+      color: #666;
+      font-weight: 600;
+    }
+    .cert-qr-url {
+      font-size: 4px;
+      color: #888;
+      word-break: break-all;
+    }
+    .cert-footer {
+      text-align: center;
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px solid #2a5934;
+    }
+    .cert-footer-text {
+      font-size: 4px;
+      color: #888;
+    }
+    @media (max-width: 768px) {
+      .proof-bad-row {
+        grid-template-columns: 1fr;
+      }
+      .proof-good-section {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .proof-features {
+        justify-content: center;
+      }
+      .cert-preview-wrapper {
+        margin-top: 24px;
+      }
+    }
+
+    /* ===== Free Proof Section ===== */
+    .free-proof-section {
+      padding: 80px 0;
+      background: linear-gradient(180deg, var(--bg) 0%, var(--bg-card) 100%);
+      border-top: 1px solid var(--border);
+    }
+    .free-proof-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .free-proof-badge {
+      display: inline-block;
+      background: #22c55e;
+      color: #000;
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+    .free-proof-header h2 {
+      font-size: clamp(28px, 5vw, 40px);
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+    .free-proof-header p {
+      font-size: 18px;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .free-proof-options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    .free-proof-card {
+      background: linear-gradient(180deg, #151b22 0%, #0f1318 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      text-align: center;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .free-proof-card:hover {
+      border-color: #22c55e;
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(34, 197, 94, 0.15);
+    }
+    .free-proof-card .card-icon {
+      font-size: 40px;
+      margin-bottom: 16px;
+    }
+    .free-proof-card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+    .free-proof-card .card-tagline {
+      font-size: 13px;
+      color: #22c55e;
+      font-style: italic;
+      margin-bottom: 12px;
+    }
+    .free-proof-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 20px;
+      flex: 1;
+    }
+    .free-proof-card .card-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .free-proof-card .btn-free {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 14px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .free-proof-card .btn-free.primary {
+      background: #22c55e;
+      color: #000;
+    }
+    .free-proof-card .btn-free.primary:hover {
+      background: #1ea550;
+    }
+    .free-proof-card .btn-free.secondary {
+      background: transparent;
+      color: #22c55e;
+      border: 1px solid #22c55e;
+      padding: 10px 18px;
+      font-size: 13px;
+    }
+    .free-proof-card .btn-free.secondary:hover {
+      background: rgba(34, 197, 94, 0.1);
+    }
+    .free-proof-card .or-divider {
+      font-size: 11px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .free-proof-footer {
+      text-align: center;
+      margin-top: 40px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border);
+    }
+    .free-proof-footer p {
+      font-size: 14px;
+      color: #6b7280;
+    }
+    .free-proof-footer a {
+      color: #22c55e;
+      text-decoration: none;
+    }
+    .free-proof-footer a:hover {
+      text-decoration: underline;
+    }
+    @media (max-width: 768px) {
+      .free-proof-options {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .free-proof-card {
+        padding: 24px 20px;
+      }
+    }
+
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="header-inner">
+      <a href="/" class="logo">
+        <img src="/docuproof-logo.png" alt="docuProof">
+        <div>
+          <div class="logo-text">docuProof</div>
+          <div class="logo-sub">Proof you can point to</div>
+        </div>
+      </a>
+      <a href="/start.html" class="nav-cta">Get Started →</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge">💼 For Businesses</div>
+      <h1>Your Contract's Insurance Policy. <span class="highlight">$2.89.</span></h1>
+      <p class="hero-sub">Photos, videos, documents — anchor them to the blockchain the moment they exist. Proof that can't be faked, altered, or denied.</p>
+      
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-value">$12,000+</div>
+          <div class="stat-label">Average contract dispute cost</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">$2.89</div>
+          <div class="stat-label">To prevent it</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">30 sec</div>
+          <div class="stat-label">To protect a file</div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <section class="proof-section">
+    <div class="container">
+      <div class="proof-header">
+        <h2>What actually holds up as proof?</h2>
+        <p>Not what you think.</p>
+      </div>
+      
+      <div class="proof-bad-row">
+        <div class="proof-bad-card">
+          <div class="proof-icon">✕</div>
+          <h3>Screenshots</h3>
+          <p>Can be faked in 30 seconds with any image editor. Zero credibility in disputes.</p>
+        </div>
+        <div class="proof-bad-card">
+          <div class="proof-icon">✕</div>
+          <h3>File Metadata</h3>
+          <p>"Date Created" can be changed with a single command. Not evidence.</p>
+        </div>
+        <div class="proof-bad-card">
+          <div class="proof-icon">✕</div>
+          <h3>Email Timestamps</h3>
+          <p>Headers can be manipulated. "I emailed it to myself" doesn't prove anything.</p>
+        </div>
+      </div>
+      
+      <div class="proof-good-section">
+        <div class="proof-good-content">
+          <div class="proof-icon">✓</div>
+          <h3>docuProof Certificate</h3>
+          <p>Anchored to an immutable blockchain. Cryptographic proof that can't be disputed, altered, or faked. Independently verifiable forever.</p>
+          <div class="proof-features">
+            <span class="proof-feature">✓ Court-ready PDF</span>
+            <span class="proof-feature">✓ QR verification</span>
+            <span class="proof-feature">✓ Blockchain anchor</span>
+          </div>
+        </div>
+        <div class="cert-preview-wrapper">
+          <div class="cert-preview">
+            <div class="cert-inner">
+              <div class="cert-header">
+                <div class="cert-logo-img">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <rect x="12" y="13" width="6" height="6" rx="1" fill="#22c55e" stroke="none"/>
+                  </svg>
+                </div>
+                <div class="cert-brand">docuProof</div>
+                <div class="cert-tagline">Proof you can point to.</div>
+              </div>
+              <div class="cert-divider"></div>
+              <div class="cert-title-section">
+                <div class="cert-title-small">Certificate of</div>
+                <div class="cert-title-main">PROOF OF EXISTENCE</div>
+                <div class="cert-subtitle">Blockchain-Anchored Timestamp</div>
+              </div>
+              <div class="cert-details-box">
+                <div class="cert-details-header">Document Details</div>
+                <div class="cert-row"><span class="label">Proof ID:</span><span class="value">a1b2c3d4e5f6</span></div>
+                <div class="cert-row"><span class="label">Document:</span><span class="value">contract_v2.pdf</span></div>
+                <div class="cert-row"><span class="label">Timestamp:</span><span class="value">Jan 26, 2026</span></div>
+                <div class="cert-row"><span class="label">Block:</span><span class="value">#932,061</span></div>
+              </div>
+              <div class="cert-qr-section">
+                <div class="cert-qr"></div>
+                <div class="cert-qr-text">
+                  <div class="cert-qr-label">SCAN TO VERIFY</div>
+                  <div class="cert-qr-url">docuproof.io/v/a1b2c3d4</div>
+                </div>
+              </div>
+              <div class="cert-footer">
+                <div class="cert-footer-text">docuProof.io • Proof of Existence on the Blockchain</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <section class="usecases">
+    <div class="container">
+      <h2>What businesses are protecting</h2>
+      
+      <div class="usecase-grid">
+        <div class="usecase-item">
+          <div class="usecase-icon">📝</div>
+          <div class="usecase-text">
+            <h4>Contracts & Agreements</h4>
+            <p>Before you sign or send</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">✅</div>
+          <div class="usecase-text">
+            <h4>Client Approvals</h4>
+            <p>Prove what they signed off on</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">💼</div>
+          <div class="usecase-text">
+            <h4>Business Plans & IP</h4>
+            <p>Before sharing with anyone</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">🔧</div>
+          <div class="usecase-text">
+            <h4>Scope of Work</h4>
+            <p>Lock in project boundaries</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">💰</div>
+          <div class="usecase-text">
+            <h4>Quotes & Invoices</h4>
+            <p>End pricing disputes forever</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">📋</div>
+          <div class="usecase-text">
+            <h4>Employee Policies</h4>
+            <p>Prove when policies existed</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">🎨</div>
+          <div class="usecase-text">
+            <h4>Creative Deliverables</h4>
+            <p>Timestamp before client review</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">📊</div>
+          <div class="usecase-text">
+            <h4>Reports & Documentation</h4>
+            <p>Compliance-ready timestamps</p>
+          </div>
+        </div>
+      </div>
+      
+      <div style="text-align: center; margin-top: 32px;">
+        <a href="/usecases.html" style="color: var(--accent); text-decoration: none; font-weight: 500; font-size: 15px;">See all 10 business use cases with real dispute scenarios →</a>
+      </div>
+    </div>
+  </section>
+  
+  
+  <!-- Try It Free Section -->
+  <section class="free-proof-section" id="try-free">
+    <div class="container">
+      <div class="free-proof-header">
+        <span class="free-proof-badge">✨ Your First Proof is Free</span>
+        <h2>Try It Right Now</h2>
+        <p>No account needed. Pick any option and see blockchain-verified proof in 60 seconds.</p>
+      </div>
+      
+      <div class="free-proof-options">
+        
+        <!-- Option 1: Timestamp This Moment -->
+        <div class="free-proof-card">
+          <div class="card-icon">📍</div>
+          <h3>Timestamp This Moment</h3>
+          <p class="card-tagline">"I was here."</p>
+          <p>Take a photo of where you are right now. This is the moment you discovered docuProof — anchored forever to the blockchain.</p>
+          <div class="card-buttons">
+            <a href="#" onclick="openCamera('moment'); return false;" class="btn-free primary">Take Photo →</a>
+          </div>
+        </div>
+        
+        <!-- Option 2: Timestamp Yourself -->
+        <div class="free-proof-card">
+          <div class="card-icon">🤳</div>
+          <h3>Timestamp Yourself</h3>
+          <p class="card-tagline">"This version of me existed."</p>
+          <p>Take a selfie. Not for social media — for the blockchain. Permanent proof that you existed at this exact moment.</p>
+          <div class="card-buttons">
+            <a href="#" onclick="openCamera('selfie'); return false;" class="btn-free primary">Take Selfie →</a>
+          </div>
+        </div>
+        
+        <!-- Option 3: Timestamp Today's Headlines -->
+        <div class="free-proof-card">
+          <div class="card-icon">📰</div>
+          <h3>Timestamp Today</h3>
+          <p class="card-tagline">"Proof of this day in history."</p>
+          <p>Download our daily headlines PDF — a time capsule of today. Timestamp it for blockchain-verified proof of this date.</p>
+          <div class="card-buttons">
+            <a href="/.netlify/functions/daily_headline" class="btn-free secondary" download>Download Today's PDF</a>
+            <span class="or-divider">then</span>
+            <a href="/app.html?source=headlines" class="btn-free primary">Upload & Timestamp →</a>
+          </div>
+        </div>
+        
+        <!-- Option 4: Screenshot Anything -->
+        <div class="free-proof-card">
+          <div class="card-icon">📱</div>
+          <h3>Screenshot Anything</h3>
+          <p class="card-tagline">"My proof. My moment."</p>
+          <p>Screenshot whatever matters — a news headline, a product price, a social post, a conversation. Your personal time capsule.</p>
+          <div class="card-buttons">
+            <a href="/app.html?source=screenshot" class="btn-free primary">Upload Screenshot →</a>
+          </div>
+        </div>
+        
+      </div>
+      
+      <div class="free-proof-footer">
+        <p>Your file never leaves your device until you upload. <a href="/privacy.html">See our privacy promise →</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-box">
+        <h2>Get Your First Timestamp Free</h2>
+        <p>Protect your next contract, approval, or agreement. Use this code at checkout:</p>
+        
+        <div class="promo-label">YOUR FREE PROOF CODE</div>
+        <div class="promo-code">BUSINESS</div>
+        
+        <br><br>
+        
+        <a href="/start.html" class="cta-button">Protect Your Documents →</a>
+        
+        <p class="cta-note">🔒 Your file never leaves your browser. Only the cryptographic hash is timestamped.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-logo">
+      <img src="/docuproof-logo.png" alt="docuProof">
+      <span>docuProof</span>
+    </div>
+    <div class="footer-links">
+      <a href="/start.html">Get Started</a>
+      <a href="/verify">Verify a Proof</a>
+      <a href="/usecases.html">Use Cases</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/privacy.html">Privacy</a>
+    </div>
+    <p class="footer-copy">© 2026 docuProof.io — Proof of Existence on the blockchain.</p>
+  </div>
+</footer>
+
+
+<script>
+// Camera capture functionality for "Take Photo" and "Take Selfie" buttons
+function openCamera(type) {
+  // Check if we're on a device that likely has a camera
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  
+  // Create a file input that triggers camera
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.capture = type === 'selfie' ? 'user' : 'environment'; // front or back camera
+  
+  input.onchange = function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      // Store file info and redirect to app
+      sessionStorage.setItem('docuproof_camera_file', file.name);
+      sessionStorage.setItem('docuproof_source', type);
+      
+      // Create a URL for the file and store it
+      const url = URL.createObjectURL(file);
+      sessionStorage.setItem('docuproof_file_url', url);
+      
+      // Redirect to app with the file
+      window.location.href = '/app.html?source=' + type + '&hasfile=true';
+    }
+  };
+  
+  // Check if camera/file access is supported
+  if (!isMobile && !navigator.mediaDevices) {
+    // Desktop without camera - show helpful message
+    alert('📱 For the best experience, try this on your phone!\n\nYou can also upload any photo from your computer by clicking the button again.');
+  }
+  
+  input.click();
+}
+</script>
+
+</body>
+</html>
