@@ -118,9 +118,14 @@ async function generatePDF(date, headlines, weather) {
     doc.font("Helvetica-Bold").fontSize(9).fillColor(accent)
        .text(`#${dateId}`, W - 100, 38, { width: 70, align: "right" });
 
-    // Logo placeholder
-    doc.roundedRect(W/2 - 20, 55, 40, 40, 6).fillAndStroke(card, accent);
-    doc.fontSize(8).fillColor(accent).text("docuProof", W/2 - 20, 70, { width: 40, align: "center" });
+    // Logo
+    const logoPath = "./netlify/functions/assets/logo_nobg.png";
+    if (fs.existsSync(logoPath)) {
+      doc.image(logoPath, W/2 - 25, 50, { width: 50, height: 50 });
+    } else {
+      // Fallback placeholder
+      doc.roundedRect(W/2 - 20, 55, 40, 40, 6).fillAndStroke(card, accent);
+    }
 
     // Brand
     doc.font("Helvetica-Bold").fontSize(18).fillColor(accent)
