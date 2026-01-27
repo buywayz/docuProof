@@ -365,7 +365,7 @@ async function generatePDF(date, headlines, weather) {
          });
 
       // === FOOTER ===
-      const footerY = pageH - inch(0.6);
+      const footerY = pageH - inch(0.55);
 
       doc.lineWidth(1)
          .strokeColor(colors.border)
@@ -376,9 +376,10 @@ async function generatePDF(date, headlines, weather) {
       doc.font("Helvetica")
          .fontSize(7)
          .fillColor(colors.textDim)
-         .text(`docuProof.io  •  Proof of Existence on the Blockchain  •  ${dateId}-DAILY`, 0, footerY + inch(0.1), {
-           width: pageW,
-           align: "center"
+         .text(`docuProof.io  •  Proof of Existence on the Blockchain  •  ${dateId}-DAILY`, inch(0.5), footerY + inch(0.08), {
+           width: pageW - inch(1),
+           align: "center",
+           lineBreak: false
          });
 
       doc.end();
