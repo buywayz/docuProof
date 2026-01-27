@@ -226,36 +226,36 @@ async function generatePDF(date, headlines, weather) {
 
       // === BRAND NAME ===
       doc.font("Helvetica-Bold")
-         .fontSize(18)
+         .fontSize(16)
          .fillColor(colors.accent)
          .text("docuProof", 0, y, { width: pageW, align: "center" });
-      y += inch(0.28);
+      y += inch(0.22);
 
       doc.font("Helvetica-Oblique")
-         .fontSize(9)
+         .fontSize(8)
          .fillColor(colors.textMuted)
          .text("Proof you can point to.", 0, y, { width: pageW, align: "center" });
-      y += inch(0.5);
+      y += inch(0.35);
 
       // === MAIN TITLE ===
       doc.font("Helvetica-Bold")
-         .fontSize(32)
+         .fontSize(28)
          .fillColor(colors.white)
          .text("TODAY IN HISTORY", 0, y, { width: pageW, align: "center" });
-      y += inch(0.5);
+      y += inch(0.4);
 
       // === DATE ===
       doc.font("Helvetica-Bold")
-         .fontSize(22)
+         .fontSize(20)
          .fillColor(colors.accent)
          .text(formatDate(date), 0, y, { width: pageW, align: "center" });
-      y += inch(0.35);
+      y += inch(0.28);
 
       doc.font("Helvetica")
-         .fontSize(10)
+         .fontSize(9)
          .fillColor(colors.textDim)
          .text(`Generated at ${formatTime(date)}`, 0, y, { width: pageW, align: "center" });
-      y += inch(0.4);
+      y += inch(0.3);
 
       // === DECORATIVE DIVIDER ===
       const divW = inch(3.5);
@@ -277,14 +277,14 @@ async function generatePDF(date, headlines, weather) {
       // === HEADLINES BOX ===
       const boxMargin = inch(0.7);
       const boxWidth = pageW - 2 * boxMargin;
-      const boxHeight = inch(2.6);
+      const boxHeight = inch(2.2);
 
       // Box background
       doc.roundedRect(boxMargin, y, boxWidth, boxHeight, 10)
          .fillAndStroke(colors.bgCard, colors.border);
 
       // Header bar
-      const headerH = inch(0.45);
+      const headerH = inch(0.4);
       doc.save();
       doc.roundedRect(boxMargin, y, boxWidth, headerH, 10).clip();
       doc.rect(boxMargin, y, boxWidth, headerH).fill(colors.accent);
@@ -293,55 +293,55 @@ async function generatePDF(date, headlines, weather) {
       doc.rect(boxMargin, y + headerH - 10, boxWidth, 10).fill(colors.accent);
 
       doc.font("Helvetica-Bold")
-         .fontSize(12)
+         .fontSize(11)
          .fillColor(colors.bgDark)
-         .text("TOP HEADLINES", 0, y + inch(0.14), { width: pageW, align: "center" });
+         .text("TOP HEADLINES", 0, y + inch(0.12), { width: pageW, align: "center" });
 
       // Headlines
-      let hY = y + headerH + inch(0.3);
+      let hY = y + headerH + inch(0.2);
 
       for (let i = 0; i < headlines.length; i++) {
         // Number
         doc.font("Helvetica-Bold")
-           .fontSize(14)
+           .fontSize(12)
            .fillColor(colors.accent)
            .text(`${i + 1}`, boxMargin + inch(0.25), hY);
 
         // Headline text
         doc.font("Helvetica")
-           .fontSize(12)
+           .fontSize(11)
            .fillColor(colors.textPrimary)
-           .text(headlines[i], boxMargin + inch(0.55), hY, {
-             width: boxWidth - inch(0.8),
-             lineGap: 2
+           .text(headlines[i], boxMargin + inch(0.5), hY, {
+             width: boxWidth - inch(0.7),
+             lineGap: 1
            });
 
-        hY = doc.y + inch(0.25);
+        hY = doc.y + inch(0.15);
       }
 
-      y += boxHeight + inch(0.35);
+      y += boxHeight + inch(0.25);
 
       // === WEATHER PILL ===
-      const pillW = inch(3);
-      const pillH = inch(0.4);
+      const pillW = inch(2.8);
+      const pillH = inch(0.35);
       const pillX = (pageW - pillW) / 2;
 
       doc.roundedRect(pillX, y, pillW, pillH, pillH / 2)
          .fillAndStroke(colors.bgElevated, colors.border);
 
       doc.font("Helvetica")
-         .fontSize(10)
+         .fontSize(9)
          .fillColor(colors.textMuted)
-         .text(`${weather.city}: ${weather.temp}, ${weather.condition}`, 0, y + inch(0.12), {
+         .text(`${weather.city}: ${weather.temp}, ${weather.condition}`, 0, y + inch(0.1), {
            width: pageW,
            align: "center"
          });
-      y += pillH + inch(0.4);
+      y += pillH + inch(0.25);
 
       // === CTA BOX ===
       const ctaMargin = inch(0.9);
       const ctaWidth = pageW - 2 * ctaMargin;
-      const ctaHeight = inch(0.8);
+      const ctaHeight = inch(0.7);
 
       // Glow effect
       doc.roundedRect(ctaMargin - 3, y - 3, ctaWidth + 6, ctaHeight + 6, 12)
@@ -352,14 +352,14 @@ async function generatePDF(date, headlines, weather) {
          .fillAndStroke(colors.bgCard, colors.accent);
 
       doc.font("Helvetica-Bold")
-         .fontSize(13)
+         .fontSize(12)
          .fillColor(colors.accent)
-         .text("TIMESTAMP THIS DOCUMENT", 0, y + inch(0.18), { width: pageW, align: "center" });
+         .text("TIMESTAMP THIS DOCUMENT", 0, y + inch(0.15), { width: pageW, align: "center" });
 
       doc.font("Helvetica")
-         .fontSize(10)
+         .fontSize(9)
          .fillColor(colors.textMuted)
-         .text("Upload to docuproof.io for blockchain-verified proof of this date", 0, y + inch(0.45), {
+         .text("Upload to docuproof.io for blockchain-verified proof of this date", 0, y + inch(0.38), {
            width: pageW,
            align: "center"
          });
