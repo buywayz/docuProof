@@ -118,6 +118,8 @@ async function generatePDF(date, headlines, weather) {
       const doc = new PDFDocument({
         size: "LETTER",
         margins: { top: inch(0.5), bottom: inch(0.5), left: inch(0.5), right: inch(0.5) },
+        autoFirstPage: true,
+        bufferPages: true,
         info: {
           Title: `Today in History - ${formatDate(date)}`,
           Author: "docuProof.io",
@@ -354,14 +356,15 @@ async function generatePDF(date, headlines, weather) {
       doc.font("Helvetica-Bold")
          .fontSize(12)
          .fillColor(colors.accent)
-         .text("TIMESTAMP THIS DOCUMENT", 0, y + inch(0.15), { width: pageW, align: "center" });
+         .text("TIMESTAMP THIS DOCUMENT", 0, y + inch(0.15), { width: pageW, align: "center", lineBreak: false });
 
       doc.font("Helvetica")
          .fontSize(9)
          .fillColor(colors.textMuted)
          .text("Upload to docuproof.io for blockchain-verified proof of this date", 0, y + inch(0.38), {
            width: pageW,
-           align: "center"
+           align: "center",
+           lineBreak: false
          });
 
       // === FOOTER ===
