@@ -14,11 +14,15 @@
     "netlify/functions/data/**"
   ]
 
-# Keep functions uncached while we iterate
+# Disable caching for all functions
 [[headers]]
   for = "/.netlify/functions/*"
   [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate"
+    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+    Pragma = "no-cache"
+    Expires = "0"
+    CDN-Cache-Control = "no-store"
+    Netlify-CDN-Cache-Control = "no-store"
 
 # Homepage redirects to prelaunch landing page
 [[redirects]]
@@ -44,5 +48,6 @@
   schedule = "@hourly"
 
 # Daily headline PDF generator - runs at 9am EST (2pm UTC) every day
+# NOTE: Function name uses UNDERSCORES to match the filename
 [functions."generate_daily_headline"]
   schedule = "0 14 * * *"
