@@ -215,6 +215,10 @@ exports.handler = async (event, context) => {
 
     return {
       statusCode: 200,
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({ ok: true, date: dateStr, headlines: headlines.length, size: pdfBuffer.length })
     };
   } catch (err) {

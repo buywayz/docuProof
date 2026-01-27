@@ -49,7 +49,7 @@ exports.handler = async (event, context) => {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${filename}"`,
         "Content-Length": String(pdfBuffer.length),
-        "Cache-Control": "public, max-age=3600",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
         "X-Generated-By": "docuProof Daily Headlines"
       },
       body: pdfBuffer.toString("base64"),
