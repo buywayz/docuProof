@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Proof Gallery — docuProof</title>
+  <meta name="description" content="Locked & Protected — see what people are protecting with blockchain timestamps.">
+  <link rel="icon" href="/docuproof-logo.png">
+  <meta name="theme-color" content="#0b0f14">
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --ink: #eaeaea;
+      --muted: #a7b0ba;
+      --accent: #22C55E;
+      --card: #151b22;
+      --card-soft: #10151b;
+      --border: #1e2630;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    
+    header {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--ink);
+    }
+    .brand img { height: 32px; }
+    .brand strong { font-size: 18px; }
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      margin-left: 20px;
+      font-size: 14px;
+    }
+    nav a:hover { color: var(--accent); }
+
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px 60px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .hero h1 {
+      font-size: 42px;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--accent), #4ade80);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+    .gallery-logo {
+      height: 56px;
+      width: auto;
+    }
+    .hero p {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .hero .tagline {
+      font-size: 14px;
+      color: var(--accent);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-bottom: 48px;
+      flex-wrap: wrap;
+    }
+    .stat {
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .stat-label {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .wall {
+      display: grid;
+      gap: 16px;
+    }
+
+    .proof-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      transition: border-color 0.2s, transform 0.2s;
+      animation: fadeIn 0.3s ease-out;
+    }
+    .proof-item:hover {
+      border-color: var(--accent);
+      transform: translateX(4px);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .proof-icon {
+      font-size: 28px;
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      background: var(--card-soft);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .proof-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .proof-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .proof-category {
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .proof-type {
+      color: var(--accent);
+      font-size: 14px;
+    }
+
+    .proof-separator {
+      color: var(--muted);
+    }
+
+    .proof-description {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    .proof-time {
+      font-size: 12px;
+      color: var(--muted);
+      opacity: 0.7;
+      margin-top: 6px;
+    }
+
+    .proof-badge {
+      flex-shrink: 0;
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .empty-state .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .cta-section {
+      margin-top: 60px;
+      text-align: center;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 24px;
+    }
+    .cta-section h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+    .cta-section p {
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .cta-btn {
+      display: inline-block;
+      background: var(--accent);
+      color: #071109;
+      text-decoration: none;
+      padding: 14px 32px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 16px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
+    }
+
+    footer {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+    }
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 32px; }
+      .stats { gap: 24px; }
+      .stat-value { font-size: 28px; }
+      .proof-item { flex-direction: column; }
+      .proof-badge { align-self: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="brand" href="/">
+    <img src="/docuproof-logo.png" alt="docuProof">
+    <strong>docuProof</strong>
+  </a>
+  <nav>
+    <a href="/start.html">Timestamp a File</a>
+    <a href="/business.html">For Business</a>
+  </nav>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="hero-logo">
+      <img src="/docuproof-logo.png" alt="docuProof" class="gallery-logo">
+      <h1>The Proof Gallery</h1>
+    </div>
+    <p class="tagline">Locked & Protected</p>
+    <p>See what people are protecting with blockchain timestamps</p>
+  </div>
+
+  <div class="stats" id="stats">
+    <div class="stat">
+      <div class="stat-value" id="totalCount">—</div>
+      <div class="stat-label">Documents Protected</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="todayCount">—</div>
+      <div class="stat-label">Today</div>
+    </div>
+  </div>
+
+  <div class="wall" id="wall">
+    <div class="loading">Loading The Proof Gallery</div>
+  </div>
+
+  <div class="cta-section">
+    <h2>Ready to protect what matters?</h2>
+    <p>Create permanent, tamper-proof evidence that your document existed — starting at just $2.89</p>
+    <a href="/start.html" class="cta-btn">Timestamp Your First Document →</a>
+  </div>
+</main>
+
+<footer>
+  © <span id="year"></span> docuProof.io — Proof of Existence on the Blockchain
+</footer>
+
+<script>
+document.getElementById('year').textContent = new Date().getFullYear();
+
+function timeAgo(dateString) {
+  const now = new Date();
+  const date = new Date(dateString);
+  const seconds = Math.floor((now - date) / 1000);
+  
+  if (seconds < 60) return 'just now';
+  if (seconds < 3600) return Math.floor(seconds / 60) + ' min ago';
+  if (seconds < 86400) return Math.floor(seconds / 3600) + ' hours ago';
+  if (seconds < 604800) return Math.floor(seconds / 86400) + ' days ago';
+  return date.toLocaleDateString();
+}
+
+async function loadWall() {
+  const wall = document.getElementById('wall');
+  const totalCount = document.getElementById('totalCount');
+  const todayCount = document.getElementById('todayCount');
+  
+  try {
+    const res = await fetch('/.netlify/functions/wall_of_proof');
+    const data = await res.json();
+    
+    if (!data.ok || !data.submissions || data.submissions.length === 0) {
+      wall.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">🔐</div>
+          <h3>Be the first!</h3>
+          <p>No entries yet. Timestamp a document to be the first in The Proof Gallery.</p>
+        </div>
+      `;
+      totalCount.textContent = '0';
+      todayCount.textContent = '0';
+      return;
+    }
+    
+    const submissions = data.submissions;
+    
+    // Count stats
+    const today = new Date().toDateString();
+    const todaySubmissions = submissions.filter(s => 
+      new Date(s.timestamp).toDateString() === today
+    ).length;
+    
+    totalCount.textContent = submissions.length.toString();
+    todayCount.textContent = todaySubmissions.toString();
+    
+    // Render submissions
+    wall.innerHTML = submissions.map(s => `
+      <div class="proof-item">
+        <div class="proof-icon">${s.categoryIcon}</div>
+        <div class="proof-content">
+          <div class="proof-header">
+            <span class="proof-category">${s.categoryLabel}</span>
+            <span class="proof-separator">›</span>
+            <span class="proof-type">${s.type}</span>
+          </div>
+          ${s.description ? `<div class="proof-description">"${s.description}"</div>` : ''}
+          <div class="proof-time">${timeAgo(s.timestamp)}</div>
+        </div>
+        <div class="proof-badge">🔒 Verified</div>
+      </div>
+    `).join('');
+    
+  } catch (err) {
+    console.error('Error loading wall:', err);
+    wall.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">⚠️</div>
+        <p>Unable to load The Proof Gallery. Please try again later.</p>
+      </div>
+    `;
+  }
+}
+
+loadWall();
+
+// Auto-refresh every 30 seconds
+setInterval(loadWall, 30000);
+</script>
+
+</body>
+</html>

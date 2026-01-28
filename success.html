@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <title>Payment complete — proof saved | docuProof</title>
-<meta name="description" content="Your proof has been queued for anchoring on Bitcoin.">
+<meta name="description" content="Your proof has been queued for anchoring on the blockchain.">
 
 <link rel="icon" href="/docuproof-logo.png">
 <meta name="theme-color" content="#0b0f14">
@@ -153,6 +153,557 @@
   @media (max-width:900px){
     h1{font-size:26px}
   }
+
+  /* RIP Add-on Styles */
+  .rip-section{
+    margin-top:24px;
+    background:var(--card);
+    border:2px solid var(--accent);
+    border-radius:16px;
+    padding:20px 24px 24px;
+    position:relative;
+    overflow:hidden;
+  }
+  .rip-section::before{
+    content:'';
+    position:absolute;
+    top:0;left:0;right:0;bottom:0;
+    background:linear-gradient(135deg, rgba(34,197,94,0.08) 0%, transparent 60%);
+    pointer-events:none;
+  }
+  .rip-header{
+    display:flex;
+    align-items:flex-start;
+    gap:14px;
+    margin-bottom:16px;
+    position:relative;
+  }
+  .rip-icon{
+    font-size:28px;
+    flex-shrink:0;
+  }
+  .rip-title{
+    font-size:18px;
+    font-weight:700;
+    color:var(--accent);
+    margin:0 0 4px;
+  }
+  .rip-subtitle{
+    font-size:14px;
+    color:var(--muted);
+    margin:0;
+  }
+  .rip-price{
+    position:absolute;
+    top:0;
+    right:0;
+    background:var(--accent);
+    color:#071109;
+    padding:4px 12px;
+    border-radius:20px;
+    font-weight:700;
+    font-size:14px;
+  }
+  .rip-body{
+    position:relative;
+    font-size:14px;
+    color:var(--neutral-text);
+    line-height:1.6;
+    margin-bottom:18px;
+  }
+  .rip-actions{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    position:relative;
+  }
+  .rip-btn{
+    background:var(--accent);
+    color:#071109;
+    border:none;
+    padding:12px 24px;
+    border-radius:999px;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+  }
+  .rip-btn:hover{
+    filter:brightness(1.1);
+  }
+  .rip-btn-skip{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--muted);
+    padding:12px 20px;
+    border-radius:999px;
+    font-weight:600;
+    font-size:14px;
+    cursor:pointer;
+  }
+  .rip-btn-skip:hover{
+    border-color:var(--muted);
+  }
+  .rip-note{
+    margin-top:14px;
+    font-size:12px;
+    color:var(--muted);
+    position:relative;
+  }
+
+  /* RIP Flow Steps */
+  .rip-steps{
+    display:flex;
+    gap:8px;
+    margin-bottom:24px;
+  }
+  .rip-step{
+    flex:1;
+    text-align:center;
+    padding:8px 4px;
+    font-size:12px;
+    color:var(--muted);
+    border-bottom:2px solid var(--border);
+  }
+  .rip-step.active{
+    color:var(--accent);
+    border-color:var(--accent);
+  }
+  .rip-step.done{
+    color:var(--ok-text);
+    border-color:var(--ok-border);
+  }
+
+  /* RIP Instructions */
+  .rip-instructions{
+    background:var(--card-soft);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:16px;
+    margin-bottom:20px;
+  }
+  .rip-instructions h4{
+    margin:0 0 12px;
+    font-size:15px;
+    color:var(--ink);
+  }
+  .rip-instructions ol{
+    margin:0;
+    padding-left:20px;
+    color:var(--muted);
+    font-size:14px;
+  }
+  .rip-instructions li{
+    margin-bottom:8px;
+  }
+  .rip-warning{
+    background:var(--warn-bg);
+    border:1px solid var(--warn-border);
+    border-radius:8px;
+    padding:12px;
+    font-size:13px;
+    color:var(--warn-text);
+    margin-top:12px;
+  }
+
+  /* Storage suggestions */
+  .rip-storage{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin:16px 0;
+  }
+  @media(max-width:600px){
+    .rip-storage{grid-template-columns:1fr;}
+  }
+  .rip-storage-item{
+    background:var(--card-soft);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px;
+    text-align:center;
+  }
+  .rip-storage-item .icon{font-size:24px;margin-bottom:6px;}
+  .rip-storage-item h5{font-size:13px;margin:0 0 2px;color:var(--ink);}
+  .rip-storage-item p{font-size:11px;color:var(--muted);margin:0;}
+
+  /* Drop zone */
+  .rip-dropzone{
+    border:2px dashed var(--border);
+    border-radius:12px;
+    padding:32px 20px;
+    text-align:center;
+    margin:20px 0;
+    transition:all 0.2s;
+    cursor:pointer;
+  }
+  .rip-dropzone:hover,
+  .rip-dropzone.dragover{
+    border-color:var(--accent);
+    background:rgba(34,197,94,0.05);
+  }
+  .rip-dropzone .icon{font-size:36px;color:var(--muted);margin-bottom:8px;}
+  .rip-dropzone p{margin:0;color:var(--muted);font-size:14px;}
+  .rip-dropzone input{display:none;}
+
+  /* File list */
+  .rip-files{margin:16px 0;}
+  .rip-file{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:var(--card-soft);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:12px 14px;
+    margin-bottom:8px;
+  }
+  .rip-file.success{border-color:var(--ok-border);}
+  .rip-file.error{border-color:#ff6b6b;}
+  .rip-file-info{display:flex;align-items:center;gap:10px;}
+  .rip-file-icon{font-size:20px;}
+  .rip-file-name{font-size:14px;font-weight:500;}
+  .rip-file-status{font-size:13px;font-weight:600;}
+  .rip-file-status.success{color:var(--ok-text);}
+  .rip-file-status.error{color:#ff6b6b;}
+  .rip-file-status.pending{color:var(--muted);}
+
+  /* Success state */
+  .rip-success{
+    text-align:center;
+    padding:20px;
+  }
+  .rip-success .icon{font-size:48px;color:var(--accent);margin-bottom:12px;}
+  .rip-success h3{color:var(--accent);margin:0 0 8px;font-size:20px;}
+  .rip-success p{color:var(--muted);margin:0 0 16px;font-size:14px;}
+
+  /* Hidden by default */
+  .rip-hidden{display:none !important;}
+
+  /* RIP flow step visibility */
+  .rip-flow{display:none;}
+  .rip-flow.active{display:block;}
+  
+  /* Collapsed state for skipped */
+  .rip-section.collapsed{
+    border-color:var(--border);
+    background:var(--card-soft);
+  }
+  .rip-section.collapsed::before{display:none;}
+
+  /* File list items */
+  .file-item{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:var(--card-soft);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:12px 14px;
+    margin-bottom:8px;
+  }
+  .file-item.success{border-color:var(--ok-border);}
+  .file-item.error{border-color:#ff6b6b;}
+  .file-info{display:flex;align-items:center;gap:10px;}
+  .file-icon{font-size:20px;}
+  .file-name{font-size:14px;font-weight:500;}
+  .status{font-size:13px;font-weight:600;}
+  .status.success{color:var(--ok-text);}
+  .status.error{color:#ff6b6b;}
+  .status.pending{color:var(--muted);}
+
+  /* Drop zone */
+  .drop-zone{
+    border:2px dashed var(--border);
+    border-radius:12px;
+    padding:32px 20px;
+    text-align:center;
+    margin:20px 0;
+    transition:all 0.2s;
+    cursor:pointer;
+  }
+  .drop-zone:hover,
+  .drop-zone.dragover{
+    border-color:var(--accent);
+    background:rgba(34,197,94,0.05);
+  }
+  .drop-zone .icon{font-size:36px;color:var(--muted);margin-bottom:8px;}
+  .drop-zone p{margin:0;color:var(--muted);font-size:14px;}
+
+  /* Storage grid */
+  .storage-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin:16px 0;
+  }
+  @media(max-width:600px){
+    .storage-grid{grid-template-columns:1fr;}
+  }
+  .storage-item{
+    background:var(--card-soft);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px;
+    text-align:center;
+  }
+  .storage-item .icon{font-size:24px;margin-bottom:6px;}
+  .storage-item h5{font-size:13px;margin:0 0 2px;color:var(--ink);}
+  .storage-item p{font-size:11px;color:var(--muted);margin:0;}
+
+  /* RIP error display */
+  .rip-error{
+    background:var(--danger-bg);
+    border:1px solid #5f2f2f;
+    border-radius:8px;
+    padding:12px;
+    margin-top:12px;
+    font-size:13px;
+    color:var(--danger);
+  }
+
+  /* RIP step indicators */
+  .rip-step-num{
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    background:var(--card);
+    border:2px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:600;
+    font-size:13px;
+    margin-bottom:4px;
+  }
+  .rip-step.active .rip-step-num{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#071109;
+  }
+  .rip-step.completed .rip-step-num{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#071109;
+  }
+  .rip-step-label{font-size:11px;color:var(--muted);}
+  .rip-step.active .rip-step-label{color:var(--ink);}
+
+  /* RIP success state */
+  .rip-success{
+    text-align:center;
+    padding:20px;
+  }
+  .rip-success .icon{font-size:48px;color:var(--accent);margin-bottom:12px;}
+  .rip-success h3{color:var(--accent);margin:0 0 8px;font-size:20px;}
+  .rip-success p{color:var(--muted);margin:0;font-size:14px;}
+
+  /* RIP buttons layout */
+  .rip-buttons{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-top:16px;
+  }
+  .rip-buttons button{
+    padding:12px 24px;
+  }
+
+  /* Wall of Proof Contribution Styles */
+  .wall-contribution {
+    margin-top: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 24px 24px;
+  }
+  .wall-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .wall-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+    animation: lightbulb-glow 2s ease-in-out infinite;
+  }
+  @keyframes lightbulb-glow {
+    0%, 100% {
+      filter: drop-shadow(0 0 4px rgba(255, 214, 0, 0.4));
+      transform: scale(1);
+    }
+    50% {
+      filter: drop-shadow(0 0 12px rgba(255, 214, 0, 0.8)) drop-shadow(0 0 20px rgba(255, 214, 0, 0.4));
+      transform: scale(1.05);
+    }
+  }
+  .wall-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--ink);
+    margin: 0 0 4px;
+  }
+  .wall-subtitle {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0;
+  }
+  .wall-dropdowns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 500px) {
+    .wall-dropdowns { grid-template-columns: 1fr; }
+  }
+  .wall-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+  }
+  .wall-field label {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+  .wall-field select,
+  .wall-field input {
+    background: var(--card-soft);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 14px;
+    color: var(--ink);
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .wall-field select:focus,
+  .wall-field input:focus {
+    border-color: var(--accent);
+  }
+  .wall-field select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .wall-field input::placeholder {
+    color: var(--muted);
+    opacity: 0.7;
+  }
+  .wall-char-count {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    font-size: 11px;
+    color: var(--muted);
+    pointer-events: none;
+  }
+  .wall-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .wall-btn {
+    padding: 12px 24px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+  }
+  .wall-btn.primary {
+    background: var(--accent);
+    color: #071109;
+  }
+  .wall-btn.primary:hover:not(:disabled) {
+    filter: brightness(1.1);
+  }
+  .wall-btn.primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .wall-btn.secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .wall-btn.secondary:hover {
+    border-color: var(--muted);
+    color: var(--ink);
+  }
+  .wall-success {
+    text-align: center;
+    padding: 20px;
+  }
+  .wall-success-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .wall-success-logo {
+    height: 48px;
+    width: auto;
+  }
+  .wall-success-check {
+    width: 48px;
+    height: 48px;
+    background: var(--accent);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+  .wall-success-check svg {
+    width: 32px;
+    height: 32px;
+    stroke: #071109;
+    stroke-width: 3;
+    fill: none;
+  }
+  @keyframes glow-pulse {
+    0%, 100% {
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.4), 0 0 16px rgba(34, 197, 94, 0.2);
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.6), 0 0 40px rgba(34, 197, 94, 0.3);
+    }
+  }
+  .wall-success h4 {
+    color: var(--accent);
+    margin: 0 0 8px;
+    font-size: 18px;
+  }
+  .wall-success p {
+    color: var(--muted);
+    margin: 0 0 16px;
+    font-size: 14px;
+  }
+  .wall-link {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .wall-link:hover {
+    text-decoration: underline;
+  }
+  .wall-skipped {
+    text-align: center;
+    padding: 12px;
+  }
+  .wall-muted {
+    color: var(--muted);
+    font-size: 14px;
+    margin: 0;
+  }
+  .wall-muted a {
+    color: var(--accent);
+  }
 </style>
 </head>
 <body>
@@ -162,7 +713,7 @@
     <strong>docuProof</strong>
   </a>
   <nav>
-    <a href="/start.html">Start</a> · <a href="/app">App</a> · <a href="/verify">Verify</a>
+    <a href="/start.html" target="_blank">Home</a> · <a href="/app.html" target="_blank">Generate New Proof</a>
   </nav>
 </header>
 
@@ -179,8 +730,6 @@
         <div class="label">Proof ID</div>
         <div class="row">
           <div id="proofId" class="value">—</div>
-          <a id="statusLink" href="#" style="font-size:13px;">status</a>
-          <a id="viewLiveLink" href="#" style="font-size:13px;">View live</a>
         </div>
       </div>
 
@@ -193,50 +742,278 @@
         </div>
       </div>
 
-      <!-- Txid -->
-      <div class="field-row">
-        <div class="label">Bitcoin txid</div>
-        <div id="txidValue" class="value">—</div>
+      <!-- Blockchain Block (hidden until anchored) -->
+      <div class="field-row" id="blockRow" style="display:none;">
+        <div class="label">Blockchain block</div>
+        <div id="blockValue" class="value">—</div>
       </div>
 
       <!-- Actions -->
       <div class="actions">
-        <button id="openVerify" class="primary" disabled>Open Verify Page</button>
-        <button id="dlOts" disabled>Download OTS Receipt</button>
+        <button id="openVerify" class="primary" disabled>Check Status</button>
         <button id="dlPdf" disabled>Download PDF Certificate</button>
       </div>
 
       <div class="helper-box" id="helperBox">
-        <strong>What this means:</strong>
+        <strong>What you just created:</strong>
         <div id="helperText">
-          Your receipt is created and your proof has been queued for batching and anchoring to Bitcoin.
-          You can always verify later at the <strong>Verify</strong> link using your Proof ID.
+          Your proof is being batched with others for anchoring to the blockchain. This typically completes within a few hours. You'll receive an email notification when it's anchored.
         </div>
       </div>
     </article>
 
     <aside class="side-card">
-      <h3 style="margin:0 0 8px;font-size:18px;">What happens next?</h3>
-      <ul style="margin:6px 0 0 0;padding-left:18px;font-size:14px;color:var(--muted);">
-        <li>Your receipt is already created and downloadable above (once ready).</li>
-        <li>We batch and anchor proofs to Bitcoin. Once mined, a txid appears with confirmations.</li>
-        <li>You can always verify later via <strong>Verify</strong> using your Proof ID.</li>
-      </ul>
+      <h3 style="margin:0 0 12px;font-size:18px;">What happens next?</h3>
+      
+      <p style="font-size:14px;color:var(--muted);margin:0 0 12px;">
+        <strong style="color:var(--ink);">Right now:</strong><br>
+        Your PDF certificate is ready. Check your email for a copy.
+      </p>
+      
+      <p style="font-size:14px;color:var(--muted);margin:0 0 12px;">
+        <strong style="color:var(--ink);">Soon:</strong><br>
+        Your proof will be anchored to the blockchain's blockchain. You'll get an email with the block number when it's complete.
+      </p>
+      
+      <p style="font-size:14px;color:var(--muted);margin:0 0 12px;">
+        <strong style="color:var(--ink);">Why this matters:</strong><br>
+        Whether it's protecting intellectual property, proving compliance, or establishing priority — you've created permanent, tamper-proof evidence that stands up in court.
+      </p>
+      
+      <p style="font-size:14px;color:var(--muted);margin:0;">
+        <strong style="color:var(--ink);">Your privacy:</strong><br>
+        Your file never left your device. We only saw its cryptographic hash — a unique fingerprint that can't be reversed into your original file.
+      </p>
     </aside>
   </section>
 
-  <section class="what-next">
-    <h2>Keep your proof bundle together</h2>
-    <ul>
-      <li>Save your original file (for example <code>document.pdf</code>).</li>
-      <li>Save the OpenTimestamps receipt (for example <code>document.pdf.ots</code>).</li>
-      <li>Optionally save this PDF certificate for a human-readable summary and QR.</li>
+  <!-- RIP Add-on Section -->
+  <section class="rip-section" id="ripSection">
+    <!-- Initial Upsell Offer -->
+    <div id="ripOffer" class="rip-flow active">
+      <div class="rip-header">
+        <span class="rip-icon">🛡️</span>
+        <div>
+          <h3 class="rip-title">Protect Your Proof with RIP (Redundant Identity Preservation)</h3>
+          <p class="rip-subtitle">
+            <strong>Your proof is only valuable if you can produce the original file.</strong><br>
+            Verify backup copies now to ensure your proof remains usable even if your original is lost or damaged.
+          </p>
+        </div>
+      </div>
+      <div class="rip-price">Add RIP verification for just <strong>+$2.00</strong></div>
+      <div class="rip-buttons">
+        <button id="ripYes" class="primary">Yes, Protect My Proof →</button>
+        <button id="ripNo">No thanks, skip</button>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:12px;">
+        ✓ Included FREE with Pro Plan
+      </p>
+    </div>
+    
+    <!-- Step 2: Create Copies Instructions -->
+    <div id="ripStep2" class="rip-flow">
+      <div class="rip-steps">
+        <div class="rip-step completed"><div class="rip-step-num">✓</div><span class="rip-step-label">Proof Created</span></div>
+        <div class="rip-step active"><div class="rip-step-num">2</div><span class="rip-step-label">Create Copies</span></div>
+        <div class="rip-step"><div class="rip-step-num">3</div><span class="rip-step-label">Verify</span></div>
+        <div class="rip-step"><div class="rip-step-num">4</div><span class="rip-step-label">Certificate</span></div>
+      </div>
+      
+      <h3 style="margin:0 0 8px;">Create 2 Backup Copies</h3>
+      <p style="font-size:14px;color:var(--muted);margin:0 0 16px;">Store each copy in a different location to protect against data loss.</p>
+      
+      <div class="rip-instructions">
+        <h4>📋 Instructions</h4>
+        <ol>
+          <li>Locate your original file on your computer</li>
+          <li>Copy it twice (right-click → Copy, then Paste)</li>
+          <li><strong>Do NOT rename or open the copies</strong> — this can modify the file</li>
+          <li>Move each copy to a different storage location</li>
+        </ol>
+      </div>
+      
+      <div class="storage-grid">
+        <div class="storage-item">
+          <div class="icon">💾</div>
+          <h5>Copy 1</h5>
+          <p>External drive or USB</p>
+        </div>
+        <div class="storage-item">
+          <div class="icon">☁️</div>
+          <h5>Copy 2</h5>
+          <p>Cloud storage</p>
+        </div>
+        <div class="storage-item">
+          <div class="icon">📁</div>
+          <h5>Original</h5>
+          <p>Primary location</p>
+        </div>
+      </div>
+      
+      <div class="rip-warning">
+        <strong>⚠️ Important:</strong> Each copy must be stored in a separate location — if one fails (drive crash, account locked), the others survive.
+      </div>
+      
+      <div class="rip-buttons" style="margin-top:16px;">
+        <button id="ripCopiesDone" class="primary">I've Created My Copies →</button>
+      </div>
+    </div>
+    
+    <!-- Step 3: Verify Copies -->
+    <div id="ripStep3" class="rip-flow">
+      <div class="rip-steps">
+        <div class="rip-step completed"><div class="rip-step-num">✓</div><span class="rip-step-label">Proof Created</span></div>
+        <div class="rip-step completed"><div class="rip-step-num">✓</div><span class="rip-step-label">Create Copies</span></div>
+        <div class="rip-step active"><div class="rip-step-num">3</div><span class="rip-step-label">Verify</span></div>
+        <div class="rip-step"><div class="rip-step-num">4</div><span class="rip-step-label">Certificate</span></div>
+      </div>
+      
+      <h3 style="margin:0 0 8px;">Verify All Copies Match</h3>
+      <p style="font-size:14px;color:var(--muted);margin:0 0 16px;">Select your original file plus both backup copies. We'll verify they're identical to your proof.</p>
+      
+      <div class="drop-zone" id="dropZone">
+        <div class="icon">📄</div>
+        <p><strong>Drop 3 files here</strong><br>or click to browse</p>
+        <p style="margin-top:6px;font-size:12px;">Original + 2 backup copies</p>
+      </div>
+      <input type="file" id="ripFileInput" multiple style="display:none;">
+      
+      <div class="file-list" id="fileList"></div>
+      
+      <p style="font-size:12px;color:var(--muted);text-align:center;">
+        🔒 Files are verified locally in your browser. Nothing is uploaded.
+      </p>
+      
+      <div id="ripVerifyError" class="rip-error" style="display:none;"></div>
+      
+      <div class="rip-buttons" style="margin-top:16px;">
+        <button id="ripVerifyBtn" class="primary" disabled>Verify Files</button>
+        <button id="ripBackToStep2">← Back</button>
+      </div>
+    </div>
+    
+    <!-- Step 4: Success / Certificate -->
+    <div id="ripStep4" class="rip-flow">
+      <div class="rip-steps">
+        <div class="rip-step completed"><div class="rip-step-num">✓</div><span class="rip-step-label">Proof Created</span></div>
+        <div class="rip-step completed"><div class="rip-step-num">✓</div><span class="rip-step-label">Create Copies</span></div>
+        <div class="rip-step completed"><div class="rip-step-num">✓</div><span class="rip-step-label">Verify</span></div>
+        <div class="rip-step active"><div class="rip-step-num">4</div><span class="rip-step-label">Certificate</span></div>
+      </div>
+      
+      <div class="rip-success">
+        <div class="icon">🛡️</div>
+        <h3>RIP Verification Complete!</h3>
+        <p>All 3 files are bit-identical and match your proof hash.</p>
+      </div>
+      
+      <div class="helper-box">
+        <strong>What this means:</strong>
+        <div>Your enhanced certificate now includes RIP verification — documenting that on this date, 3 independent file instances were cryptographically confirmed as identical to your anchored proof.</div>
+      </div>
+      
+      <div class="rip-buttons" style="margin-top:16px;justify-content:center;">
+        <button id="ripDownloadCert" class="primary">Download Enhanced Certificate</button>
+      </div>
+      
+      <p style="font-size:13px;color:var(--muted);text-align:center;margin-top:16px;">
+        ✓ Store this certificate with each of your file copies<br>
+        ✓ Your proof can be independently verified at any time
+      </p>
+    </div>
+    
+    <!-- Collapsed/Skipped State -->
+    <div id="ripSkipped" class="rip-flow">
+      <div class="rip-header" style="margin-bottom:0;">
+        <span class="rip-icon" style="opacity:0.5;">🛡️</span>
+        <div>
+          <h3 class="rip-title" style="color:var(--muted);">RIP (Redundant Identity Preservation)</h3>
+          <p style="font-size:13px;color:var(--muted);margin:0;">
+            You skipped RIP verification. <a href="#" id="ripReopen" style="color:var(--accent);">Add it now →</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="what-next" id="whatToKeep">
+    <h2>All you need to keep:</h2>
+    <ul id="keepList">
+      <li><strong>Your PDF certificate</strong> — This contains your Proof ID, verification QR code, and all proof details.</li>
+      <li id="keepFileItem"><strong>Your original file</strong> — Keep the exact file you timestamped (unchanged).</li>
     </ul>
+    <p id="keepSummary" style="font-size:14px;color:var(--muted);margin-top:12px;">
+      Together, these two items let anyone verify your proof independently — even if docuProof disappears.
+    </p>
+  </section>
+
+  <!-- The Proof Gallery Contribution -->
+  <section class="wall-contribution" id="wallContribution">
+    <div class="wall-header">
+      <span class="wall-icon">💡</span>
+      <div>
+        <h3 class="wall-title">Help others discover what they can protect</h3>
+        <p class="wall-subtitle">Share what you timestamped (anonymously) to inspire others</p>
+      </div>
+    </div>
+    
+    <div class="wall-form" id="wallForm">
+      <div class="wall-dropdowns">
+        <div class="wall-field">
+          <label for="wallCategory">Category</label>
+          <select id="wallCategory">
+            <option value="">Select category...</option>
+            <option value="creative">🎨 Creative Work</option>
+            <option value="legal">⚖️ Legal Document</option>
+            <option value="business">💼 Business Record</option>
+            <option value="personal">🏠 Personal File</option>
+            <option value="other">📄 Other</option>
+          </select>
+        </div>
+        
+        <div class="wall-field">
+          <label for="wallType">Type</label>
+          <select id="wallType" disabled>
+            <option value="">Select type...</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="wall-field">
+        <label for="wallDescription">Brief description (optional)</label>
+        <input type="text" id="wallDescription" placeholder="e.g., Freelance design contract with new client" maxlength="100">
+        <span class="wall-char-count"><span id="charCount">0</span>/100</span>
+      </div>
+      
+      <div class="wall-actions">
+        <button id="wallSubmit" class="wall-btn primary" disabled>Add to The Proof Gallery</button>
+        <button id="wallSkip" class="wall-btn secondary">Skip</button>
+      </div>
+    </div>
+    
+    <div class="wall-success" id="wallSuccess" style="display:none;">
+      <div class="wall-success-icon">
+        <img src="/docuproof-logo.png" alt="docuProof" class="wall-success-logo">
+        <div class="wall-success-check">
+          <svg viewBox="0 0 24 24">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+      </div>
+      <h4>Added to The Proof Gallery!</h4>
+      <p>Thanks for helping others discover what they can protect.</p>
+      <a href="/proof-gallery.html" class="wall-link">View The Proof Gallery →</a>
+    </div>
+    
+    <div class="wall-skipped" id="wallSkipped" style="display:none;">
+      <p class="wall-muted">No problem! <a href="/proof-gallery.html">View The Proof Gallery →</a></p>
+    </div>
   </section>
 </main>
 
 <footer>
-  © <span id="year"></span> docuProof.io — Proof of Existence on the Bitcoin Blockchain.
+  © <span id="year"></span> docuProof.io — Proof of Existence on the blockchain.
 </footer>
 
 <script>
@@ -246,18 +1023,21 @@
 
   const params = new URLSearchParams(location.search);
   const sessionId = (params.get("session_id") || "").trim();
-  const explicitId = (params.get("id") || "").trim(); // allow canonical direct
+  const explicitId = (params.get("id") || "").trim();
+  const ripPaid = params.get("rip_paid") === "true";
 
   const proofIdEl   = $("proofId");
   const statusPill  = $("statusPill");
   const statusText  = $("statusText");
-  const txidValue   = $("txidValue");
+  const blockRow    = $("blockRow");
+  const blockValue  = $("blockValue");
   const helperText  = $("helperText");
   const openVerify  = $("openVerify");
-  const dlOts       = $("dlOts");
   const dlPdf       = $("dlPdf");
-  const statusLink  = $("statusLink");
-  const viewLive    = $("viewLiveLink");
+
+  // Store proof hash for RIP verification
+  let proofHash = null;
+  let currentCanonicalId = null;
 
   function setStatus(kind, label, helper) {
     statusPill.className = "status-pill " + kind;
@@ -270,21 +1050,21 @@
 
   function wireForCanonicalId(canonicalId) {
     proofIdEl.textContent = canonicalId;
+    currentCanonicalId = canonicalId;
 
     const verifyUrl = "/v/" + encodeURIComponent(canonicalId);
-    statusLink.href = verifyUrl;
-    viewLive.href = verifyUrl;
 
     openVerify.disabled = false;
-    openVerify.onclick = function () { window.location.href = verifyUrl; };
+    openVerify.onclick = function () { window.open(verifyUrl, '_blank'); };
 
     dlPdf.disabled = false;
     dlPdf.onclick = function () {
-      window.location.href =
-        "/.netlify/functions/proof_pdf_meta?id=" + encodeURIComponent(canonicalId);
+      window.open(
+        "/.netlify/functions/proof_pdf_meta?id=" + encodeURIComponent(canonicalId),
+        '_blank'
+      );
     };
 
-    // normalize URL for reload/share
     try {
       const u = new URL(location.href);
       if (!u.searchParams.get("id")) u.searchParams.set("id", canonicalId);
@@ -304,10 +1084,13 @@
     if (explicitId) return explicitId;
     if (!sessionId) return null;
 
-    // canonical mapping is NOT in Stripe metadata; use our lookup function
     const url = "/.netlify/functions/stripe_session_info?session_id=" + encodeURIComponent(sessionId);
     const { ok, json } = await fetchJson(url);
-    if (ok && json && json.canonicalId) return String(json.canonicalId).trim();
+    if (ok && json && json.canonicalId) {
+      // Also try to get the hash from session info
+      if (json.hash) proofHash = json.hash;
+      return String(json.canonicalId).trim();
+    }
     return null;
   }
 
@@ -320,31 +1103,33 @@
       setStatus(
         "neutral",
         "Queued for anchoring",
-        "We do not yet see a receipt or Bitcoin anchor for this ID. If you just created this proof, allow time for batching and anchoring. You can always check back via the Verify page."
+        "We do not yet see a receipt or blockchain anchor for this ID. If you just created this proof, allow time for batching and anchoring. You can always check back via the Verify page."
       );
+      blockRow.style.display = "none";
       return;
     }
 
+    // Store hash from anchor status if available
+    if (json.hash) proofHash = json.hash;
+
     const state = json.state || "NOT_FOUND";
 
-    if (state === "ANCHORED") {
+    if (state === "ANCHORED" || json.blockHeight) {
       setStatus(
         "ok",
-        "Anchored on Bitcoin",
-        "Your proof has been anchored in a Bitcoin transaction. Confirmations will accumulate over time."
+        "Anchored on the Blockchain",
+        "Your proof has been anchored in a blockchain block. Confirmations will accumulate over time."
       );
-      if (json.txid) {
-        const mempoolUrl = "https://mempool.space/tx/" + encodeURIComponent(json.txid);
-        txidValue.innerHTML =
+      
+      // Show block height
+      if (json.blockHeight) {
+        blockRow.style.display = "block";
+        const mempoolUrl = "https://mempool.space/block/" + json.blockHeight;
+        blockValue.innerHTML =
           '<a class="value" href="' + mempoolUrl + '" target="_blank" rel="noopener">' +
-          json.txid +
+          json.blockHeight +
           "</a>";
       }
-      dlOts.disabled = false;
-      dlOts.onclick = function () {
-        window.location.href =
-          "/.netlify/functions/download_receipt?id=" + encodeURIComponent(canonicalId);
-      };
       return;
     }
 
@@ -352,24 +1137,20 @@
       setStatus(
         "warn",
         "Receipt created — awaiting anchor",
-        "Your OpenTimestamps receipt is available and will be batched into a Bitcoin transaction shortly."
+        "Your proof is being batched with others for anchoring to the blockchain. This typically completes within a few hours. You'll receive an email notification when it's anchored."
       );
-      dlOts.disabled = false;
-      dlOts.onclick = function () {
-        window.location.href =
-          "/.netlify/functions/download_receipt?id=" + encodeURIComponent(canonicalId);
-      };
+      blockRow.style.display = "none";
       return;
     }
 
     setStatus(
       "neutral",
       "Queued for anchoring",
-      "We do not yet see a receipt or Bitcoin anchor for this ID. If you just created this proof, allow time for batching and anchoring. You can always check back via the Verify page."
+      "Your proof is being processed. If you just created this proof, allow some time for it to be batched and anchored to the blockchain. You can check back anytime or wait for your email notification."
     );
+    blockRow.style.display = "none";
   }
 
-  // initial message
   setStatus(
     "neutral",
     "Queued for anchoring",
@@ -381,7 +1162,6 @@
     return;
   }
 
-  // Resolve canonical
   const canonicalId = await resolveCanonicalId();
 
   if (!canonicalId) {
@@ -396,6 +1176,347 @@
 
   wireForCanonicalId(canonicalId);
   await loadAnchorStatus(canonicalId);
+
+  // ============================================
+  // RIP (Redundant Identity Preservation) Logic
+  // ============================================
+  
+  const ripSection = $("ripSection");
+  const ripOffer = $("ripOffer");
+  const ripStep2 = $("ripStep2");
+  const ripStep3 = $("ripStep3");
+  const ripStep4 = $("ripStep4");
+  const ripSkipped = $("ripSkipped");
+  
+  const ripYes = $("ripYes");
+  const ripNo = $("ripNo");
+  const ripCopiesDone = $("ripCopiesDone");
+  const ripBackToStep2 = $("ripBackToStep2");
+  const ripVerifyBtn = $("ripVerifyBtn");
+  const ripDownloadCert = $("ripDownloadCert");
+  const ripReopen = $("ripReopen");
+  
+  const dropZone = $("dropZone");
+  const ripFileInput = $("ripFileInput");
+  const fileList = $("fileList");
+  const ripVerifyError = $("ripVerifyError");
+  
+  let selectedFiles = [];
+  let verifiedFiles = [];
+  
+  function showRipFlow(flowId) {
+    [ripOffer, ripStep2, ripStep3, ripStep4, ripSkipped].forEach(el => {
+      el.classList.remove('active');
+    });
+    $(flowId).classList.add('active');
+    
+    // Update border style
+    if (flowId === 'ripSkipped') {
+      ripSection.classList.add('collapsed');
+    } else {
+      ripSection.classList.remove('collapsed');
+    }
+  }
+  
+  // Auto-advance to Step 2 if RIP was just paid for
+  if (ripPaid) {
+    showRipFlow('ripStep2');
+    // Clean up URL to remove rip_paid parameter
+    try {
+      const cleanUrl = new URL(location.href);
+      cleanUrl.searchParams.delete('rip_paid');
+      cleanUrl.searchParams.delete('rip_session_id');
+      history.replaceState({}, '', cleanUrl.toString());
+    } catch (e) {
+      console.warn('Could not clean URL:', e);
+    }
+  }
+  
+  // SHA-256 hash function (same as app.html)
+  async function sha256Hex(file) {
+    const buf = await file.arrayBuffer();
+    const digest = await crypto.subtle.digest('SHA-256', buf);
+    return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  
+  // Render file list
+  function renderFileList() {
+    fileList.innerHTML = '';
+    selectedFiles.forEach((file, index) => {
+      const verified = verifiedFiles[index];
+      let statusClass = 'pending';
+      let statusText = 'Pending';
+      let statusIcon = '⏳';
+      
+      if (verified !== undefined) {
+        if (verified) {
+          statusClass = 'success';
+          statusText = 'Matches Proof';
+          statusIcon = '✓';
+        } else {
+          statusClass = 'error';
+          statusText = 'Does Not Match';
+          statusIcon = '✗';
+        }
+      }
+      
+      const div = document.createElement('div');
+      div.className = 'file-item';
+      div.innerHTML = `
+        <div class="file-info">
+          <span class="file-icon">📄</span>
+          <span class="file-name">${file.name}</span>
+        </div>
+        <div class="status ${statusClass}">${statusIcon} ${statusText}</div>
+      `;
+      fileList.appendChild(div);
+    });
+    
+    // Enable verify button if 3 files selected
+    ripVerifyBtn.disabled = selectedFiles.length < 3;
+  }
+  
+  // Handle file selection
+  function handleFiles(files) {
+    // Add files up to 3
+    for (let i = 0; i < files.length && selectedFiles.length < 3; i++) {
+      selectedFiles.push(files[i]);
+    }
+    verifiedFiles = []; // Reset verification
+    renderFileList();
+  }
+  
+  // Upsell buttons
+  ripYes.addEventListener('click', function() {
+    // Redirect to Stripe for RIP payment
+    if (currentCanonicalId) {
+      window.location.href = '/.netlify/functions/create_rip_session?id=' + encodeURIComponent(currentCanonicalId);
+    } else {
+      alert('Unable to process RIP payment - proof ID not found. Please refresh and try again.');
+    }
+  });
+  
+  ripNo.addEventListener('click', function() {
+    showRipFlow('ripSkipped');
+  });
+  
+  ripReopen.addEventListener('click', function(e) {
+    e.preventDefault();
+    showRipFlow('ripOffer');
+  });
+  
+  // Step 2 -> Step 3
+  ripCopiesDone.addEventListener('click', function() {
+    showRipFlow('ripStep3');
+  });
+  
+  // Step 3 back to Step 2
+  ripBackToStep2.addEventListener('click', function() {
+    showRipFlow('ripStep2');
+  });
+  
+  // Drop zone interactions
+  dropZone.addEventListener('click', function() {
+    ripFileInput.click();
+  });
+  
+  dropZone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+  
+  dropZone.addEventListener('dragleave', function() {
+    dropZone.classList.remove('dragover');
+  });
+  
+  dropZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) {
+      handleFiles(e.dataTransfer.files);
+    }
+  });
+  
+  ripFileInput.addEventListener('change', function(e) {
+    if (e.target.files.length > 0) {
+      handleFiles(e.target.files);
+    }
+  });
+  
+  // Verify files
+  ripVerifyBtn.addEventListener('click', async function() {
+    if (selectedFiles.length < 3) return;
+    
+    ripVerifyBtn.disabled = true;
+    ripVerifyBtn.textContent = 'Verifying...';
+    ripVerifyError.style.display = 'none';
+    
+    try {
+      // Hash all files
+      const hashes = [];
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const hash = await sha256Hex(selectedFiles[i]);
+        hashes.push(hash);
+      }
+      
+      // Check if all hashes are identical
+      const allMatch = hashes.every(h => h === hashes[0]);
+      
+      // Check if they match the proof hash (if we have it)
+      let matchesProof = true;
+      if (proofHash) {
+        matchesProof = hashes[0].toLowerCase() === proofHash.toLowerCase();
+      }
+      
+      // Update verification status for each file
+      verifiedFiles = hashes.map(h => {
+        if (proofHash) {
+          return h.toLowerCase() === proofHash.toLowerCase();
+        }
+        return h === hashes[0]; // If no proof hash, just check they're identical
+      });
+      
+      renderFileList();
+      
+      if (allMatch && matchesProof) {
+        // Success! Move to step 4
+        showRipFlow('ripStep4');
+        
+        // Update "All you need to keep" section for RIP
+        const keepFileItem = $("keepFileItem");
+        const keepSummary = $("keepSummary");
+        if (keepFileItem) {
+          keepFileItem.innerHTML = '<strong>Your original file + 2 backup copies</strong> — Keep all three identical copies stored in separate locations (unchanged).';
+        }
+        if (keepSummary) {
+          keepSummary.textContent = 'Together, your certificate and three file copies let anyone verify your proof independently — even if docuProof disappears.';
+        }
+      } else {
+        // Show error
+        let errorMsg = '';
+        if (!allMatch) {
+          errorMsg = 'Not all files are identical. One or more copies may have been modified. Please create fresh copies from your original and try again.';
+        } else if (!matchesProof) {
+          errorMsg = 'Files are identical to each other but do not match your proof hash. Make sure you\'re using the same file you originally timestamped.';
+        }
+        ripVerifyError.textContent = errorMsg;
+        ripVerifyError.style.display = 'block';
+      }
+    } catch (err) {
+      ripVerifyError.textContent = 'Error verifying files: ' + err.message;
+      ripVerifyError.style.display = 'block';
+    }
+    
+    ripVerifyBtn.disabled = false;
+    ripVerifyBtn.textContent = 'Verify Files';
+  });
+  
+  // Download enhanced certificate
+  ripDownloadCert.addEventListener('click', function() {
+    if (currentCanonicalId) {
+      // TODO: In production, this would call a function to generate enhanced PDF with RIP language
+      // For now, use the regular PDF endpoint
+      window.open(
+        "/.netlify/functions/proof_pdf_meta?id=" + encodeURIComponent(currentCanonicalId) + "&rip=true",
+        '_blank'
+      );
+    }
+  });
+  
+  // ============================================
+  // Wall of Proof Contribution Logic
+  // ============================================
+  
+  const WALL_TYPES = {
+    creative: ["Contract", "Portfolio", "Design", "Music/Audio", "Writing", "Photography", "Other"],
+    legal: ["Agreement", "NDA", "Will/Estate", "Evidence", "Court Filing", "Other"],
+    business: ["Invoice", "Proposal", "Report", "Email/Communication", "Financial", "Other"],
+    personal: ["Photo", "Video", "Receipt", "Certificate", "Home Inventory", "Other"],
+    other: ["Other"]
+  };
+  
+  const wallCategory = $("wallCategory");
+  const wallType = $("wallType");
+  const wallDescription = $("wallDescription");
+  const wallSubmit = $("wallSubmit");
+  const wallSkip = $("wallSkip");
+  const wallForm = $("wallForm");
+  const wallSuccess = $("wallSuccess");
+  const wallSkipped = $("wallSkipped");
+  const charCount = $("charCount");
+  
+  // Update type dropdown when category changes
+  wallCategory.addEventListener("change", function() {
+    const category = this.value;
+    wallType.innerHTML = '<option value="">Select type...</option>';
+    
+    if (category && WALL_TYPES[category]) {
+      WALL_TYPES[category].forEach(type => {
+        const opt = document.createElement("option");
+        opt.value = type;
+        opt.textContent = type;
+        wallType.appendChild(opt);
+      });
+      wallType.disabled = false;
+    } else {
+      wallType.disabled = true;
+    }
+    
+    updateWallSubmitState();
+  });
+  
+  // Update character count
+  wallDescription.addEventListener("input", function() {
+    charCount.textContent = this.value.length;
+  });
+  
+  // Enable submit when category and type selected
+  wallType.addEventListener("change", updateWallSubmitState);
+  
+  function updateWallSubmitState() {
+    wallSubmit.disabled = !(wallCategory.value && wallType.value);
+  }
+  
+  // Submit to Wall of Proof
+  wallSubmit.addEventListener("click", async function() {
+    if (!wallCategory.value || !wallType.value) return;
+    
+    wallSubmit.disabled = true;
+    wallSubmit.textContent = "Adding...";
+    
+    try {
+      const res = await fetch("/.netlify/functions/wall_of_proof", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: wallCategory.value,
+          type: wallType.value,
+          description: wallDescription.value.trim()
+        })
+      });
+      
+      const data = await res.json();
+      
+      if (data.ok) {
+        wallForm.style.display = "none";
+        wallSuccess.style.display = "block";
+      } else {
+        throw new Error(data.error || "Failed to submit");
+      }
+    } catch (err) {
+      console.error("Wall submission error:", err);
+      wallSubmit.disabled = false;
+      wallSubmit.textContent = "Add to The Proof Gallery";
+      alert("Unable to add to The Proof Gallery. Please try again.");
+    }
+  });
+  
+  // Skip
+  wallSkip.addEventListener("click", function() {
+    wallForm.style.display = "none";
+    wallSkipped.style.display = "block";
+  });
+  
 })();
 </script>
 
