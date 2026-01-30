@@ -1298,9 +1298,9 @@
           <p class="card-tagline">"Proof of this day in history."</p>
           <p>Download our daily headlines PDF — a time capsule of today. Timestamp it for blockchain-verified proof of this date.</p>
           <div class="card-buttons">
-            <a href="/.netlify/functions/daily_headline" class="btn-free secondary" download>Download Today's PDF</a>
+            <a href="/.netlify/functions/daily_headline" class="btn-free secondary" download>Download Today's Headline PDF</a>
             <span class="or-divider">then</span>
-            <a href="/app.html?source=headlines" class="btn-free primary">Upload & Timestamp →</a>
+            <a href="#" onclick="openFreeProof('headlines'); return false;" class="btn-free primary">Upload & Timestamp →</a>
           </div>
         </div>
         
@@ -1311,7 +1311,7 @@
           <p class="card-tagline">"My proof. My moment."</p>
           <p>Screenshot whatever matters — a news headline, a product price, a social post, a conversation. Your personal time capsule.</p>
           <div class="card-buttons">
-            <a href="/app.html?source=screenshot" class="btn-free primary">Upload Screenshot →</a>
+            <a href="#" onclick="openFreeProof('screenshot'); return false;" class="btn-free primary">Upload & Timestamp →</a>
           </div>
         </div>
         
@@ -1388,5 +1388,32 @@ function openCamera(type) {
   input.click();
 }
 </script>
+<!-- Free Proof Success Modal -->
+<div id="freeProofModal" class="free-proof-modal" style="display:none;">
+  <div class="free-proof-modal-content">
+    <div class="free-proof-modal-header">
+      <span class="free-proof-modal-icon">✅</span>
+      <h3>Proof Created!</h3>
+    </div>
+    <div class="free-proof-modal-body">
+      <p>Your file has been timestamped. Here's your proof:</p>
+      <div class="free-proof-result">
+        <div class="free-proof-field">
+          <label>Verification Link</label>
+          <div class="free-proof-value">
+            <a id="freeProofLink" href="#" target="_blank"></a>
+          </div>
+        </div>
+        <div class="free-proof-field">
+          <label>File Hash (SHA-256)</label>
+          <div class="free-proof-hash" id="freeProofHash"></div>
+        </div>
+      </div>
+      <p class="free-proof-note">🔒 This is a free proof stored in our database. <a href="/app.html">Upgrade to blockchain-anchored proof →</a></p>
+    </div>
+    <button class="btn-free primary" onclick="closeFreeProofModal()">Done</button>
+  </div>
+</div>
+
 </body>
 </html>

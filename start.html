@@ -516,6 +516,88 @@ a{color:var(--accent);text-decoration:none}
     }
 
 .mobile-note { font-size: 12px; color: var(--muted); margin-top: 12px; text-align: center; opacity: 0.8; }
+
+/* Free Proof Modal */
+.free-proof-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+.free-proof-modal-content {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+.free-proof-modal-header {
+  margin-bottom: 20px;
+}
+.free-proof-modal-icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 12px;
+}
+.free-proof-modal-header h3 {
+  font-size: 24px;
+  color: var(--accent);
+  margin: 0;
+}
+.free-proof-modal-body p {
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+.free-proof-result {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+.free-proof-field {
+  margin-bottom: 12px;
+}
+.free-proof-field:last-child {
+  margin-bottom: 0;
+}
+.free-proof-field label {
+  font-size: 12px;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 4px;
+}
+.free-proof-value a {
+  color: var(--accent);
+  word-break: break-all;
+}
+.free-proof-hash {
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--ink);
+  word-break: break-all;
+  background: var(--card);
+  padding: 8px;
+  border-radius: 4px;
+}
+.free-proof-note {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 16px;
+}
+.free-proof-note a {
+  color: var(--accent);
+}
 </style>
 </head>
 <body>
@@ -757,11 +839,11 @@ a{color:var(--accent);text-decoration:none}
         <div class="card-icon">📰</div>
         <h3>Timestamp Today</h3>
         <p class="card-tagline">"Proof of this day in history."</p>
-        <p>Download our daily headlines PDF — a time capsule of today. Timestamp it for blockchain-verified proof of this date.</p>
+        <p>Download our daily headline PDF — a time capsule of today. Timestamp it for blockchain-verified proof of this date.</p>
         <div class="card-buttons">
-          <a href="/.netlify/functions/daily_headline" class="btn-free secondary" download>Download Today's PDF</a>
+          <a href="/.netlify/functions/daily_headline" class="btn-free secondary" download>Download Today's Headline PDF</a>
           <span class="or-divider">then</span>
-          <a href="/app.html?source=headlines" class="btn-free primary">Upload & Timestamp →</a>
+          <a href="#" onclick="openFreeProof('headlines'); return false;" class="btn-free primary">Upload & Timestamp →</a>
         </div>
       </div>
       
@@ -772,7 +854,7 @@ a{color:var(--accent);text-decoration:none}
         <p class="card-tagline">"My proof. My moment."</p>
         <p>Screenshot whatever matters — a news headline, a product price, a social post, a conversation. Your personal time capsule.</p>
         <div class="card-buttons">
-          <a href="/app.html?source=screenshot" class="btn-free primary">Upload Screenshot →</a>
+          <a href="#" onclick="openFreeProof('screenshot'); return false;" class="btn-free primary">Upload & Timestamp →</a>
         </div>
       </div>
       
@@ -783,6 +865,33 @@ a{color:var(--accent);text-decoration:none}
     </div>
   </div>
 </section>
+
+<!-- Free Proof Success Modal -->
+<div id="freeProofModal" class="free-proof-modal" style="display:none;">
+  <div class="free-proof-modal-content">
+    <div class="free-proof-modal-header">
+      <span class="free-proof-modal-icon">✅</span>
+      <h3>Proof Created!</h3>
+    </div>
+    <div class="free-proof-modal-body">
+      <p>Your file has been timestamped. Here's your proof:</p>
+      <div class="free-proof-result">
+        <div class="free-proof-field">
+          <label>Verification Link</label>
+          <div class="free-proof-value">
+            <a id="freeProofLink" href="#" target="_blank"></a>
+          </div>
+        </div>
+        <div class="free-proof-field">
+          <label>File Hash (SHA-256)</label>
+          <div class="free-proof-hash" id="freeProofHash"></div>
+        </div>
+      </div>
+      <p class="free-proof-note">🔒 This is a free proof stored in our database. <a href="/app.html">Upgrade to blockchain-anchored proof →</a></p>
+    </div>
+    <button class="btn-free primary" onclick="closeFreeProofModal()">Done</button>
+  </div>
+</div>
 
 <section class="final-cta">
 <h2>Ready to create <span class="accent">unfakeable proof</span>?</h2>
@@ -850,6 +959,78 @@ document.querySelectorAll('.faq-q').forEach(function(question) {
     item.classList.toggle('open');
   });
 });
+
+// Free Proof functionality for "Upload & Timestamp" buttons
+async function sha256Hex(file) {
+  const buf = await file.arrayBuffer();
+  const digest = await crypto.subtle.digest('SHA-256', buf);
+  return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function openFreeProof(source) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = source === 'screenshot' ? 'image/*' : '*/*';
+  
+  input.onchange = async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    try {
+      // Show loading state
+      const btn = event.target;
+      const originalText = btn.textContent;
+      btn.textContent = 'Processing...';
+      btn.disabled = true;
+      
+      // Compute hash locally
+      const hash = await sha256Hex(file);
+      
+      // Send to free proof endpoint
+      const response = await fetch('/.netlify/functions/create_free_proof', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          hash: hash,
+          filename: file.name,
+          source: source
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || 'Failed to create proof');
+      }
+      
+      // Show success modal
+      document.getElementById('freeProofLink').href = data.verifyUrl;
+      document.getElementById('freeProofLink').textContent = data.verifyUrl;
+      document.getElementById('freeProofHash').textContent = data.hash;
+      document.getElementById('freeProofModal').style.display = 'flex';
+      
+      // Reset button
+      btn.textContent = originalText;
+      btn.disabled = false;
+      
+    } catch (err) {
+      alert('Error: ' + err.message);
+      // Reset button if we can find it
+      document.querySelectorAll('.btn-free.primary').forEach(b => {
+        if (b.disabled) {
+          b.disabled = false;
+          b.textContent = 'Upload & Timestamp →';
+        }
+      });
+    }
+  };
+  
+  input.click();
+}
+
+function closeFreeProofModal() {
+  document.getElementById('freeProofModal').style.display = 'none';
+}
 </script>
 </body>
 </html>
