@@ -1060,7 +1060,8 @@
       }
     }
 
-  </style>
+  .mobile-note { font-size: 12px; color: var(--muted); margin-top: 12px; text-align: center; opacity: 0.8; }
+</style>
 </head>
 <body>
 
@@ -1247,7 +1248,7 @@
       </div>
       
       <div style="text-align: center; margin-top: 32px;">
-        <a href="/usecases.html" style="color: var(--accent); text-decoration: none; font-weight: 500; font-size: 15px;">See all 10 business use cases with real dispute scenarios →</a>
+        <a href="/business-usecases.html" style="color: var(--accent); text-decoration: none; font-weight: 500; font-size: 15px;">See all 10 business use cases with real dispute scenarios →</a>
       </div>
     </div>
   </section>
@@ -1269,9 +1270,11 @@
           <div class="card-icon">📍</div>
           <h3>Timestamp This Moment</h3>
           <p class="card-tagline">"I was here."</p>
-          <p>Upload a photo from your device. On mobile, you can take one directly. This is the moment you discovered docuProof — anchored forever to the blockchain.</p>
+          <p>Take a photo of where you are right now. This is the moment you discovered docuProof — anchored forever to the blockchain.</p>
           <div class="card-buttons">
-            <a href="/app.html?source=photo" class="btn-free primary">Upload Photo →</a>
+            <a href="#" onclick="openCamera('moment'); return false;" class="btn-free primary">Take Photo →</a>
+        </div>
+        <p class="mobile-note">📱 Best on mobile — opens your camera directly</p>
           </div>
         </div>
         
@@ -1280,9 +1283,11 @@
           <div class="card-icon">🤳</div>
           <h3>Timestamp Yourself</h3>
           <p class="card-tagline">"This version of me existed."</p>
-          <p>Upload a selfie from your device. On mobile, you can take one directly. Permanent proof that you existed at this exact moment.</p>
+          <p>Take a selfie. Not for social media — for the blockchain. Permanent proof that you existed at this exact moment.</p>
           <div class="card-buttons">
-            <a href="/app.html?source=selfie" class="btn-free primary">Upload Selfie →</a>
+            <a href="#" onclick="openCamera('selfie'); return false;" class="btn-free primary">Take Selfie →</a>
+        </div>
+        <p class="mobile-note">📱 Best on mobile — opens front camera</p>
           </div>
         </div>
         
@@ -1346,7 +1351,7 @@
     <div class="footer-links">
       <a href="/start.html">Get Started</a>
       <a href="/verify">Verify a Proof</a>
-      <a href="/usecases.html">Use Cases</a>
+      <a href="/business-usecases.html">Use Cases</a>
       <a href="/terms.html">Terms</a>
       <a href="/privacy.html">Privacy</a>
     </div>
@@ -1355,5 +1360,33 @@
 </footer>
 
 
+<script>
+function openCamera(type) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.capture = type === 'selfie' ? 'user' : 'environment';
+  input.onchange = function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        sessionStorage.setItem('docuproof_pending_file', event.target.result);
+        sessionStorage.setItem('docuproof_pending_filename', file.name);
+        sessionStorage.setItem('docuproof_pending_type', file.type);
+        window.location.href = '/app.html?source=' + type + '\&hasfile=true';
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if (!isMobile) {
+    if (!confirm('📱 This works best on mobile where it opens your camera directly.\n\nOn desktop, you can still select a photo from your files.\n\nContinue?')) {
+      return;
+    }
+  }
+  input.click();
+}
+</script>
 </body>
 </html>

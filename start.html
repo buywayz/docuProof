@@ -515,6 +515,7 @@ a{color:var(--accent);text-decoration:none}
       }
     }
 
+.mobile-note { font-size: 12px; color: var(--muted); margin-top: 12px; text-align: center; opacity: 0.8; }
 </style>
 </head>
 <body>
@@ -527,7 +528,7 @@ a{color:var(--accent);text-decoration:none}
 <p class="hero-sub">docuProof turns any file into a permanent, blockchain-anchored certificate that proves it existed, unchanged, at a specific moment in time.</p>
 <p class="hero-tagline">Paper burns. Servers crash. Screenshots can be faked. The blockchain never forgets.</p>
 <div class="hero-cta"><a href="/app.html" class="btn btn-primary">Generate Proof →</a><a href="#how" class="btn btn-secondary">See How It Works</a></div>
-<p class="hero-why"><a href="/scenarios.html">Not sure you need this? See 9 real scenarios →</a></p>
+<p class="hero-why"><a href="/individual-scenarios.html">Not sure you need this? See 9 real scenarios →</a></p>
 </div>
 <p class="demo-label">Your Certificate</p>
 <div class="proof-good-section" style="max-width:800px;margin:0 auto;">
@@ -698,7 +699,7 @@ a{color:var(--accent);text-decoration:none}
 <h2>Frequently Asked Questions</h2>
 </div>
 <div class="faq-grid">
-<div class="faq-item"><div class="faq-q"><span>Why would an everyday person need this?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">You'd be surprised how often "prove it" comes up in everyday life. Landlords disputing move-in photos. Contractors blaming you for damage they caused. Insurance companies claiming your policy "changed." Family members fighting over a will. A $2.89 timestamp today can save you thousands in disputes tomorrow. <a href="/scenarios.html">See 9 real scenarios where proof saves the day →</a></div></div></div>
+<div class="faq-item"><div class="faq-q"><span>Why would an everyday person need this?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">You'd be surprised how often "prove it" comes up in everyday life. Landlords disputing move-in photos. Contractors blaming you for damage they caused. Insurance companies claiming your policy "changed." Family members fighting over a will. A $2.89 timestamp today can save you thousands in disputes tomorrow. <a href="/individual-scenarios.html">See 9 real scenarios where proof saves the day →</a></div></div></div>
 <div class="faq-item"><div class="faq-q"><span>Is this a legal notary service?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">No. docuProof creates cryptographic proof-of-existence, not legal notarization. It provides mathematical evidence that your file existed at a specific time and hasn't changed since—evidence that can support legal claims but doesn't replace formal notarization where required.</div></div></div>
 <div class="faq-item"><div class="faq-q"><span>Does my file get uploaded anywhere?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">No. Your file never leaves your device. We hash it locally in your browser and only submit the 64-character SHA-256 fingerprint. Your document's contents remain completely private—we never see them.</div></div></div>
 <div class="faq-item"><div class="faq-q"><span>What exactly gets stored on the blockchain?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Only your file's cryptographic fingerprint (a 64-character hash). This hash cannot be reversed to reconstruct your file—it's a one-way mathematical function. Think of it as a unique digital seal that proves the file existed.</div></div></div>
@@ -709,8 +710,8 @@ a{color:var(--accent);text-decoration:none}
 <div class="faq-item"><div class="faq-q"><span>What happens if I lose my original file?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Without your original file, you can't prove your claim—the timestamp only proves <em>some file</em> existed. After checkout, we offer RIP (Redundant Identity Preservation) to verify your backup copies match your original, protecting you if one copy is lost.</div></div></div>
 <div class="faq-item"><div class="faq-q"><span>What can accidentally change my file?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Opening and re-saving, re-exporting, or software updating metadata—even without visible changes. Renaming is safe (it doesn't change contents). Best practice: make backup copies right after timestamping and don't open them.</div></div></div>
 <div class="faq-item"><div class="faq-q"><span>How reliable is the file verification?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">We use SHA-256—the same algorithm securing the blockchain and banking systems. Matching hashes means files are mathematically identical, bit for bit. It's not an estimate; it's cryptographic certainty.</div></div></div>
-<div class="faq-item"><div class="faq-q"><span>Is docuProof only for businesses?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Not at all. Homeowners and families use docuProof just as much—rental move-in photos, contractor quotes, home inventory for insurance, car condition before lending, even custody agreements. A $2.89 timestamp can save thousands in disputes. <a href="/personal-usecases.html">See 10 things smart homeowners timestamp →</a></div></div></div>
-<div class="faq-item"><div class="faq-q"><span>What documents should I timestamp?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Anything where proving "when it existed" might matter later. For businesses: contracts, approvals, quotes, NDAs, creative work. For individuals: rental photos, contractor agreements, valuables documentation, receipts. <a href="/usecases.html">Business use cases →</a> · <a href="/personal-usecases.html">Personal use cases →</a></div></div></div>
+<div class="faq-item"><div class="faq-q"><span>Is docuProof only for businesses?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Not at all. Homeowners and families use docuProof just as much—rental move-in photos, contractor quotes, home inventory for insurance, car condition before lending, even custody agreements. A $2.89 timestamp can save thousands in disputes. <a href="/homeowner-usecases.html">See 10 things smart individuals timestamp →</a></div></div></div>
+<div class="faq-item"><div class="faq-q"><span>What documents should I timestamp?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Anything where proving "when it existed" might matter later. For businesses: contracts, approvals, quotes, NDAs, creative work. For individuals: rental photos, contractor agreements, valuables documentation, receipts. <a href="/business-usecases.html">Business use cases →</a> · <a href="/homeowner-usecases.html">Personal use cases →</a></div></div></div>
 </div>
 </div>
 </section>
@@ -732,10 +733,11 @@ a{color:var(--accent);text-decoration:none}
         <div class="card-icon">📍</div>
         <h3>Timestamp This Moment</h3>
         <p class="card-tagline">"I was here."</p>
-        <p>Upload a photo from your device. On mobile, you can take one directly. This is the moment you discovered docuProof — anchored forever to the blockchain.</p>
+        <p>Take a photo of where you are right now. This is the moment you discovered docuProof — anchored forever to the blockchain.</p>
         <div class="card-buttons">
-          <a href="/app.html?source=photo" class="btn-free primary">Upload Photo →</a>
+          <a href="#" onclick="openCamera('moment'); return false;" class="btn-free primary">Take Photo →</a>
         </div>
+        <p class="mobile-note">📱 Best on mobile — opens your camera directly</p>
       </div>
       
       <!-- Option 2: Timestamp Yourself -->
@@ -743,10 +745,11 @@ a{color:var(--accent);text-decoration:none}
         <div class="card-icon">🤳</div>
         <h3>Timestamp Yourself</h3>
         <p class="card-tagline">"This version of me existed."</p>
-        <p>Upload a selfie from your device. On mobile, you can take one directly. Permanent proof that you existed at this exact moment.</p>
+        <p>Take a selfie. Not for social media — for the blockchain. Permanent proof that you existed at this exact moment.</p>
         <div class="card-buttons">
-          <a href="/app.html?source=selfie" class="btn-free primary">Upload Selfie →</a>
+          <a href="#" onclick="openCamera('selfie'); return false;" class="btn-free primary">Take Selfie →</a>
         </div>
+        <p class="mobile-note">📱 Best on mobile — opens front camera</p>
       </div>
       
       <!-- Option 3: Timestamp Today's Headlines -->
@@ -797,6 +800,41 @@ a{color:var(--accent);text-decoration:none}
 
 <script>
 document.getElementById('yr').textContent=new Date().getFullYear();
+
+// Camera capture functionality for "Take Photo" and "Take Selfie" buttons
+function openCamera(type) {
+  // Create a file input that triggers camera
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.capture = type === 'selfie' ? 'user' : 'environment'; // front or back camera
+  
+  input.onchange = function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      // Store the file in sessionStorage as base64 for transfer to app.html
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        sessionStorage.setItem('docuproof_pending_file', event.target.result);
+        sessionStorage.setItem('docuproof_pending_filename', file.name);
+        sessionStorage.setItem('docuproof_pending_type', file.type);
+        window.location.href = '/app.html?source=' + type + '&hasfile=true';
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
+  // Check if we're on desktop
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if (!isMobile) {
+    // On desktop, show a message but still let them pick a file
+    if (!confirm('📱 This works best on mobile where it opens your camera directly.\n\nOn desktop, you can still select a photo from your files.\n\nContinue?')) {
+      return;
+    }
+  }
+  
+  input.click();
+}
 
 // FAQ Accordion Toggle
 document.querySelectorAll('.faq-q').forEach(function(question) {

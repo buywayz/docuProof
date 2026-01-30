@@ -241,6 +241,38 @@
   const planSel = $('plan'), billSel = $('billing'), billWrap = $('billingWrap');
   const email = $('email'), fname=$('fname'), dname=$('dname'), buyBtn=$('buyBtn'), msg=$('msg');
 
+  // Check for pending file from camera capture
+  (function checkPendingFile() {
+    const pendingData = sessionStorage.getItem('docuproof_pending_file');
+    const pendingName = sessionStorage.getItem('docuproof_pending_filename');
+    const pendingType = sessionStorage.getItem('docuproof_pending_type');
+    
+    if (pendingData && pendingName) {
+      // Clear the sessionStorage
+      sessionStorage.removeItem('docuproof_pending_file');
+      sessionStorage.removeItem('docuproof_pending_filename');
+      sessionStorage.removeItem('docuproof_pending_type');
+      
+      // Convert base64 back to file
+      fetch(pendingData)
+        .then(res => res.blob())
+        .then(blob => {
+          const pendingFile = new File([blob], pendingName, { type: pendingType || 'image/jpeg' });
+          
+          // Create a DataTransfer to set the file input
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(pendingFile);
+          file.files = dataTransfer.files;
+          
+          // Trigger the change event to compute hash
+          file.dispatchEvent(new Event('change', { bubbles: true }));
+        })
+        .catch(err => {
+          console.error('Failed to load pending file:', err);
+        });
+    }
+  })();
+
   function syncBilling() {
     const isOne = planSel.value === 'one-time';
     billWrap.style.display = isOne ? 'none' : 'block';
