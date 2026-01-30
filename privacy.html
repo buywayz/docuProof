@@ -1,177 +1,300 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Privacy Policy — docuProof</title>
+  <meta name="description" content="docuProof Privacy Policy. Learn how we protect your data and privacy.">
 
-  <!-- Icons / PWA -->
-  <link rel="manifest" href="/site.webmanifest">
-  <link rel="icon" href="/icon-192.png" sizes="192x192">
-  <link rel="icon" href="/icon-512.png" sizes="512x512">
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <meta name="theme-color" content="#0b0d0f">
+  <link rel="icon" href="/docuproof-logo.png">
+  <link rel="apple-touch-icon" href="/docuproof-logo.png">
+  <meta name="theme-color" content="#0B0F14">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    :root{
-      --bg:#0b0d0f; --card:#121418; --muted:#9aa3af; --text:#e6e7eb;
-      --accent:#56f08a; --ring:#2a2f36; --input:#1a1f24;
+    :root {
+      --bg: #0a0d10;
+      --bg-card: #12161c;
+      --ink: #e8eaed;
+      --muted: #8b949e;
+      --accent: #22c55e;
+      --border: #21262d;
+      --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
     }
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0}
-    body{background:var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;overflow-x:hidden}
 
-    /* Shared header (logo) */
-    .site-header{width:100%;border-bottom:1px solid #1b1c20;background:#0b0d0f}
-    .site-header .inner{max-width:920px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:12px}
-    .brand{display:flex;align-items:center;gap:10px}
-    .brand img{display:block}
-    .brand-name{color:#e6e7eb;font-weight:700;letter-spacing:.02em}
-    .brand-tagline{font-size:13px;color:#9aa3af;margin-top:2px;font-weight:400}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font: 16px/1.7 var(--font-display);
+    }
 
-/* Hero block to match index look */
-.hero{margin:42px 0 24px}
-.hero-title{
-  font-size:clamp(36px,6vw,60px);
-  line-height:1.05;
-  margin:0 0 10px;
-  color:#e6e7eb;
-  font-weight:800;
-}
-.hero-lead{
-  color:#c6c8ce;
-  font-size:18px;
-  margin:0 0 28px;
-}
-    .wrap{max-width:920px;margin:36px auto 48px;padding:0 20px}
-    header.page{margin:8px 0 18px}
-    h1{font-size:34px;margin:10px 0 6px}
-    .tag{color:var(--muted);font-weight:600;letter-spacing:.02em}
-    .card{background:var(--card);border:1px solid var(--ring);border-radius:14px;padding:22px;margin:16px 0}
-    h2{font-size:20px;margin:0 0 10px}
-    p,li{color:#d3d6db}
-    a{color:var(--accent);text-decoration:none}
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
 
-    footer{margin-top:40px;text-align:center;color:#9aa3af;font-size:14px;border-top:1px solid #1b1c20;padding:20px 20px 28px}
-    footer a{color:#56f08a;text-decoration:none}
-    .microcopy{margin-top:6px;color:#666;font-size:12px}
+    /* Header */
+    .header {
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .header-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--ink);
+    }
+    .brand img { height: 32px; }
+    .brand span { font-weight: 700; font-size: 18px; }
+
+    /* Content */
+    .content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    .hero {
+      margin-bottom: 48px;
+    }
+    .hero h1 {
+      font-size: clamp(36px, 5vw, 48px);
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .hero .tagline {
+      font-size: 18px;
+      color: var(--muted);
+    }
+    .hero .effective {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 16px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--ink);
+    }
+
+    .card p {
+      color: #c9d2db;
+      margin-bottom: 14px;
+    }
+    .card p:last-child { margin-bottom: 0; }
+
+    .card ul {
+      color: #c9d2db;
+      padding-left: 24px;
+      margin-bottom: 14px;
+    }
+    .card li {
+      margin-bottom: 8px;
+    }
+
+    .highlight {
+      background: #0e1a12;
+      border-left: 4px solid var(--accent);
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 16px 0;
+    }
+    .highlight p {
+      margin: 0;
+      color: var(--ink);
+    }
+
+    /* Footer */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+    }
+    .footer-inner {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .footer p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .footer-links {
+      margin-top: 12px;
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .footer-links a {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .footer-links a:hover { color: var(--accent); }
   </style>
 </head>
 <body>
 
-  <!-- Header with logo (no resizing) -->
-<header class="site-header">
-  <div class="inner">
-    <div class="brand">
-      <img src="/docuproof-logo.png" alt="docuProof logo" loading="eager" style="display:block;height:32px">
-      <div>
-        <div class="brand-name">docuProof</div>
-        </div>
-      </div>
-    </div>
+<header class="header">
+  <div class="header-inner">
+    <a href="/" class="brand">
+      <img src="/docuproof-logo.png" alt="docuProof logo">
+      <span>docuProof</span>
+    </a>
   </div>
 </header>
 
-  <div class="wrap">
-<section class="hero">
-  <h1 class="hero-title">Proof you can point to.</h1>
-  <p class="hero-lead">Preserve the truth of what you create — because memories fade, but proof doesn’t.</p>
-</section>
-    <header class="page">
-      <div class="tag">docuProof™ — Proof you can point to.</div>
-      <h1>Privacy Policy</h1>
-      <div class="tag">Effective: 2025-10-13</div>
-    </header>
+<main class="content">
+  <section class="hero">
+    <h1>Privacy Policy</h1>
+    <p class="tagline">Your privacy is fundamental to how docuProof works.</p>
+    <p class="effective">Effective: January 13, 2026</p>
+  </section>
 
-    <div class="card">
-      <p><strong>Who we are.</strong> docuProof™ is operated by <strong>BuyWayz LLC</strong>, a Wyoming company, doing business as <strong>docuProof.io</strong> (“<strong>docuProof</strong>,” “we,” “us,” or “our”).</p>
-      <p><strong>What we do.</strong> We provide a non-custodial proof-of-existence service. You compute a cryptographic fingerprint (SHA-256 hash) of your file locally in your browser; we anchor that hash and return a permanent verification link. <em>We are not a notary or a legal certification service.</em></p>
+  <div class="card">
+    <div class="highlight">
+      <p><strong>The Short Version:</strong> Your files never leave your device. We only receive a cryptographic hash (fingerprint) of your file—not the file itself. We cannot see, access, or reconstruct your documents.</p>
     </div>
-
-    <div class="card">
-      <h2>1) Data we do <em>not</em> collect</h2>
-      <ul>
-        <li><strong>No file contents.</strong> Your document never leaves your device. We do not upload, scan, or store your files.</li>
-        <li><strong>No third-party ad pixels.</strong> We don’t run invasive tracking beacons.</li>
-      </ul>
-    </div>
-
-    <div class="card">
-      <h2>2) Data we process to deliver the service</h2>
-      <ul>
-        <li><strong>Document hash (SHA-256):</strong> submitted by you to create a proof record. This is a one-way fingerprint and cannot reconstruct your file.</li>
-        <li><strong>Basic proof metadata:</strong> proof ID, timestamps, optional filename/display name you provide, and a public verification URL.</li>
-        <li><strong>Payment data via Stripe:</strong> We use Stripe for one-time purchases and subscriptions. Stripe is a separate controller for payment data; we don’t store full card numbers. See <a href="https://stripe.com/privacy" target="_blank" rel="noopener">stripe.com/privacy</a>.</li>
-        <li><strong>Operational logs:</strong> limited, short-lived logs for security and uptime (e.g., function invocation, error traces). No file contents.</li>
-      </ul>
-    </div>
-
-    <div class="card">
-      <h2>2a) Email delivery</h2>
-      <p>We use an email service provider (such as Postmark) to send transactional messages including receipts, proof delivery notices, and verification links. This involves processing your email address, the message body, and minimal delivery metadata such as timestamps and message IDs. During Postmark domain approval, delivery may be limited to addresses under the same verified domain.</p>
-    </div>
-
-    <div class="card">
-      <h2>3) Public nature of proofs</h2>
-      <p>When you create a proof, the verification page URL and proof fields you provide (e.g., display name) may be publicly accessible by anyone with the link. Do not include confidential or personal data in fields you intend to make public.</p>
-    </div>
-
-    <div class="card">
-      <h2>4) Legal bases & purposes</h2>
-      <ul>
-        <li><strong>Contract:</strong> to provide the timestamping and verification service you request.</li>
-        <li><strong>Legitimate interests:</strong> to secure, maintain, and improve the service; to prevent abuse and fraud.</li>
-        <li><strong>Compliance:</strong> to meet obligations under applicable law (e.g., tax/financial record retention related to payments).</li>
-      </ul>
-    </div>
-
-    <div class="card">
-      <h2>5) Retention</h2>
-      <ul>
-        <li><strong>Proof records:</strong> retained to preserve verifiability of your proofs.</li>
-        <li><strong>Payment records:</strong> retained per legal/tax requirements.</li>
-        <li><strong>Operational logs:</strong> retained for a limited time and rotated.</li>
-      </ul>
-    </div>
-
-    <div class="card">
-      <h2>6) Your choices</h2>
-      <ul>
-        <li><strong>Minimize inputs:</strong> Provide only what you want to appear on a public proof page.</li>
-        <li><strong>Questions:</strong> Contact <a href="mailto:support@docuproof.io">support@docuproof.io</a>.</li>
-      </ul>
-    </div>
-
-    <div class="card">
-      <h2>7) Children’s privacy</h2>
-      <p>docuProof is not intended for children under 16. If you believe a minor has submitted personal data, contact us and we will address it promptly.</p>
-    </div>
-
-    <div class="card">
-      <h2>8) International users</h2>
-      <p>We operate from the United States (Wyoming). By using docuProof, you understand your data may be processed in the U.S. We apply the practices described here regardless of your location.</p>
-    </div>
-
-    <div class="card">
-      <h2>9) Security</h2>
-      <p>We apply industry-standard controls to our systems and never ingest your file contents. No online service can guarantee perfect security; please use strong device security and avoid embedding sensitive information in public proof fields.</p>
-    </div>
-
-    <div class="card">
-      <h2>10) Changes</h2>
-      <p>We may update this policy as our service evolves. Material changes will be posted here with a new “Effective” date. Continued use constitutes acceptance of the revised policy.</p>
-    </div>
-
-    <div class="card">
-      <h2>11) Contact</h2>
-      <p><strong>BuyWayz LLC (dba docuProof.io)</strong><br>Cheyenne, Wyoming, USA<br>
-Email: <a href="mailto:support@docuproof.io">support@docuproof.io</a></p>
-    </div>
-
-    <footer>
-      © 2025 BuyWayz LLC (dba docuProof.io). All rights reserved. · <a href="/terms.html">Terms</a> · <a href="/privacy.html">Privacy</a>
-      <div class="microcopy">Not a notary — cryptographic proof only. No document contents are ever uploaded.</div>
-    </footer>
   </div>
-</body>
-</html>
+
+  <div class="card">
+    <h2>1. What We Collect</h2>
+    <p><strong>What we DO collect:</strong></p>
+    <ul>
+      <li><strong>SHA-256 Hash:</strong> A 64-character cryptographic fingerprint of your file, computed in your browser</li>
+      <li><strong>Email Address:</strong> For sending your certificate and anchoring confirmation</li>
+      <li><strong>Optional Metadata:</strong> Filename and display name you choose to provide</li>
+      <li><strong>Payment Information:</strong> Processed securely by Stripe—we never see your full card number</li>
+    </ul>
+    <p><strong>What we DO NOT collect:</strong></p>
+    <ul>
+      <li>Your actual file or document contents</li>
+      <li>Any data that could reconstruct your file</li>
+      <li>Browsing history or tracking cookies</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>2. How Your File Stays Private</h2>
+    <p>docuProof uses <strong>client-side hashing</strong>. When you select a file:</p>
+    <ul>
+      <li>Your browser computes the SHA-256 hash locally on your device</li>
+      <li>Only this 64-character hash is sent to our servers</li>
+      <li>SHA-256 is a one-way function—the hash cannot be reversed to reveal your file</li>
+      <li>Your file never touches our servers or any third-party service</li>
+    </ul>
+    <p>This is not just a policy—it's how the technology works. We <em>cannot</em> access your documents even if we wanted to.</p>
+  </div>
+
+  <div class="card">
+    <h2>3. How We Use Your Information</h2>
+    <p>We use the information we collect to:</p>
+    <ul>
+      <li>Create and anchor your proof-of-existence record</li>
+      <li>Send you your PDF certificate and anchoring confirmation</li>
+      <li>Process your payment via Stripe</li>
+      <li>Provide customer support when you contact us</li>
+      <li>Improve our service based on aggregate, anonymized usage patterns</li>
+    </ul>
+    <p>We do NOT:</p>
+    <ul>
+      <li>Sell your information to third parties</li>
+      <li>Use your data for advertising</li>
+      <li>Share your email with marketing partners</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>4. Data Storage & Security</h2>
+    <p><strong>Proof Records:</strong> Your proof data (hash, proof ID, timestamps) is stored on secure, encrypted infrastructure to enable verification.</p>
+    <p><strong>Blockchain:</strong> Your hash is permanently anchored to the blockchain. This is public by design—anyone can verify the timestamp, but the hash alone reveals nothing about your file.</p>
+    <p><strong>Email:</strong> Your email is stored securely and used only for service communications.</p>
+    <p><strong>Payment:</strong> All payment processing is handled by Stripe. We never store your full credit card information.</p>
+  </div>
+
+  <div class="card">
+    <h2>5. Third-Party Services</h2>
+    <p>We use the following third-party services:</p>
+    <ul>
+      <li><strong>Stripe:</strong> Payment processing (<a href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe Privacy Policy</a>)</li>
+      <li><strong>Postmark:</strong> Email delivery (<a href="https://postmarkapp.com/privacy-policy" target="_blank" rel="noopener">Postmark Privacy Policy</a>)</li>
+      <li><strong>Netlify:</strong> Website hosting (<a href="https://www.netlify.com/privacy/" target="_blank" rel="noopener">Netlify Privacy Policy</a>)</li>
+      <li><strong>OpenTimestamps:</strong> Blockchain timestamping protocol (open-source, decentralized)</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>6. Your Rights</h2>
+    <p>You have the right to:</p>
+    <ul>
+      <li><strong>Access:</strong> Request information about what data we hold about you</li>
+      <li><strong>Correction:</strong> Request correction of inaccurate information</li>
+      <li><strong>Deletion:</strong> Request deletion of your account and associated data</li>
+      <li><strong>Portability:</strong> Request a copy of your data in a standard format</li>
+    </ul>
+    <p>Note: Proof records anchored to the blockchain cannot be deleted from the blockchain—this is fundamental to how the service works. However, we can delete your account information and email from our systems.</p>
+    <p>To exercise these rights, contact us at <a href="mailto:support@docuproof.io">support@docuproof.io</a>.</p>
+  </div>
+
+  <div class="card">
+    <h2>7. Cookies & Tracking</h2>
+    <p>We use minimal, essential cookies for:</p>
+    <ul>
+      <li>Maintaining your session during checkout</li>
+      <li>Basic analytics to understand service usage (no personal tracking)</li>
+    </ul>
+    <p>We do NOT use:</p>
+    <ul>
+      <li>Advertising cookies</li>
+      <li>Cross-site tracking</li>
+      <li>Third-party marketing pixels</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>8. Children's Privacy</h2>
+    <p>docuProof is not intended for children under 16. We do not knowingly collect information from children under 16. If you believe we have collected such information, please contact us immediately.</p>
+  </div>
+
+  <div class="card">
+    <h2>9. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy as our service evolves. Material changes will be posted with a new Effective date. Your continued use of docuProof after changes constitutes acceptance of the updated policy.</p>
+  </div>
+
+  <div class="card">
+    <h2>10. Contact Us</h2>
+    <p><strong>BuyWayz LLC (dba docuProof.io)</strong><br>
+    Cheyenne, Wyoming, USA<br>
+    Email: <a href="mailto:support@docuproof.io">support@docuproof.io</a></p>
+    <p>For privacy-specific inquiries, please include "Privacy" in your subject line.</p>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <p>© <span id="year"></span> docuProof.io — Proof of Existence on the blockchain</p>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/app.html">G

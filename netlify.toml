@@ -27,7 +27,7 @@
 # Homepage redirects to prelaunch landing page
 [[redirects]]
   from = "/"
-  to = "/prelaunch-landing.html"
+  to = "/start.html"
   status = 200
   force = true
 
