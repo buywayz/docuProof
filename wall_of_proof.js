@@ -74,7 +74,7 @@ exports.handler = async (event, context) => {
   if (event.httpMethod === "POST") {
     try {
       const body = JSON.parse(event.body || "{}");
-      const { category, type, description } = body;
+      const { category, type, description, proofId } = body;
 
       // Validate
       if (!category || !CATEGORIES[category]) {
@@ -100,6 +100,12 @@ exports.handler = async (event, context) => {
         .trim()
         .slice(0, 100);
 
+      // Sanitize proofId (alphanumeric only, max 50 chars)
+      const cleanProofId = (proofId || "")
+        .replace(/[^a-zA-Z0-9_-]/g, "")
+        .trim()
+        .slice(0, 50);
+
       // Create submission
       const submission = {
         id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -108,6 +114,7 @@ exports.handler = async (event, context) => {
         categoryIcon: CATEGORIES[category].icon,
         type,
         description: cleanDescription || null,
+        proofId: cleanProofId || null,
         timestamp: new Date().toISOString()
       };
 

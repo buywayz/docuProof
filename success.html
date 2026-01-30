@@ -986,6 +986,11 @@
         <span class="wall-char-count"><span id="charCount">0</span>/100</span>
       </div>
       
+      <div class="wall-field">
+        <label for="wallProofId">Proof ID (optional — makes your proof viewable by others)</label>
+        <input type="text" id="wallProofId" placeholder="e.g., abc123xyz">
+      </div>
+      
       <div class="wall-actions">
         <button id="wallSubmit" class="wall-btn primary" disabled>Add to The Proof Gallery</button>
         <button id="wallSkip" class="wall-btn secondary">Skip</button>
@@ -1438,6 +1443,7 @@
   const wallCategory = $("wallCategory");
   const wallType = $("wallType");
   const wallDescription = $("wallDescription");
+  const wallProofId = $("wallProofId");
   const wallSubmit = $("wallSubmit");
   const wallSkip = $("wallSkip");
   const wallForm = $("wallForm");
@@ -1491,7 +1497,8 @@
         body: JSON.stringify({
           category: wallCategory.value,
           type: wallType.value,
-          description: wallDescription.value.trim()
+          description: wallDescription.value.trim(),
+          proofId: wallProofId.value.trim()
         })
       });
       

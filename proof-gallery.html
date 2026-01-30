@@ -194,7 +194,6 @@
     }
 
     .proof-badge {
-      flex-shrink: 0;
       background: rgba(34, 197, 94, 0.15);
       border: 1px solid rgba(34, 197, 94, 0.3);
       color: var(--accent);
@@ -205,6 +204,26 @@
       display: flex;
       align-items: center;
       gap: 4px;
+    }
+
+    .proof-actions {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .proof-view-link {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .proof-view-link:hover {
+      opacity: 0.8;
+      text-decoration: underline;
     }
 
     .empty-state {
@@ -400,7 +419,10 @@ async function loadWall() {
           ${s.description ? `<div class="proof-description">"${s.description}"</div>` : ''}
           <div class="proof-time">${timeAgo(s.timestamp)}</div>
         </div>
-        <div class="proof-badge">🔒 Verified</div>
+        <div class="proof-actions">
+          <div class="proof-badge">🔒 Verified</div>
+          ${s.proofId ? `<a href="/v/${s.proofId}" class="proof-view-link" target="_blank">View Proof →</a>` : ''}
+        </div>
       </div>
     `).join('');
     
