@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>docuProof — Your Word Against Theirs? Now You Have Proof.</title>
-  <meta name="description" content="Blockchain-anchored timestamps for homeowners and families. Protect rental deposits, contractor quotes, and more. Use code HOMEOWNER for a free timestamp.">
+  <meta name="description" content="Blockchain-anchored timestamps for individuals and families. Protect rental deposits, contractor quotes, and more. Use code INDIVIDUAL for a free timestamp.">
   <link rel="icon" href="/docuproof-logo.png">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1082,7 +1082,7 @@
 <main>
   <section class="hero">
     <div class="container">
-      <div class="hero-badge">🏠 For Homeowners & Families</div>
+      <div class="hero-badge">🏠 For Individuals & Families</div>
       <h1>Your Word Against Theirs? <span class="highlight">Now You Have Proof.</span></h1>
       <p class="hero-sub">Photos, videos, documents — anchor them to the blockchain the moment they exist. Proof that can't be faked, altered, or denied.</p>
       
@@ -1185,7 +1185,7 @@
   
   <section class="usecases">
     <div class="container">
-      <h2>What smart homeowners timestamp</h2>
+      <h2>What smart individuals timestamp</h2>
       
       <div class="usecase-grid">
         <div class="usecase-item">
@@ -1269,9 +1269,9 @@
           <div class="card-icon">📍</div>
           <h3>Timestamp This Moment</h3>
           <p class="card-tagline">"I was here."</p>
-          <p>Take a photo of where you are right now. This is the moment you discovered docuProof — anchored forever to the blockchain.</p>
+          <p>Upload a photo from your device. On mobile, you can take one directly. This is the moment you discovered docuProof — anchored forever to the blockchain.</p>
           <div class="card-buttons">
-            <a href="#" onclick="openCamera('moment'); return false;" class="btn-free primary">Take Photo →</a>
+            <a href="/app.html?source=photo" class="btn-free primary">Upload Photo →</a>
           </div>
         </div>
         
@@ -1280,9 +1280,9 @@
           <div class="card-icon">🤳</div>
           <h3>Timestamp Yourself</h3>
           <p class="card-tagline">"This version of me existed."</p>
-          <p>Take a selfie. Not for social media — for the blockchain. Permanent proof that you existed at this exact moment.</p>
+          <p>Upload a selfie from your device. On mobile, you can take one directly. Permanent proof that you existed at this exact moment.</p>
           <div class="card-buttons">
-            <a href="#" onclick="openCamera('selfie'); return false;" class="btn-free primary">Take Selfie →</a>
+            <a href="/app.html?source=selfie" class="btn-free primary">Upload Selfie →</a>
           </div>
         </div>
         
@@ -1325,7 +1325,7 @@
         <p>Protect your rental photos, contractor quotes, or home inventory. Use this code at checkout:</p>
         
         <div class="promo-label">YOUR FREE PROOF CODE</div>
-        <div class="promo-code">HOMEOWNER</div>
+        <div class="promo-code">INDIVIDUAL</div>
         
         <br><br>
         
@@ -1354,44 +1354,6 @@
   </div>
 </footer>
 
-
-<script>
-// Camera capture functionality for "Take Photo" and "Take Selfie" buttons
-function openCamera(type) {
-  // Check if we're on a device that likely has a camera
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  
-  // Create a file input that triggers camera
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.capture = type === 'selfie' ? 'user' : 'environment'; // front or back camera
-  
-  input.onchange = function(e) {
-    const file = e.target.files[0];
-    if (file) {
-      // Store file info and redirect to app
-      sessionStorage.setItem('docuproof_camera_file', file.name);
-      sessionStorage.setItem('docuproof_source', type);
-      
-      // Create a URL for the file and store it
-      const url = URL.createObjectURL(file);
-      sessionStorage.setItem('docuproof_file_url', url);
-      
-      // Redirect to app with the file
-      window.location.href = '/app.html?source=' + type + '&hasfile=true';
-    }
-  };
-  
-  // Check if camera/file access is supported
-  if (!isMobile && !navigator.mediaDevices) {
-    // Desktop without camera - show helpful message
-    alert('📱 For the best experience, try this on your phone!\n\nYou can also upload any photo from your computer by clicking the button again.');
-  }
-  
-  input.click();
-}
-</script>
 
 </body>
 </html>

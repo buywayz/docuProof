@@ -704,6 +704,35 @@
   .wall-muted a {
     color: var(--accent);
   }
+
+  /* Spread the Word */
+  .spread-word {
+    margin-top: 24px;
+    text-align: center;
+  }
+  .spread-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  .spread-link:hover {
+    border-color: var(--accent);
+    color: var(--ink);
+  }
+  .spread-icon {
+    font-size: 20px;
+  }
+  .spread-text {
+    color: inherit;
+  }
 </style>
 </head>
 <body>
@@ -1014,6 +1043,14 @@
     <div class="wall-skipped" id="wallSkipped" style="display:none;">
       <p class="wall-muted">No problem! <a href="/proof-gallery.html">View The Proof Gallery →</a></p>
     </div>
+  </section>
+
+  <!-- Spread the Word -->
+  <section class="spread-word">
+    <a href="/badges.html" class="spread-link">
+      <span class="spread-icon">📧</span>
+      <span class="spread-text">Spread the word → Get a badge for your email signature</span>
+    </a>
   </section>
 </main>
 

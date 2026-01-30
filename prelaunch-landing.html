@@ -1033,70 +1033,6 @@
   </section>
   
   
-  <!-- Try It Free Section -->
-  <section class="free-proof-section" id="try-free">
-    <div class="container">
-      <div class="free-proof-header">
-        <span class="free-proof-badge">✨ Your First Proof is Free</span>
-        <h2>Try It Right Now</h2>
-        <p>No account needed. Pick any option and see blockchain-verified proof in 60 seconds.</p>
-      </div>
-      
-      <div class="free-proof-options">
-        
-        <!-- Option 1: Timestamp This Moment -->
-        <div class="free-proof-card">
-          <div class="card-icon">📍</div>
-          <h3>Timestamp This Moment</h3>
-          <p class="card-tagline">"I was here."</p>
-          <p>Take a photo of where you are right now. This is the moment you discovered docuProof — anchored forever to the blockchain.</p>
-          <div class="card-buttons">
-            <a href="#" onclick="openCamera('moment'); return false;" class="btn-free primary">Take Photo →</a>
-          </div>
-        </div>
-        
-        <!-- Option 2: Timestamp Yourself -->
-        <div class="free-proof-card">
-          <div class="card-icon">🤳</div>
-          <h3>Timestamp Yourself</h3>
-          <p class="card-tagline">"This version of me existed."</p>
-          <p>Take a selfie. Not for social media — for the blockchain. Permanent proof that you existed at this exact moment.</p>
-          <div class="card-buttons">
-            <a href="#" onclick="openCamera('selfie'); return false;" class="btn-free primary">Take Selfie →</a>
-          </div>
-        </div>
-        
-        <!-- Option 3: Timestamp Today's Headlines -->
-        <div class="free-proof-card">
-          <div class="card-icon">📰</div>
-          <h3>Timestamp Today</h3>
-          <p class="card-tagline">"Proof of this day in history."</p>
-          <p>Download our daily headlines PDF — a time capsule of today. Timestamp it for blockchain-verified proof of this date.</p>
-          <div class="card-buttons">
-            <a href="/.netlify/functions/daily_headline" class="btn-free secondary" download>Download Today's PDF</a>
-            <span class="or-divider">then</span>
-            <a href="/app.html?source=headlines" class="btn-free primary">Upload & Timestamp →</a>
-          </div>
-        </div>
-        
-        <!-- Option 4: Screenshot Anything -->
-        <div class="free-proof-card">
-          <div class="card-icon">📱</div>
-          <h3>Screenshot Anything</h3>
-          <p class="card-tagline">"My proof. My moment."</p>
-          <p>Screenshot whatever matters — a news headline, a product price, a social post, a conversation. Your personal time capsule.</p>
-          <div class="card-buttons">
-            <a href="/app.html?source=screenshot" class="btn-free primary">Upload Screenshot →</a>
-          </div>
-        </div>
-        
-      </div>
-      
-      <div class="free-proof-footer">
-        <p>Your file never leaves your device until you upload. <a href="/privacy.html">See our privacy promise →</a></p>
-      </div>
-    </div>
-  </section>
 
   <section class="cta-section">
     <div class="container">
@@ -1178,44 +1114,6 @@ document.getElementById('signup-form').addEventListener('submit', function(e) {
 });
 </script>
 
-
-<script>
-// Camera capture functionality for "Take Photo" and "Take Selfie" buttons
-function openCamera(type) {
-  // Check if we're on a device that likely has a camera
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  
-  // Create a file input that triggers camera
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.capture = type === 'selfie' ? 'user' : 'environment'; // front or back camera
-  
-  input.onchange = function(e) {
-    const file = e.target.files[0];
-    if (file) {
-      // Store file info and redirect to app
-      sessionStorage.setItem('docuproof_camera_file', file.name);
-      sessionStorage.setItem('docuproof_source', type);
-      
-      // Create a URL for the file and store it
-      const url = URL.createObjectURL(file);
-      sessionStorage.setItem('docuproof_file_url', url);
-      
-      // Redirect to app with the file
-      window.location.href = '/app.html?source=' + type + '&hasfile=true';
-    }
-  };
-  
-  // Check if camera/file access is supported
-  if (!isMobile && !navigator.mediaDevices) {
-    // Desktop without camera - show helpful message
-    alert('📱 For the best experience, try this on your phone!\n\nYou can also upload any photo from your computer by clicking the button again.');
-  }
-  
-  input.click();
-}
-</script>
 
 </body>
 </html>

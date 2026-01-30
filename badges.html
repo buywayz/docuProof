@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Signature Badges — docuProof</title>
+  <meta name="description" content="Add a docuProof badge to your email signature. Let the world know you protect what matters.">
+  <link rel="icon" href="/docuproof-logo.png">
+  <meta name="theme-color" content="#0b0f14">
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --ink: #eaeaea;
+      --muted: #a7b0ba;
+      --accent: #22C55E;
+      --card: #151b22;
+      --border: #1e2630;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    
+    header {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--ink);
+    }
+    .brand img { height: 32px; }
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      margin-left: 20px;
+      font-size: 14px;
+    }
+    nav a:hover { color: var(--accent); }
+
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 24px 60px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .hero h1 {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+    .hero p {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 550px;
+      margin: 0 auto 24px;
+    }
+    .hero-subtext {
+      font-size: 14px;
+      color: var(--muted);
+      max-width: 500px;
+      margin: 0 auto;
+      font-style: italic;
+    }
+
+    .badge-section {
+      margin-bottom: 40px;
+    }
+    .badge-section h2 {
+      font-size: 18px;
+      margin-bottom: 6px;
+      color: var(--ink);
+    }
+    .badge-section .subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .badge-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .badge-preview {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+
+    /* Badge Styles */
+    .email-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    .email-badge img {
+      height: 20px;
+      width: auto;
+    }
+
+    .code-block {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+      position: relative;
+    }
+    .code-block pre {
+      margin: 0;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 11px;
+      color: #c9d1d9;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: var(--accent);
+      color: #071109;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover {
+      filter: brightness(1.1);
+    }
+    .copy-btn.copied {
+      background: #6b7280;
+    }
+
+    .section-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-top: 40px;
+    }
+    .section-box h2 {
+      font-size: 20px;
+      margin-bottom: 16px;
+      color: var(--ink);
+    }
+    .section-box ol, .section-box ul {
+      padding-left: 20px;
+      color: var(--muted);
+    }
+    .section-box li {
+      margin-bottom: 10px;
+    }
+    .section-box strong {
+      color: var(--ink);
+    }
+    .section-box p {
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .email-instructions {
+      margin-top: 8px;
+      padding-left: 20px;
+    }
+    .email-instructions li {
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .why-item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .why-item .icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    .why-item h4 {
+      font-size: 14px;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+    .why-item p {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    footer {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      border-top: 1px solid var(--border);
+    }
+    footer a {
+      color: var(--muted);
+      text-decoration: none;
+      margin: 0 12px;
+    }
+    footer a:hover {
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="brand" href="/">
+    <img src="/docuproof-logo.png" alt="docuProof">
+    <strong>docuProof</strong>
+  </a>
+  <nav>
+    <a href="/start.html">Timestamp a File</a>
+    <a href="/proof-gallery.html">Proof Gallery</a>
+  </nav>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>📧 Spread the Word</h1>
+    <p>Add a docuProof badge to your email signature and help others discover the power of proof.</p>
+    <p class="hero-subtext">Every email you send plants a seed. You never know who needs this.</p>
+  </div>
+
+  <!-- Badge 1: Minimal Green -->
+  <div class="badge-section">
+    <h2>Option 1: Bold & Minimal</h2>
+    <p class="subtitle">Clean, confident, unmistakable.</p>
+    
+    <div class="badge-card">
+      <div class="badge-preview">
+        <a href="https://docuproof.io" class="email-badge">
+          <img src="https://docuproof.io/docuproof-logo.png" alt="docuProof">
+          <span style="font-size:12px;color:#22C55E;font-weight:600;">docuProof it.</span>
+        </a>
+      </div>
+      
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy HTML</button>
+        <pre>&lt;a href="https://docuproof.io" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;"&gt;&lt;img src="https://docuproof.io/docuproof-logo.png" alt="docuProof" style="height:20px;width:auto;"&gt;&lt;span style="font-size:12px;color:#22C55E;font-weight:600;"&gt;docuProof it.&lt;/span&gt;&lt;/a&gt;</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Badge 2: Memory Fades -->
+  <div class="badge-section">
+    <h2>Option 2: Thought-Provoking</h2>
+    <p class="subtitle">Makes people pause and think.</p>
+    
+    <div class="badge-card">
+      <div class="badge-preview">
+        <a href="https://docuproof.io" class="email-badge">
+          <img src="https://docuproof.io/docuproof-logo.png" alt="docuProof">
+          <span style="font-size:12px;color:#6b7280;font-style:italic;">Memory fades. Proof doesn't.</span>
+        </a>
+      </div>
+      
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy HTML</button>
+        <pre>&lt;a href="https://docuproof.io" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;"&gt;&lt;img src="https://docuproof.io/docuproof-logo.png" alt="docuProof" style="height:20px;width:auto;"&gt;&lt;span style="font-size:12px;color:#6b7280;font-style:italic;"&gt;Memory fades. Proof doesn't.&lt;/span&gt;&lt;/a&gt;</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Badge 3: Deserves Permanence -->
+  <div class="badge-section">
+    <h2>Option 3: Professional</h2>
+    <p class="subtitle">Subtle, sophisticated, timeless.</p>
+    
+    <div class="badge-card">
+      <div class="badge-preview">
+        <a href="https://docuproof.io" class="email-badge">
+          <img src="https://docuproof.io/docuproof-logo.png" alt="docuProof">
+          <span style="font-size:12px;color:#6b7280;font-style:italic;">Your work deserves permanence.</span>
+        </a>
+      </div>
+      
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy HTML</button>
+        <pre>&lt;a href="https://docuproof.io" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,Roboto,Arial,sans-serif;"&gt;&lt;img src="https://docuproof.io/docuproof-logo.png" alt="docuProof" style="height:20px;width:auto;"&gt;&lt;span style="font-size:12px;color:#6b7280;font-style:italic;"&gt;Your work deserves permanence.&lt;/span&gt;&lt;/a&gt;</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- How to Add -->
+  <div class="section-box">
+    <h2>How to Add to Your Signature</h2>
+    <ol>
+      <li><strong>Copy the HTML</strong> — Click "Copy HTML" on your favorite badge above.</li>
+      <li><strong>Open your email settings:</strong>
+        <ul class="email-instructions">
+          <li><strong>Gmail:</strong> Settings → See all settings → General → Signature → paste</li>
+          <li><strong>Outlook:</strong> Settings → Mail → Compose → Email signature → paste</li>
+          <li><strong>Apple Mail:</strong> Mail → Preferences → Signatures → paste</li>
+        </ul>
+      </li>
+      <li><strong>Save</strong> — That's it! Every email now helps spread the word.</li>
+    </ol>
+  </div>
+
+  <!-- Why Add -->
+  <div class="section-box">
+    <h2>Why Add a Badge?</h2>
+    <p>You're not just promoting a product. You're sharing something that could genuinely help someone avoid a nightmare—lost IP, disputed agreements, faded memories with no proof.</p>
+    
+    <div class="why-grid">
+      <div class="why-item">
+        <div class="icon">💡</div>
+        <h4>Plant Seeds</h4>
+        <p>Someone on your email list might need this and not know it exists.</p>
+      </div>
+      <div class="why-item">
+        <div class="icon">🤝</div>
+        <h4>Help Others</h4>
+        <p>Creators, freelancers, business owners—they all have something worth protecting.</p>
+      </div>
+      <div class="why-item">
+        <div class="icon">🔒</div>
+        <h4>Signal Values</h4>
+        <p>Shows you take documentation seriously and protect what matters.</p>
+      </div>
+      <div class="why-item">
+        <div class="icon">💬</div>
+        <h4>Start Conversations</h4>
+        <p>"What's docuProof?" — and now you've helped someone.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <a href="/start.html">Timestamp a File</a>
+  <a href="/proof-gallery.html">Proof Gallery</a>
+  <a href="/badges.html">Email Badges</a>
+  <a href="/business.html">For Business</a>
+  <br><br>
+  © <span id="year"></span> docuProof.io — Proof of Existence on the Blockchain
+</footer>
+
+<script>
+document.getElementById('year').textContent = new Date().getFullYear();
+
+function copyCode(btn) {
+  const pre = btn.parentElement.querySelector('pre');
+  const text = pre.textContent;
+  
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy HTML';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+</script>
+
+</body>
+</html>
