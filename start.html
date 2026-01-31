@@ -590,6 +590,14 @@ a{color:var(--accent);text-decoration:none}
   padding: 8px;
   border-radius: 4px;
 }
+.free-proof-status {
+  font-size: 13px;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  padding: 8px 12px;
+  border-radius: 4px;
+  border-left: 3px solid #f59e0b;
+}
 .free-proof-note {
   font-size: 13px;
   color: var(--muted);
@@ -874,7 +882,7 @@ a{color:var(--accent);text-decoration:none}
       <h3>Proof Created!</h3>
     </div>
     <div class="free-proof-modal-body">
-      <p>Your file has been timestamped. Here's your proof:</p>
+      <p>Your file's unique fingerprint has been recorded and queued for blockchain anchoring.</p>
       <div class="free-proof-result">
         <div class="free-proof-field">
           <label>Verification Link</label>
@@ -886,8 +894,12 @@ a{color:var(--accent);text-decoration:none}
           <label>File Hash (SHA-256)</label>
           <div class="free-proof-hash" id="freeProofHash"></div>
         </div>
+        <div class="free-proof-field">
+          <label>Status</label>
+          <div class="free-proof-status">⏳ Awaiting blockchain anchor (typically completes within a few hours)</div>
+        </div>
       </div>
-      <p class="free-proof-note">🔒 This is a free proof stored in our database. <a href="/app.html">Upgrade to blockchain-anchored proof →</a></p>
+      <p class="free-proof-note">🔒 Your file never left your device — only its cryptographic fingerprint was recorded. <a href="/app.html">Create another proof →</a></p>
     </div>
     <button class="btn-free primary" onclick="closeFreeProofModal()">Done</button>
   </div>

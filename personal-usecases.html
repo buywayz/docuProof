@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>10 Things Smart Homeowners Timestamp | docuProof</title>
+  <meta name="description" content="Protect your home, family, and finances. Discover how everyday people use blockchain timestamps to win disputes and protect what matters.">
+  <link rel="icon" href="/docuproof-logo.png">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #0a0d12;
+      --bg-card: #12171f;
+      --border: #1e2a3a;
+      --text: #e8eaed;
+      --text-muted: #8b95a5;
+      --accent: #22c55e;
+      --accent-glow: rgba(34, 197, 94, 0.15);
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Space Grotesk', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    
+    /* Header */
+    header {
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border);
+      max-width: 1100px;
+      margin: 0 auto;
+      padding-left: 24px;
+      padding-right: 24px;
+    }
+    
+    .header-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text);
+    }
+    
+    .logo img { width: 36px; height: 36px; }
+    .logo-text { font-weight: 700; font-size: 20px; }
+    
+    .nav-cta {
+      background: var(--accent);
+      color: #000;
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    /* Hero */
+    .hero {
+      padding: 60px 0 40px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .hero h1 {
+      font-size: clamp(28px, 4vw, 40px);
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+    
+    .hero p {
+      font-size: 18px;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .hero-note {
+      margin-top: 20px;
+      font-size: 14px;
+      color: var(--accent);
+    }
+    
+    /* Use Cases */
+    .usecases {
+      padding: 50px 0;
+    }
+    
+    .usecase {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+      transition: border-color 0.2s;
+    }
+    
+    .usecase:hover {
+      border-color: rgba(34, 197, 94, 0.4);
+    }
+    
+    .usecase-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .usecase-number {
+      background: var(--accent);
+      color: #000;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    
+    .usecase h2 {
+      font-size: 20px;
+      margin: 0;
+    }
+    
+    .usecase-scenario {
+      background: rgba(239, 68, 68, 0.1);
+      border-left: 3px solid #ef4444;
+      padding: 16px 20px;
+      margin: 16px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    
+    .usecase-scenario strong {
+      color: #fca5a5;
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .usecase-scenario p {
+      color: var(--text);
+      margin: 0;
+      font-style: italic;
+    }
+    
+    .usecase-solution {
+      background: var(--accent-glow);
+      border-left: 3px solid var(--accent);
+      padding: 16px 20px;
+      margin: 16px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    
+    .usecase-solution strong {
+      color: var(--accent);
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .usecase-solution p {
+      color: var(--text);
+      margin: 0;
+    }
+    
+    .usecase-body {
+      color: var(--text-muted);
+    }
+    
+    .usecase-body p {
+      margin-bottom: 12px;
+    }
+    
+    /* CTA Section */
+    .cta-section {
+      padding: 60px 0;
+      text-align: center;
+      border-top: 1px solid var(--border);
+    }
+    
+    .cta-section h2 {
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+    
+    .cta-section p {
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+    
+    .cta-btn {
+      display: inline-block;
+      background: var(--accent);
+      color: #000;
+      padding: 16px 32px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 16px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .cta-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 24px var(--accent-glow);
+    }
+    
+    .cta-note {
+      margin-top: 16px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    
+    /* Footer */
+    footer {
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+    }
+    
+    .footer-links a:hover { color: var(--accent); }
+    
+    .footer-copy {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    
+    @media (max-width: 600px) {
+      .usecase { padding: 24px; }
+      .usecase-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="/" class="logo">
+      <img src="/docuproof-logo.png" alt="docuProof">
+      <div class="logo-text">docuProof</div>
+    </a>
+    <a href="/start.html" class="nav-cta">Timestamp Now →</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="container">
+    <h1>10 Things Smart Homeowners Timestamp</h1>
+    <p>You don't need to be a business to protect yourself. These everyday situations cost people thousands — and a $2.89 timestamp could save you.</p>
+    <p class="hero-note">→ Also see: <a href="/usecases.html" style="color: var(--accent);">Business Use Cases</a></p>
+  </div>
+</section>
+
+<main class="usecases">
+  <div class="container">
+    
+    <article class="usecase">
+      <div class="usecase-header">
+        <div class="usecase-number">1</div>
+        <h2>Rental Move-In & Move-Out Photos</h2>
+      </div>
+      <div class="usecase-scenario">
+        <strong>The Nightmare</strong>
+        <p>"There's damage to the walls and carpet. I'm keeping your $2,400 security deposit."</p>
+      </div>
+      <div class="usecase-body">
+        <p>You spent an hour taking photos when you moved in. The apartment was spotless. Now you're moving out, and the landlord claims you caused damage that was already there. Your photos are on your phone — but how do you prove when they were taken? Metadata can be edited. The landlord doesn't care.</p>
+        <p><strong>Average security deposit lost to disputes: $1,800.</strong></p>
+      </div>
+      <div class="usecase-solution">
+        <strong>With Timestamp</strong>
+        <p>Timestamp your move-in photos the day you get the keys. When the landlord tries to keep your deposit, you have blockchain-anchored proof those photos existed on day one. Dispute over. Deposit returned.</p>
+      </div>
+    </article>
+    
+    <article class="usecase">
+      <div class="usecase-header">
+        <div class="usecase-number">2</div>
+        <h2>Contractor Quotes & Agreements</h2>
+      </div>
+      <div class="usecase-scenario">
+        <strong>The Nightmare</strong>
+        <p>"That was never included. The deck railing is an extra $3,500."</p>
+      </div>
+      <div class="usecase-body">
+        <p>You hired a contractor for your kitchen renovation. They gave you a written quote. Halfway through the job, suddenly things that were "obviously included" now cost extra. The original quote? They have a different version. Or they say you're misremembering.</p>
+        <p><strong>Home improvement disputes average $7,000+ to resolve.</strong></p>
+      </div>
+      <div class="usecase-solution">
+        <strong>With Timestamp</strong>
+        <p>Timestamp the quote before work begins. When the contractor claims the scope was different, pull up your proof: "Here's exactly what you agreed to, timestamped three weeks ago." No court needed.</p>
+      </div>
+    </article>
+    
+    <article class="usecase">
+      <div class="usecase-header">
+        <div class="usecase-number">3</div>
+        <h2>Home Inventory for Insurance</h2>
+      </div>
+      <div class="usecase-scenario">
+        <strong>The Nightmare</strong>
+        <p>"We can't verify you owned a $4,000 watch. Claim denied."</p>
+      </div>
+      <div class="usecase-body">
+        <p>Your house was broken into. Your grandmother's jewelry, your camera equipment, your tools — gone. You file an insurance claim. But the adjuster wants proof you owned these items. Receipts? Lost in the same robbery. Photos? "Those could have been taken anywhere, anytime."</p>
+        <p><strong>Insurance companies deny 10-15% of claims due to insufficient documentation.</strong></p>
+      </div>
+      <div class="usecase-solution">
+        <strong>With Timestamp</strong>
+        <p>Take photos of your valuables today. Timestamp them. If disaster strikes, you have dated proof you owned these items before the loss. The insurance company can't argue with blockchain.</p>
+      </div>
+    </article>
+    
+    <article class="usecase">
+      <div class="usecase-header">
+        <div class="usecase-number">4</div>
+        <h2>Car Condition Before Lending</h2>
+      </div>
+      <div class="usecase-scenario">
+        <strong>The Nightmare</strong>
+        <p>"That dent was already there. I didn't do anything to your car."</p>
+      </div>
+      <div class="usecase-body">
+        <p>You lent your car to your brother-in-law for the weekend. He returns it with a scrape on the bumper. He swears it was already there. You know it wasn't — but can you prove it? Now it's awkward, and someone's paying $800 for a repair that shouldn't be their problem.</p>
+      </div>
+      <div class="usecase-solution">
+        <strong>With Timestamp</strong>
+        <p>Walk around the car, take photos, timestamp them before handing over the keys. When there's damage, you have proof of exactly what the car looked like beforehand. No arguments. No damaged relationships. Just facts.</p>
+      </div>
+    </article>
+    
+    <article class="usecase">
+      <div class="usecase-header">
+        <div class="usecase-number">5</div>
+        <h2>Neighbor Property Disputes</h2>
+      </div>
+      <div class="usecase-scenario">
+        <strong>The Nightmare</strong>
+        <p>"Your tree dropped branches that destroyed my fence. And it's been like this for months — you ignored it."</p>
+      </div>
+      <div class="usecase-body">
+        <p>Property line disputes. Fence placement arguments. Tree damage. Water runoff. The longer a neighbor dispute goes on, the nastier it gets. And in court, timing matters: who knew what, when? If you can't prove when the damage occurred — or didn't occur — you're at their mercy.</p>
+        <p><strong>Neighbor disputes that go to court average $10,000-$30,000 in legal fees.</strong></p>
+      </div>
+      <div class="usecase-solution">
+        <strong>With Timestamp</strong>
+        <p>Document the property line, the fence, the tree — whatever the issue is — with timestamped photos. If it escalates, you have dated evidence. Lawyers love evidence. Judges love evidence. It often ends disputes before they start.</p>
+      </div>
+    </article>
+    
+    <article class="usecase">
+      <div class="usecase-header">
+        <div class="usecase-number">6</div>
+        <h2>Custody Agreements & Co-Parenting</h2>
+      </div>
+      <div class="usecase-scenario">
+        <strong>The Nightmare</strong>
+        <p>"That's not what we agreed to. I never said you could have them that weekend."</p>
+      </div>
+      <div class="usecase-body">
+        <p>Co-parenting is hard enough without disputes over what was agreed. Custody schedules, holiday arrangements, expense splits — when things are contentious, memory becomes selective. And family court isn't cheap.</p>
+      </div>
+      <div class="usecase-solution">
+        <strong>With Timestamp</strong>
+        <p>When you reach an agreement — even an informal one via text or email — screenshot it and timestamp it. If they later claim it was different, you have proof of exactly what was agreed and when.</p>
+      </div>
+    </article>
+    
+    <article class="usecase">
+      <div class="usecase-header">
+        <div class="usecase-number">7</div>
+        <h2>Your Child's Creative Work</h2>
+      </div>
+      <div class="usecase-scenario">
+        <strong>The Nightmare</strong>
+        <p>"How do we know your daughter actually wrote this essay? The writing style is very sophisticated."</p>
+      </div>
+      <div class="usecase-body">
+        <p>Your teenager writes something brilliant. An essay, a song, an app idea, artwork. They enter a competition, apply to a program, or submit it for college applications. Someone questions whether it's really their work. Or worse — someone else copies it and claims it first.</p>
+      </div>
+      <div class="usecase-solution">
+        <strong>With Timestamp</strong>
+        <p>Timestamp their work the day they finish it. If anyone questions authorship or timing, you have cryptographic proof your child created it — and when. Their work, protected.</p>
+      </div>
+    </article>
+    
+    <article class="usecase">
+      <div class="usecase-header">
+        <div class="usecase-number">8</div>
+        <h2>Medical Records & Incident Documentation</h2>
+      </div>
+      <div class="usecase-scenario">
+        <strong>The Nightmare</strong>
+        <p>"We have no record of that injury being reported at the time."</p>
+      </div>
+      <div class="usecase-body">
+        <p>Your child gets hurt at school. You document the injury, but months later when you're dealing with insurance or liability, suddenly the timeline is questioned. Did you really report it then? Where's the proof?</p>
+      </div>
+      <div class="usecase-solution">
+        <strong>With Timestamp</strong>
+        <p>Photograph injuries, timestamp them immediately. Save doctor's notes and timestamp them. If there's ever a dispute about what happened and when, you have proof that existed at the time — not documentation created after the fact.</p>
+      </div>
+    </article>
+    
+    <article class="usecase">
+      <div class="usecase-header">
+        <div class="usecase-number">9</div>
+        <h2>Warranty Receipts & Proof of Purchase</h2>
+      </div>
+      <div class="usecase-scenario">
+        <strong>The Nightmare</strong>
+        <p>"Our system shows no record of your purchase. We can't honor the warranty."</p>
+      </div>
+      <div class="usecase-body">
+        <p>Your appliance breaks 11 months into a 12-month warranty. The company can't find your purchase in their system. Your credit card statement shows the charge, but they want the original receipt. It's long gone — or buried in your email somewhere, and they don't trust the date.</p>
+      </div>
+      <div class="usecase-solution">
+        <strong>With Timestamp</strong>
+        <p>Screenshot or save your receipt and timestamp it on purchase day. When the company "loses" your record, you have blockchain-anchored proof of exactly when you bought it. Warranty honored.</p>
+      </div>
+    </article>
+    
+    <article class="usecase">
+      <div class="usecase-header">
+        <div class="usecase-number">10</div>
+        <h2>Online Transactions & Price Guarantees</h2>
+      </div>
+      <div class="usecase-scenario">
+        <strong>The Nightmare</strong>
+        <p>"That price was never advertised on our site. I don't know what screenshot you're showing me."</p>
+      </div>
+      <div class="usecase-body">
+        <p>You saw a price online, made a purchase decision based on it, and now they're charging more. Or the product description was different. Or the return policy changed. Websites update constantly — and they're not keeping a record that helps you.</p>
+      </div>
+      <div class="usecase-solution">
+        <strong>With Timestamp</strong>
+        <p>Screenshot the price, the product description, the policy — and timestamp it. When the company claims it was always different, you have proof of exactly what their site said, and when.</p>
+      </div>
+    </article>
+    
+  </div>
+</main>
+
+<section class="cta-section">
+  <div class="container">
+    <h2>$2.89 now. Thousands saved later.</h2>
+    <p>Don't wait until you're in a dispute to wish you had proof.</p>
+    <a href="/start.html" class="cta-btn">Create Your First Timestamp →</a>
+    <p class="cta-note">No account required. Your file never leaves your device.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-links">
+      <a href="/start.html">Get Started</a>
+      <a href="/verify">Verify a Proof</a>
+      <a href="/usecases.html">Business Use Cases</a>
+      <a href="/personal-usecases.html">Personal Use Cases</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/cdn-cgi/l/email-protection#04777174746b767044606b677174766b6b622a6d6b">Contact</a>
+    </div>
+    <p class="footer-copy">© 2026 docuProof.io — Proof of Existence on the blockchain.</p>

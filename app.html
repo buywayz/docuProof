@@ -144,15 +144,7 @@
       Preserve the truth of what you create — because memories fade, but proof doesn’t.
     </p>
 
-    <div class="verify-banner reveal">
-      <h3>Quick Verify</h3>
-      <div class="row" style="align-items: center; gap: 12px;">
-        <input id="quickIdTop" class="mono verify-input" placeholder="e.g. cs_live_… or w1oXFVBj0iQ" />
-        <button id="verifyTopBtn" class="btn verify-btn btn-appear">Verify</button>
-      </div>
-      <div class="help">
-        Already have a proof? Paste your Proof ID (<code>cs_…</code>) or 10-character Quick Verify ID to open its verification page.
-      </div>
+    
     </div>
 
     <div class="grid">
@@ -211,6 +203,18 @@
         <div id="msg" class="help" style="min-height:22px"></div>
       </div>
     </div>
+    <!-- Quick Verify - moved below main sections for better UX -->
+    <div class="verify-banner reveal" style="margin-top: 32px;">
+      <h3>Quick Verify</h3>
+      <div class="row" style="align-items: center; gap: 12px;">
+        <input id="quickIdTop" class="mono verify-input" placeholder="e.g. cs_live_… or w1oXFVBj0iQ" />
+        <button id="verifyTopBtn" class="btn verify-btn btn-appear">Verify</button>
+      </div>
+      <div class="help">
+        Already have a proof? Paste your Proof ID (<code>cs_…</code>) or 10-character Quick Verify ID to open its verification page.
+      </div>
+    </div>
+
 
     <footer class="reveal">
       © <span id="year"></span> docuProof.io — All rights reserved. ·

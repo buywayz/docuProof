@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>9 Moments You'll Wish You Had Proof — docuProof</title>
+  <meta name="description" content="Real scenarios where a $2.89 timestamp could save you thousands. From rental disputes to family loans, see why everyday people use docuProof.">
+  <link rel="icon" href="/docuproof-logo.png">
+  <link rel="apple-touch-icon" href="/docuproof-logo.png">
+  <meta name="theme-color" content="#0B0F14">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0d10;
+      --bg-card: #12161c;
+      --bg-elevated: #1a1f27;
+      --ink: #e8eaed;
+      --muted: #8b949e;
+      --accent: #22c55e;
+      --accent-glow: rgba(34, 197, 94, 0.15);
+      --border: #21262d;
+      --danger: #f87171;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font: 16px/1.7 'Outfit', sans-serif;
+    }
+    
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    
+    a:hover {
+      text-decoration: underline;
+    }
+    
+    /* Navigation */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(10, 13, 16, 0.95);
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--ink);
+    }
+    
+    .nav-brand img {
+      height: 32px;
+    }
+    
+    .nav-brand span {
+      font-weight: 700;
+      font-size: 18px;
+    }
+    
+    .nav-cta {
+      background: var(--accent);
+      color: #000 !important;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    
+    /* Hero */
+    .hero {
+      padding: 120px 24px 60px;
+      text-align: center;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 20px;
+    }
+    
+    .hero h1 .accent {
+      color: var(--accent);
+    }
+    
+    .hero p {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    
+    /* Scenarios */
+    .scenarios {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 24px 100px;
+    }
+    
+    .scenario {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+    
+    .scenario-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .scenario-icon {
+      width: 56px;
+      height: 56px;
+      background: var(--accent-glow);
+      border: 2px solid var(--accent);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+    
+    .scenario-meta h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    
+    .scenario-meta .audience {
+      font-size: 14px;
+      color: var(--accent);
+    }
+    
+    .scenario-story {
+      font-size: 16px;
+      line-height: 1.8;
+      color: var(--muted);
+    }
+    
+    .scenario-story p {
+      margin-bottom: 16px;
+    }
+    
+    .scenario-story p:last-child {
+      margin-bottom: 0;
+    }
+    
+    .scenario-outcome {
+      margin-top: 20px;
+      padding: 16px 20px;
+      background: var(--bg);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    
+    /* CTA Section */
+    .cta-section {
+      text-align: center;
+      padding: 60px 24px 80px;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+    }
+    
+    .cta-section h2 {
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+    
+    .cta-section h2 .accent {
+      color: var(--accent);
+    }
+    
+    .cta-section p {
+      color: var(--muted);
+      margin-bottom: 24px;
+      font-size: 18px;
+    }
+    
+    .cta-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 16px;
+    }
+    
+    .btn-primary {
+      background: var(--accent);
+      color: #000 !important;
+    }
+    
+    .btn-secondary {
+      background: var(--bg-elevated);
+      color: var(--ink);
+      border: 1px solid var(--border);
+    }
+    
+    /* Footer */
+    .footer {
+      padding: 48px 24px;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+    }
+    
+    .footer-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+    
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--ink);
+    }
+    
+    .footer-brand img {
+      height: 28px;
+    }
+    
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+    
+    .footer-links a {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    
+    .footer-copy {
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+      width: 100%;
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+    
+    @media (max-width: 600px) {
+      .scenario {
+        padding: 24px;
+      }
+      
+      .scenario-header {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .footer-inner {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .footer-links {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand">
+      <img src="/docuproof-logo.png" alt="">
+      <span>docuProof</span>
+    </a>
+    <a href="/app.html" class="nav-cta">Generate Proof</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <h1>9 Moments You'll Wish You Had <span class="accent">Proof</span></h1>
+  <p>These aren't hypotheticals. They're real disputes that happen every day — where a $2.89 timestamp could save you thousands.</p>
+</section>
+
+<div class="scenarios">
+  
+  <!-- Scenario 1 -->
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-icon">📸</div>
+      <div class="scenario-meta">
+        <h2>The Rental Deposit Fight</h2>
+        <div class="audience">For renters, landlords, property managers</div>
+      </div>
+    </div>
+    <div class="scenario-story">
+      <p>You're moving into an apartment. Smart move — you photograph everything. The cracked tile in the bathroom. The stain on the carpet. The dent in the fridge. You drop those photos into docuProof. Takes 30 seconds.</p>
+      <p>Eleven months later, you're moving out. Landlord hands you a bill for $1,800. Says you damaged the tile, stained the carpet, dented the fridge. You pull up your photos. He says: "Those could've been taken yesterday. Prove they're from move-in."</p>
+      <p>So you show him the certificate. Your photos were anchored to the blockchain the day you got the keys — months before he ever claimed damage. There's no dispute. There's no argument. There's just math and a timestamp that can't be faked.</p>
+    </div>
+    <div class="scenario-outcome">You get your deposit back.</div>
+  </div>
+  
+  <!-- Scenario 2 -->
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-icon">🔧</div>
+      <div class="scenario-meta">
+        <h2>The Contractor Who Blamed You</h2>
+        <div class="audience">For homeowners, anyone hiring contractors</div>
+      </div>
+    </div>
+    <div class="scenario-story">
+      <p>You hire a contractor to remodel your kitchen. Before they start, you walk through and record a video — cabinets are fine, countertops intact, no damage anywhere. You drop that video into docuProof. 30 seconds, timestamped.</p>
+      <p>Three weeks in, the contractor's crew cracks your granite countertop. You point it out. He says: "That was already cracked when we got here. You're not pinning that on me."</p>
+      <p>You pull up your video. Timestamped the morning they arrived — shows the countertop in perfect condition. The crack didn't exist yet. He can't argue with a date anchored to the blockchain.</p>
+    </div>
+    <div class="scenario-outcome">He fixes it. On his dime.</div>
+  </div>
+  
+  <!-- Scenario 3 -->
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-icon">🎨</div>
+      <div class="scenario-meta">
+        <h2>The Stolen Design</h2>
+        <div class="audience">For designers, photographers, writers, freelancers</div>
+      </div>
+    </div>
+    <div class="scenario-story">
+      <p>You're a freelance designer. You send a logo concept to a potential client — just a preview, no contract yet. They ghost you.</p>
+      <p>Six months later, you see your logo on their website. Their website, their product, your work. You reach out. They say: "We designed that in-house. Prove it's yours."</p>
+      <p>But you timestamped your design file before you ever sent it. The blockchain says you had that exact file months before their website launched. They couldn't have designed it — it already existed, and you can prove when.</p>
+    </div>
+    <div class="scenario-outcome">They settle. You get paid.</div>
+  </div>
+  
+  <!-- Scenario 4 -->
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-icon">📝</div>
+      <div class="scenario-meta">
+        <h2>The Scope Creep Nightmare</h2>
+        <div class="audience">For consultants, freelancers, agencies</div>
+      </div>
+    </div>
+    <div class="scenario-story">
+      <p>You're a consultant. You send a proposal — 10 hours of work, $2,500, scope clearly defined. Client agrees over email. Project starts.</p>
+      <p>Halfway through, they start adding requests. Then more. Then more. When you invoice, they say: "This was all part of the original agreement. We're not paying extra."</p>
+      <p>But you timestamped that proposal before you sent it. The original scope, the original price, locked to a specific date. You show them the certificate. That's what they agreed to. Everything else is extra.</p>
+    </div>
+    <div class="scenario-outcome">They pay the full invoice. Plus the additions.</div>
+  </div>
+  
+  <!-- Scenario 5 -->
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-icon">📜</div>
+      <div class="scenario-meta">
+        <h2>The Disputed Will</h2>
+        <div class="audience">For everyone — universal appeal</div>
+      </div>
+    </div>
+    <div class="scenario-story">
+      <p>You finally sit down and write your will. Nobody wants to think about it, but you do it. You save the document.</p>
+      <p>Years later, you're gone. Your kids start arguing. One says the will was changed. Another says it's not the real version. Lawyers get involved. The estate starts bleeding money.</p>
+      <p>But you timestamped it. The will your attorney has matches the file you anchored to the blockchain — same document, same hash, dated years ago. No one can claim it was altered. No one can say there's a newer version. The timestamp settles it.</p>
+    </div>
+    <div class="scenario-outcome">Your wishes are honored. Your family doesn't spend years in court.</div>
+  </div>
+  
+  <!-- Scenario 6 -->
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-icon">🏠</div>
+      <div class="scenario-meta">
+        <h2>The Insurance Policy Switcheroo</h2>
+        <div class="audience">For homeowners, renters, anyone with insurance</div>
+      </div>
+    </div>
+    <div class="scenario-story">
+      <p>You buy homeowner's insurance. Good coverage — replacement cost, personal property, the works. You save the policy declaration to your computer.</p>
+      <p>Three years later, a pipe bursts. Destroys your basement. You file a claim. The insurance company sends an adjuster. They say: "Your policy doesn't cover that. It was changed two years ago. Here's what we have on file."</p>
+      <p>You don't remember any change. And conveniently, their version pays out less.</p>
+      <p>But you timestamped your original policy declaration the day you signed up. The document you have matches the hash from three years ago. It's not your word against theirs anymore — it's their word against the blockchain.</p>
+    </div>
+    <div class="scenario-outcome">You get the full payout.</div>
+  </div>
+  
+  <!-- Scenario 7 -->
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-icon">📦</div>
+      <div class="scenario-meta">
+        <h2>The Burglary Claim</h2>
+        <div class="audience">For homeowners, renters, collectors</div>
+      </div>
+    </div>
+    <div class="scenario-story">
+      <p>You spend a Saturday walking through your house with your phone. You video every room. The TV, the couch, the jewelry in the dresser, the tools in the garage. You upload that video to docuProof. 30 seconds, timestamped.</p>
+      <p>Two years later, your house is burglarized. Gone — the TV, the jewelry, half the garage. You file a claim. Insurance asks for proof of ownership. "What was the TV worth? When did you buy that necklace? Do you have receipts?"</p>
+      <p>You don't have receipts. But you have a timestamped video showing everything in your home — dated years before the break-in. No way you staged it. No way you inflated values after the fact.</p>
+    </div>
+    <div class="scenario-outcome">The adjuster approves the claim. Full value.</div>
+  </div>
+  
+  <!-- Scenario 8 -->
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-icon">💰</div>
+      <div class="scenario-meta">
+        <h2>The Family Loan Gone Wrong</h2>
+        <div class="audience">For anyone lending money to family or friends</div>
+      </div>
+    </div>
+    <div class="scenario-story">
+      <p>Your brother needs $15,000. You want to help, but you've heard the stories — family loans that turn into family feuds. So you write it up. Amount, repayment terms, timeline. You both sign. You timestamp it.</p>
+      <p>Two years later, he's paid back $10,000. Then he stops. You bring it up. He says: "That was a gift. I don't owe you anything else. What loan?"</p>
+      <p>You pull up the agreement. His signature, the terms, the repayment schedule — timestamped the day you both agreed. Anchored to the blockchain before a single dollar was repaid. There's no "I don't remember." The document exists. The date is locked.</p>
+    </div>
+    <div class="scenario-outcome">He pays you back. Thanksgiving is awkward, but you're not out $15,000.</div>
+  </div>
+  
+  <!-- Scenario 9 -->
+  <div class="scenario">
+    <div class="scenario-header">
+      <div class="scenario-icon">🏥</div>
+      <div class="scenario-meta">
+        <h2>The Medical Directive Dispute</h2>
+        <div class="audience">For everyone — emotionally powerful</div>
+      </div>
+    </div>
+    <div class="scenario-story">
+      <p>You fill out a medical directive. You name your daughter as power of attorney. If something happens, she makes the decisions. You save the document, sign it, timestamp it.</p>
+      <p>Years later, something does happen. You're in the hospital, unconscious. Your daughter shows the directive. But your son challenges it. Says it's outdated. Says there's a newer version naming him. Lawyers get called. Your family is fighting in a hospital hallway while you're in a bed.</p>
+      <p>But the directive is timestamped. The blockchain proves this version has existed for years — unchanged, unaltered. There's no newer version. This is what you wanted.</p>
+    </div>
+    <div class="scenario-outcome">Your daughter makes the call. Your wishes are followed. Your family doesn't spend your final days in court.</div>
+  </div>
+  
+</div>
+
+<section class="cta-section">
+  <h2>Ready to <span class="accent">protect what matters</span>?</h2>
+  <p>$2.89. 30 seconds. Proof that lasts forever.</p>
+  <div class="cta-buttons">
+    <a href="/app.html" class="btn btn-primary">Generate Proof →</a>
+    <a href="/start.html" class="btn btn-secondary">Learn More</a>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <a href="/" class="footer-brand">
+      <img src="/docuproof-logo.png" alt="">
+      <span>docuProof</span>
+    </a>
+    <div class="footer-links">
+      <a href="/verify">Verify a Proof</a>
+      <a href="/app.html">Generate Proof</a>
+      <a href="/usecases.html">Business Use Cases</a>
+      <a href="/personal-usecases.html">Personal Use Cases</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/privacy.html">Privacy</a>
+    </div>
+  </div>
+  <div class="footer-copy">
+    © <script>document.write(new Date().getFullYear())</script> docuProof.io — Proof of Existence on the blockchain.
+  </div>
+</footer>
+
+</body>
+</html>

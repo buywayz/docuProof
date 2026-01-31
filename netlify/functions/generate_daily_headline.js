@@ -108,6 +108,7 @@ async function generatePDF(date, headlines, weather) {
     try {
       const doc = new PDFDocument({
         size: "LETTER",
+        autoFirstPage: false, // We'll add the page manually to control it
         margins: { top: inch(0.5), bottom: inch(0.5), left: inch(0.5), right: inch(0.5) },
         info: {
           Title: `Today in History - ${formatDate(date)}`,
@@ -122,6 +123,9 @@ async function generatePDF(date, headlines, weather) {
       doc.on("end", () => resolve(Buffer.concat(chunks)));
       doc.on("error", reject);
 
+      // Add single page
+      doc.addPage();
+      
       const pageW = doc.page.width;   // 612
       const pageH = doc.page.height;  // 792
 

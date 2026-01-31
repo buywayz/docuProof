@@ -1,10 +1,11 @@
 // netlify/functions/create_free_proof.js
-// Creates a free proof without requiring payment
-// Used for "Try It Free" section on landing pages
+// Creates a FREE proof that goes through the SAME blockchain anchoring as paid proofs
+// The difference from paid: no email notifications, no PDF certificate delivery
+// But the proof IS anchored to Bitcoin via OpenTimestamps
 
 const { getStore } = require("@netlify/blobs");
 
-// Generate a short unique ID for quick verification
+// Generate a short unique ID for quick verification (same as paid proofs)
 function generateQuickId() {
   const chars = 'abcdefghjkmnpqrstuvwxyz23456789'; // No confusing chars (0,o,1,l,i)
   let id = '';
@@ -14,9 +15,9 @@ function generateQuickId() {
   return id;
 }
 
-// Generate a longer proof ID
+// Generate proof ID (matches paid proof format)
 function generateProofId() {
-  return 'fp_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  return 'free_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
 }
 
 exports.handler = async (event, context) => {
@@ -47,28 +48,30 @@ exports.handler = async (event, context) => {
     const quickId = generateQuickId();
     const now = new Date();
 
-    // Create proof record
+    // Create proof record - SAME structure as paid proofs so it goes through anchoring
     const proof = {
       id: proofId,
       quickId: quickId,
       hash: hash.toLowerCase(),
       filename: (filename || '').slice(0, 255) || null,
-      source: source || 'free',
+      source: source || 'free-trial',
       type: 'free',
-      status: 'confirmed', // Free proofs are immediately confirmed
+      
+      // IMPORTANT: Status is 'pending' so it gets picked up by the anchoring batch job
+      status: 'pending',
+      anchorStatus: 'pending',
+      
       createdAt: now.toISOString(),
       
-      // Free proofs don't have blockchain anchoring
-      // They're just stored in our database as proof of submission time
-      anchorStatus: 'not_anchored',
-      anchorNote: 'Free proofs are stored in docuProof database. Upgrade for blockchain anchoring.',
+      // No email for free proofs (user didn't provide one)
+      email: null,
       
       // Metadata
       ip: event.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown',
       userAgent: (event.headers['user-agent'] || '').slice(0, 500)
     };
 
-    // Store in Netlify Blobs
+    // Store in Netlify Blobs - same store as paid proofs
     const store = getStore({
       name: 'proofs',
       siteID: process.env.NETLIFY_SITE_ID,
@@ -77,9 +80,9 @@ exports.handler = async (event, context) => {
 
     // Save by proof ID
     await store.setJSON(proofId, proof);
-    console.log(`Free proof created: ${proofId}`);
+    console.log(`Free proof created (pending anchor): ${proofId}`);
 
-    // Also save quick ID mapping
+    // Also save quick ID mapping (same as paid)
     const quickStore = getStore({
       name: 'quick-ids',
       siteID: process.env.NETLIFY_SITE_ID,
@@ -88,7 +91,7 @@ exports.handler = async (event, context) => {
     await quickStore.set(quickId, proofId);
     console.log(`Quick ID mapped: ${quickId} -> ${proofId}`);
 
-    // Return success with verification URL
+    // Return success - proof will be anchored in next batch
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -100,9 +103,9 @@ exports.handler = async (event, context) => {
         filename: proof.filename,
         createdAt: proof.createdAt,
         verifyUrl: `https://docuproof.io/v/${quickId}`,
-        type: 'free',
-        message: 'Free proof created! Your file hash has been recorded with a timestamp.',
-        upgradeNote: 'Want blockchain-anchored proof? Upgrade to a paid plan for permanent, independently verifiable timestamps.'
+        status: 'pending',
+        message: 'Your proof has been created and queued for blockchain anchoring.',
+        note: 'Anchoring typically completes within a few hours. Check your verification link for status updates.'
       })
     };
 
