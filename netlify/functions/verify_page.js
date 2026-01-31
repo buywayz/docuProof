@@ -366,11 +366,12 @@ input {
       const state = (d.state || "").toUpperCase();
       const blockHeight = d.blockHeight || d.block || null;
       const confirmations = d.confirmations || 0;
+      const isResponseOk = d.ok !== false;
       
       // Check if actually anchored (has real block height)
-      const isAnchored = state === "ANCHORED" && blockHeight && blockHeight > 0;
-      const isPending = state === "PENDING" || state === "OTS_RECEIPT" || (!isAnchored && state !== "NOT_FOUND" && state !== "ERROR");
-      const isNotFound = state === "NOT_FOUND" || (!d.state && !d.id);
+      const isAnchored = state === "ANCHORED" && blockHeight && Number(blockHeight) > 0;
+      const isPending = state === "PENDING" || state === "OTS_RECEIPT" || (isResponseOk && !isAnchored && state !== "NOT_FOUND" && state !== "ERROR");
+      const isNotFound = state === "NOT_FOUND" || !isResponseOk;
 
       if (isAnchored) {
         // Fully anchored

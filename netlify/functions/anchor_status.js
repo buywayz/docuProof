@@ -1,7 +1,6 @@
-// netlify/functions/anchor_status.mjs
+// netlify/functions/anchor_status.js
+// v2.0.0 - Returns normalized anchoring status including blockHeight
 // ESM — Return normalized anchoring status for a given id.
-// Prefers the canonical JSON in the primary store (docuproof); falls back to other stores;
-// if missing but receipt exists, infer OTS_RECEIPT.
 
 export const handler = async (event) => {
   try {
@@ -28,16 +27,30 @@ export const handler = async (event) => {
 
     // If we found a canonical anchor JSON, normalize and return it
     if (anchor?.json) {
-      const { state = "OTS_RECEIPT", txid = null, confirmations = 0, updatedAt = null } = anchor.json || {};
+      const { 
+        state = "OTS_RECEIPT", 
+        txid = null, 
+        blockHeight = null,
+        confirmations = 0, 
+        updatedAt = null,
+        createdAt = null
+      } = anchor.json || {};
+      
+      // Determine if actually anchored (must have blockHeight)
+      const isAnchored = state === "ANCHORED" && blockHeight && blockHeight > 0;
+      
       return json(200, {
         ok: true,
         id,
-        state,
+        state: isAnchored ? "ANCHORED" : (state === "ANCHORED" ? "PENDING" : state),
         txid,
-        confirmations,
+        blockHeight: blockHeight || null,
+        block: blockHeight || null, // alias for compatibility
+        confirmations: isAnchored ? confirmations : 0,
         anchorKey,
         foundInStore: anchor.store,
         updatedAt,
+        createdAt,
       });
     }
 
@@ -47,14 +60,16 @@ export const handler = async (event) => {
                 || await findFirstBytes({ getStore, siteID, token, key: altReceipt,  stores: receiptStores });
 
     if (receipt) {
-      // We can safely infer we’re in OTS_RECEIPT
+      // We can safely infer we're in OTS_RECEIPT (pending)
       return json(200, {
         ok: true,
         id,
-        state: "OTS_RECEIPT",
+        state: "PENDING",
         txid: null,
+        blockHeight: null,
+        block: null,
         confirmations: 0,
-        anchorKey,                // where resolve_now would (or did) place it
+        anchorKey,
         inferredFromReceipt: true,
         receiptStore: receipt.store,
       });
@@ -66,6 +81,8 @@ export const handler = async (event) => {
       id,
       state: "NOT_FOUND",
       txid: null,
+      blockHeight: null,
+      block: null,
       confirmations: 0,
       tried: { anchorKey, receiptKey, altReceipt },
     });
