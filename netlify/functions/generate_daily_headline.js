@@ -1,13 +1,32 @@
 // netlify/functions/generate_daily_headline.js
-// v4.0.0 - FIXED: Single page, correct Y coordinates (top-down)
+// v4.1.0 - FIXED: Single page, correct Y coordinates, fixed Blobs import
 // Scheduled function that runs daily at 9am EST to generate "Today in History" PDF
 
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
-const { getStore } = require("@netlify/blobs");
 
 // Convert inches to points
 function inch(n) { return n * 72; }
+
+// Get Netlify Blobs store safely
+async function getStoreSafe(storeName) {
+  try {
+    const mod = await import("@netlify/blobs");
+    
+    const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID || null;
+    const token = process.env.NETLIFY_BLOBS_TOKEN || process.env.NETLIFY_API_TOKEN || null;
+    
+    if (siteID && token) {
+      return mod.getStore({ name: storeName, siteID, token });
+    }
+    
+    // Try without explicit credentials (works in Netlify runtime)
+    return mod.getStore(storeName);
+  } catch (err) {
+    console.error("Failed to get blob store:", err);
+    return null;
+  }
+}
 
 // Format date nicely
 function formatDate(date) {
@@ -330,11 +349,15 @@ exports.handler = async (event, context) => {
     console.log(`PDF generated: ${pdfBuffer.length} bytes`);
     
     // Store in Netlify Blobs
-    const store = getStore({
-      name: "daily-headlines",
-      siteID: process.env.NETLIFY_SITE_ID,
-      token: process.env.NETLIFY_API_TOKEN || process.env.NETLIFY_BLOBS_TOKEN,
-    });
+    const store = await getStoreSafe("daily-headlines");
+    
+    if (!store) {
+      console.error("Could not connect to blob store");
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ ok: false, error: "Blob store unavailable" })
+      };
+    }
     
     // Save as today.pdf (always overwrites)
     await store.set("today.pdf", pdfBuffer);
