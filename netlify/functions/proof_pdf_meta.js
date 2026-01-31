@@ -1,14 +1,56 @@
 // netlify/functions/proof_pdf_meta.js
-// Helper: given ?id=cs_..., look up proof metadata in Blobs and redirect
-// to proof_pdf with filename/displayName/quickId filled in.
+// v7.0.0 — Updated to fetch blockHeight from anchor status record
+// Helper: given ?id=..., look up proof metadata AND anchor status in Blobs
+// and redirect to proof_pdf with all fields filled in.
 
 const { getProof } = require("./_db");
 
-// Derive a short ID from the stored hash
-function shortIdFromHash(h) {
-  if (!h || typeof h !== "string") return "----------";
-  const m = h.toLowerCase().match(/[0-9a-f]{12,}/);
-  return m ? m[0].slice(0, 12) : "----------";
+// We need direct blob access for anchor status since _db.js doesn't export it
+let _storePromise = null;
+
+async function getStoreSafe() {
+  if (_storePromise) return _storePromise;
+
+  _storePromise = (async () => {
+    try {
+      const mod = await import("@netlify/blobs");
+      try {
+        return mod.getStore("proofs");
+      } catch {
+        const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID || null;
+        const token = process.env.NETLIFY_BLOBS_TOKEN || process.env.BLOBS_TOKEN || null;
+        if (siteID && token) {
+          return mod.getStore({ name: "proofs", siteID, token });
+        }
+        return null;
+      }
+    } catch {
+      return null;
+    }
+  })();
+
+  return _storePromise;
+}
+
+async function getAnchorStatus(id) {
+  const store = await getStoreSafe();
+  if (!store) return null;
+  
+  const key = `anchor:${id}.json`;
+  try {
+    const raw = await store.get(key, { type: "json" });
+    if (raw && typeof raw === "object") return raw;
+  } catch {}
+  
+  // Try alternate parsing
+  try {
+    const val = await store.get(key);
+    if (!val) return null;
+    if (typeof val === "string") return JSON.parse(val);
+    if (val && typeof val.text === "function") return JSON.parse(await val.text());
+  } catch {}
+  
+  return null;
 }
 
 exports.handler = async (event) => {
@@ -27,12 +69,13 @@ exports.handler = async (event) => {
   }
 
   // Defaults (if lookup fails)
-  let filename = "docuProof.pdf";
+  let filename = "document";
   let displayName = "Untitled";
-  let quickId = "----------";
-  let verifyUrl =
-    `https://docuproof.io/.netlify/functions/verify_page?id=${encodeURIComponent(id)}`;
+  let createdAt = new Date().toISOString();
+  let blockHeight = null;
+  let verifyUrl = `https://docuproof.io/v/${encodeURIComponent(id)}`;
 
+  // Get proof record (filename, displayName, createdAt)
   try {
     const proof = await getProof(id);
     if (proof && typeof proof === "object") {
@@ -42,22 +85,43 @@ exports.handler = async (event) => {
       if (proof.displayName && typeof proof.displayName === "string") {
         displayName = proof.displayName;
       }
-      if (proof.hash && typeof proof.hash === "string") {
-        quickId = shortIdFromHash(proof.hash);
+      if (proof.createdAt && typeof proof.createdAt === "string") {
+        createdAt = proof.createdAt;
       }
     }
   } catch (e) {
     console.error("proof_pdf_meta getProof error:", e);
-    // fall back to defaults
+  }
+
+  // Get anchor status (blockHeight)
+  try {
+    const anchor = await getAnchorStatus(id);
+    if (anchor && typeof anchor === "object") {
+      if (anchor.blockHeight && typeof anchor.blockHeight === "number") {
+        blockHeight = anchor.blockHeight;
+      }
+    }
+  } catch (e) {
+    console.error("proof_pdf_meta getAnchorStatus error:", e);
   }
 
   const params = new URLSearchParams({
     id,
     filename,
     displayName,
-    quickId,
     verifyUrl,
+    createdAt,
   });
+
+  // Add block number if available
+  if (blockHeight) {
+    params.set("block", String(blockHeight));
+  }
+
+  // Pass through RIP parameter if present
+  if (qp.rip === "true" || qp.rip === "1") {
+    params.set("rip", "true");
+  }
 
   return {
     statusCode: 302,
