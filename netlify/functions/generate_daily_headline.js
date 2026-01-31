@@ -1,7 +1,6 @@
 // netlify/functions/generate_daily_headline.js
-// v3.0.0 - Fixed single page rendering, dark theme
+// v4.0.0 - FIXED: Single page, correct Y coordinates (top-down)
 // Scheduled function that runs daily at 9am EST to generate "Today in History" PDF
-// Schedule: 0 14 * * * (9am EST = 2pm UTC)
 
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
@@ -100,20 +99,18 @@ async function fetchWeather() {
   }
 }
 
-// Generate the branded PDF - SINGLE PAGE
+// Generate the branded PDF - SINGLE PAGE, TOP-DOWN layout
 async function generatePDF(date, headlines, weather) {
   return new Promise((resolve, reject) => {
     try {
-      // Create document with single page (autoFirstPage: true is default)
       const doc = new PDFDocument({
         size: "LETTER",
-        margins: { top: inch(0.5), bottom: inch(0.5), left: inch(0.5), right: inch(0.5) },
-        bufferPages: true, // Buffer pages to prevent auto page breaks
+        margin: inch(0.5),
         info: {
           Title: `Today in History - ${formatDate(date)}`,
           Author: "docuProof.io",
           Subject: "Daily headline document for blockchain timestamping",
-          Creator: "docuProof Daily Generator v3.0"
+          Creator: "docuProof Daily Generator v4.0"
         }
       });
 
@@ -122,8 +119,8 @@ async function generatePDF(date, headlines, weather) {
       doc.on("end", () => resolve(Buffer.concat(chunks)));
       doc.on("error", reject);
       
-      const pageW = doc.page.width;   // 612
-      const pageH = doc.page.height;  // 792
+      const pageW = 612;  // LETTER width
+      const pageH = 792;  // LETTER height
 
       // === BRAND COLORS ===
       const colors = {
@@ -131,7 +128,6 @@ async function generatePDF(date, headlines, weather) {
         bgCard: "#12161c",
         bgElevated: "#1a1f27",
         accent: "#22c55e",
-        accentDark: "#16a34a",
         white: "#ffffff",
         textPrimary: "#e8eaed",
         textMuted: "#8b949e",
@@ -150,68 +146,70 @@ async function generatePDF(date, headlines, weather) {
 
       // === ACCENT CORNERS ===
       const cornerLen = inch(0.4);
+      const inset = inch(0.4);
       doc.lineWidth(2).strokeColor(colors.accent);
       
-      // Top-left
-      doc.moveTo(inch(0.4), pageH - inch(0.4) - cornerLen)
-         .lineTo(inch(0.4), pageH - inch(0.4))
-         .lineTo(inch(0.4) + cornerLen, pageH - inch(0.4))
+      // Top-left corner
+      doc.moveTo(inset, inset + cornerLen)
+         .lineTo(inset, inset)
+         .lineTo(inset + cornerLen, inset)
          .stroke();
       
-      // Top-right
-      doc.moveTo(pageW - inch(0.4) - cornerLen, pageH - inch(0.4))
-         .lineTo(pageW - inch(0.4), pageH - inch(0.4))
-         .lineTo(pageW - inch(0.4), pageH - inch(0.4) - cornerLen)
+      // Top-right corner
+      doc.moveTo(pageW - inset - cornerLen, inset)
+         .lineTo(pageW - inset, inset)
+         .lineTo(pageW - inset, inset + cornerLen)
          .stroke();
       
-      // Bottom-left
-      doc.moveTo(inch(0.4), inch(0.4) + cornerLen)
-         .lineTo(inch(0.4), inch(0.4))
-         .lineTo(inch(0.4) + cornerLen, inch(0.4))
+      // Bottom-left corner
+      doc.moveTo(inset, pageH - inset - cornerLen)
+         .lineTo(inset, pageH - inset)
+         .lineTo(inset + cornerLen, pageH - inset)
          .stroke();
       
-      // Bottom-right
-      doc.moveTo(pageW - inch(0.4) - cornerLen, inch(0.4))
-         .lineTo(pageW - inch(0.4), inch(0.4))
-         .lineTo(pageW - inch(0.4), inch(0.4) + cornerLen)
+      // Bottom-right corner
+      doc.moveTo(pageW - inset - cornerLen, pageH - inset)
+         .lineTo(pageW - inset, pageH - inset)
+         .lineTo(pageW - inset, pageH - inset - cornerLen)
          .stroke();
 
-      // === DATE ID (top right corner) ===
+      // === DATE ID (top right) ===
       const dateId = `#${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
       doc.font("Helvetica-Bold")
          .fontSize(10)
          .fillColor(colors.accent)
-         .text(dateId, pageW - inch(1.2), pageH - inch(0.65), { width: inch(0.9), align: "right" });
+         .text(dateId, pageW - inch(1.3), inch(0.6), { width: inch(1), align: "right" });
 
-      // === CONTENT AREA (top to bottom) ===
-      let y = pageH - inch(1.2);
+      // === CONTENT - TOP DOWN ===
+      let y = inch(0.9);
 
-      // docuProof branding at top
+      // docuProof branding
       doc.font("Helvetica-Bold")
          .fontSize(28)
          .fillColor(colors.accent)
          .text("docuProof", 0, y, { width: pageW, align: "center" });
+      y += inch(0.4);
 
-      y -= inch(0.35);
       doc.font("Helvetica-Oblique")
          .fontSize(11)
          .fillColor(colors.textMuted)
          .text("Proof you can point to.", 0, y, { width: pageW, align: "center" });
+      y += inch(0.6);
 
       // === MAIN DATE ===
-      y -= inch(0.8);
       doc.font("Helvetica-Bold")
          .fontSize(32)
          .fillColor(colors.accent)
          .text(formatDate(date), 0, y, { width: pageW, align: "center" });
+      y += inch(0.6);
 
       // === DECORATIVE DIVIDER ===
-      y -= inch(0.5);
       const divW = inch(3);
+      const divX = (pageW - divW) / 2;
       doc.lineWidth(2)
          .strokeColor(colors.accent)
-         .moveTo((pageW - divW) / 2, y)
-         .lineTo((pageW + divW) / 2, y)
+         .moveTo(divX, y)
+         .lineTo(divX + divW, y)
          .stroke();
 
       // Diamond in center
@@ -221,90 +219,88 @@ async function generatePDF(date, headlines, weather) {
          .rect(-4, -4, 8, 8)
          .fill(colors.accent)
          .restore();
+      y += inch(0.5);
 
-      // === HEADLINES SECTION ===
-      y -= inch(0.6);
-      
-      const boxX = inch(0.8);
-      const boxW = pageW - inch(1.6);
-      
-      // Headlines content box (dark card)
-      const contentH = inch(2.0);
-      doc.roundedRect(boxX, y - contentH, boxW, contentH, 8)
-         .fill(colors.bgCard);
-
-      // Headlines
-      let headlineY = y - inch(0.35);
-      
-      headlines.forEach((headline, i) => {
-        const numX = boxX + inch(0.3);
-        const textX = boxX + inch(0.65);
-        const textW = boxW - inch(1.0);
-        
-        // Number
-        doc.font("Helvetica-Bold")
-           .fontSize(16)
-           .fillColor(colors.accent)
-           .text(`${i + 1}`, numX, headlineY);
-        
-        // Headline text (truncate if too long)
-        const truncatedHeadline = headline.length > 90 ? headline.slice(0, 87) + "..." : headline;
-        doc.font("Helvetica")
-           .fontSize(12)
-           .fillColor(colors.textPrimary)
-           .text(truncatedHeadline, textX, headlineY, { width: textW });
-        
-        headlineY -= inch(0.55);
-      });
-
-      // Header bar at bottom of headlines box
-      y -= contentH;
-      const headerH = inch(0.38);
-      doc.roundedRect(boxX, y - headerH, boxW, headerH, 8)
-         .fill(colors.accent);
-      
-      doc.font("Helvetica-Bold")
-         .fontSize(10)
-         .fillColor(colors.bgDark)
-         .text("TOP HEADLINES", boxX, y - headerH + 11, { width: boxW, align: "center" });
-
-      // === WEATHER ===
-      y -= headerH + inch(0.5);
+      // === WEATHER PILL ===
       const weatherText = `${weather.city}: ${weather.temp}, ${weather.condition}`;
+      const pillW = inch(2.8);
+      const pillH = inch(0.4);
+      const pillX = (pageW - pillW) / 2;
       
-      doc.roundedRect(pageW/2 - inch(1.4), y - inch(0.32), inch(2.8), inch(0.42), 20)
+      doc.roundedRect(pillX, y, pillW, pillH, 20)
          .fill(colors.bgElevated);
       
       doc.font("Helvetica")
          .fontSize(11)
          .fillColor(colors.textMuted)
-         .text(weatherText, 0, y - inch(0.18), { width: pageW, align: "center" });
+         .text(weatherText, 0, y + 10, { width: pageW, align: "center" });
+      y += inch(0.7);
+
+      // === HEADLINES BOX ===
+      const boxX = inch(0.8);
+      const boxW = pageW - inch(1.6);
+      const boxH = inch(2.4);
+      
+      // Dark card background
+      doc.roundedRect(boxX, y, boxW, boxH, 8)
+         .fill(colors.bgCard);
+
+      // Headlines content
+      let headlineY = y + inch(0.4);
+      
+      headlines.forEach((headline, i) => {
+        // Number
+        doc.font("Helvetica-Bold")
+           .fontSize(16)
+           .fillColor(colors.accent)
+           .text(`${i + 1}`, boxX + inch(0.3), headlineY);
+        
+        // Headline text
+        const truncated = headline.length > 85 ? headline.slice(0, 82) + "..." : headline;
+        doc.font("Helvetica")
+           .fontSize(13)
+           .fillColor(colors.textPrimary)
+           .text(truncated, boxX + inch(0.65), headlineY, { width: boxW - inch(1.0) });
+        
+        headlineY += inch(0.6);
+      });
+
+      // "TOP HEADLINES" bar at bottom of box
+      const barH = inch(0.38);
+      const barY = y + boxH - barH;
+      doc.roundedRect(boxX, barY, boxW, barH, 8)
+         .fill(colors.accent);
+      
+      doc.font("Helvetica-Bold")
+         .fontSize(10)
+         .fillColor(colors.bgDark)
+         .text("TOP HEADLINES", boxX, barY + 11, { width: boxW, align: "center" });
+
+      y += boxH + inch(0.5);
 
       // === CTA BOX ===
-      y -= inch(0.8);
-      
+      const ctaH = inch(0.75);
       doc.lineWidth(2)
          .strokeColor(colors.accent)
-         .roundedRect(boxX, y - inch(0.75), boxW, inch(0.75), 12)
+         .roundedRect(boxX, y, boxW, ctaH, 12)
          .stroke();
       
       doc.font("Helvetica-Bold")
          .fontSize(14)
          .fillColor(colors.accent)
-         .text("TIMESTAMP THIS DOCUMENT", 0, y - inch(0.52), { width: pageW, align: "center" });
+         .text("TIMESTAMP THIS DOCUMENT", 0, y + inch(0.18), { width: pageW, align: "center" });
       
       doc.font("Helvetica")
          .fontSize(10)
          .fillColor(colors.textMuted)
-         .text("Upload to docuproof.io for blockchain-verified proof of this date", 0, y - inch(0.28), { width: pageW, align: "center" });
+         .text("Upload to docuproof.io for blockchain-verified proof of this date", 0, y + inch(0.45), { width: pageW, align: "center" });
 
       // === FOOTER ===
       doc.font("Helvetica")
          .fontSize(8)
          .fillColor(colors.textDim)
-         .text("docuProof.io • Proof of Existence on the Blockchain", 0, inch(0.6), { width: pageW, align: "center" });
+         .text("docuProof.io • Proof of Existence on the Blockchain", 0, pageH - inch(0.6), { width: pageW, align: "center" });
 
-      // Finalize - ensure only one page
       doc.end();
     } catch (err) {
       reject(err);
@@ -314,7 +310,7 @@ async function generatePDF(date, headlines, weather) {
 
 // Main handler - scheduled function
 exports.handler = async (event, context) => {
-  console.log("=== Daily Headline Generator v3.0 Starting ===");
+  console.log("=== Daily Headline Generator v4.0 Starting ===");
   
   try {
     const now = new Date();
