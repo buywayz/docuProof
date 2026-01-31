@@ -2,11 +2,10 @@
 
 /*
   netlify/functions/verify_page.js
+  v2.0.0 - Fixed status display, better wording
 
   Serves the Verify UI and calls JSON endpoints:
   - /.netlify/functions/anchor_status?id=...
-  - /.netlify/functions/download_receipt?id=...
-  - /.netlify/functions/download_receipt_json?id=...
 
   Supports:
   - /verify?id=PROOF_ID
@@ -70,6 +69,8 @@ function buildHtml(initialId) {
   --text: #f7f9ff;
   --muted: #9aa4c4;
   --accent: #16ff70;
+  --pending: #f4d28a;
+  --pending-bg: rgba(244, 210, 138, 0.1);
 }
 
 * { box-sizing: border-box; }
@@ -103,7 +104,7 @@ body {
 .logo-glyph {
   width: 32px;
   height: 32px;
-  background: center/contain no-repeat url("/.netlify/functions/logo_static");
+  background: center/contain no-repeat url("/docuproof-logo.png");
 }
 
 .logo-text {
@@ -129,6 +130,7 @@ body {
   border-radius: 999px;
   font-weight: 600;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .layout {
@@ -173,6 +175,7 @@ input {
   background: #0b1124;
   border: 1px solid var(--border);
   color: var(--text);
+  font-size: 14px;
 }
 
 .pill {
@@ -185,10 +188,28 @@ input {
   border: 1px solid rgba(255,255,255,.08);
 }
 
+.pill-waiting {
+  background: rgba(255,255,255,.05);
+  color: var(--muted);
+}
+
+.pill-pending {
+  background: var(--pending-bg);
+  border-color: var(--pending);
+  color: var(--pending);
+  font-weight: 600;
+}
+
 .pill-success {
   background: linear-gradient(135deg, #16ff70, #16ffab);
   color: #020513;
   font-weight: 600;
+}
+
+.pill-error {
+  background: rgba(255, 107, 107, 0.1);
+  border-color: #ff6b6b;
+  color: #ff6b6b;
 }
 
 .field {
@@ -246,7 +267,7 @@ input {
       <div class="logo-sub">Proof you can point to.</div>
     </div>
   </div>
-  <a href="/start" class="btn-primary">Start · Generate</a>
+  <a href="/start.html" class="btn-primary">Start · Generate</a>
 </header>
 
 <main class="layout">
@@ -257,11 +278,11 @@ input {
 
   <div class="label">Proof ID</div>
   <div class="input-row">
-    <input id="proof-id" value="${esc(initialId)}" />
+    <input id="proof-id" value="${esc(initialId)}" placeholder="e.g., cs_live_... or b5rks9n34a" />
     <button id="btn-check" class="btn-primary">Check status</button>
   </div>
 
-  <div id="pill-state" class="pill" style="margin-top:14px;">Waiting for proof</div>
+  <div id="pill-state" class="pill pill-waiting" style="margin-top:14px;">Enter a Proof ID above</div>
 
   <div class="field">
     <div class="label">Anchor state</div>
@@ -269,8 +290,8 @@ input {
   </div>
 
   <div class="field">
-    <div class="label">Bitcoin txid</div>
-    <div id="bitcoin-txid" class="mono">—</div>
+    <div class="label">Bitcoin block</div>
+    <div id="bitcoin-block" class="mono">—</div>
   </div>
 
   <div class="field">
@@ -291,15 +312,23 @@ input {
   <h1>How verification works</h1>
   <p>
     docuProof stores only a cryptographic fingerprint and a timestamp receipt.
-    Independent verification is performed via public Bitcoin block explorers
+    Independent verification is performed via the Bitcoin blockchain
     and the OpenTimestamps protocol.
+  </p>
+  <p style="margin-top: 16px; color: var(--muted); font-size: 14px;">
+    <strong>Pending proofs:</strong> After creation, proofs are queued for blockchain anchoring. 
+    This typically takes 1-3 hours as transactions are batched and confirmed by Bitcoin miners.
+  </p>
+  <p style="margin-top: 12px; color: var(--muted); font-size: 14px;">
+    <strong>Anchored proofs:</strong> Once confirmed, your proof is permanently recorded 
+    on the Bitcoin blockchain and can be independently verified forever.
   </p>
 </section>
 
 </main>
 
 <footer class="footer">
-© 2025 docuProof.io — Bitcoin-anchored proof of existence
+© 2026 docuProof.io — Bitcoin-anchored proof of existence
 </footer>
 
 </div>
@@ -310,34 +339,92 @@ input {
   const btn = document.getElementById("btn-check");
   const pill = document.getElementById("pill-state");
   const fieldState = document.getElementById("anchor-state");
-  const fieldTxid = document.getElementById("bitcoin-txid");
+  const fieldBlock = document.getElementById("bitcoin-block");
   const fieldConf = document.getElementById("confirmations");
 
   async function check(id){
+    if (!id) {
+      pill.className = "pill pill-waiting";
+      pill.textContent = "Enter a Proof ID above";
+      fieldState.textContent = "—";
+      fieldBlock.innerHTML = "—";
+      fieldConf.textContent = "—";
+      return;
+    }
+
+    pill.className = "pill pill-waiting";
     pill.textContent = "Checking…";
-    const r = await fetch("/.netlify/functions/anchor_status?id="+encodeURIComponent(id));
-    const d = await r.json();
+    fieldState.textContent = "…";
+    fieldBlock.innerHTML = "…";
+    fieldConf.textContent = "…";
 
-    pill.className = "pill pill-success";
-    pill.textContent = "Anchored on the Bitcoin blockchain";
+    try {
+      const r = await fetch("/.netlify/functions/anchor_status?id=" + encodeURIComponent(id));
+      const d = await r.json();
 
-    fieldState.textContent = d.state || "—";
-    fieldConf.textContent = d.confirmations ?? "0";
+      // Determine actual state
+      const state = (d.state || "").toUpperCase();
+      const blockHeight = d.blockHeight || d.block || null;
+      const confirmations = d.confirmations || 0;
+      
+      // Check if actually anchored (has real block height)
+      const isAnchored = state === "ANCHORED" && blockHeight && blockHeight > 0;
+      const isPending = state === "PENDING" || state === "OTS_RECEIPT" || (!isAnchored && state !== "NOT_FOUND" && state !== "ERROR");
+      const isNotFound = state === "NOT_FOUND" || (!d.state && !d.id);
 
-    if (d.txid) {
-      const tx = d.txid;
-      const short = tx.slice(0,12)+"…"+tx.slice(-6);
-      fieldTxid.innerHTML =
-        '<div class="txid-block">' +
-          '<a href="https://mempool.space/tx/'+tx+'" target="_blank">'+short+'</a>' +
-          '<div class="txid-full">'+tx+'</div>' +
-          '<div class="txid-full">Also view on <a href="https://blockstream.info/tx/'+tx+'" target="_blank">blockstream.info</a></div>' +
-        '</div>';
+      if (isAnchored) {
+        // Fully anchored
+        pill.className = "pill pill-success";
+        pill.textContent = "✓ Anchored on the Bitcoin blockchain";
+        fieldState.textContent = "Confirmed";
+        fieldConf.textContent = confirmations.toLocaleString();
+        
+        // Show block with link
+        const blockNum = Number(blockHeight).toLocaleString();
+        fieldBlock.innerHTML = 
+          '<a href="https://mempool.space/block/' + blockHeight + '" target="_blank" style="color: #7bf8b9;">#' + blockNum + '</a>' +
+          ' · <a href="https://blockstream.info/block/' + blockHeight + '" target="_blank" style="color: var(--muted); font-size: 11px;">blockstream</a>';
+          
+      } else if (isPending) {
+        // Pending - waiting for anchor
+        pill.className = "pill pill-pending";
+        pill.textContent = "⏳ Pending blockchain confirmation";
+        fieldState.textContent = "Queued for anchoring";
+        fieldBlock.innerHTML = "Awaiting confirmation";
+        fieldConf.textContent = "—";
+        
+      } else if (isNotFound) {
+        // Not found
+        pill.className = "pill pill-error";
+        pill.textContent = "Proof not found";
+        fieldState.textContent = "No record found";
+        fieldBlock.innerHTML = "—";
+        fieldConf.textContent = "—";
+        
+      } else {
+        // Unknown state - treat as pending
+        pill.className = "pill pill-pending";
+        pill.textContent = "⏳ Processing";
+        fieldState.textContent = state || "Unknown";
+        fieldBlock.innerHTML = "—";
+        fieldConf.textContent = "—";
+      }
+
+    } catch (err) {
+      pill.className = "pill pill-error";
+      pill.textContent = "Error checking status";
+      fieldState.textContent = "Connection error";
+      fieldBlock.innerHTML = "—";
+      fieldConf.textContent = "—";
     }
   }
 
   btn.onclick = () => check(input.value.trim());
-  if (input.value) check(input.value);
+  
+  // Auto-check if ID provided in URL
+  if (input.value) {
+    check(input.value.trim());
+  }
 })();
 </script>
 
