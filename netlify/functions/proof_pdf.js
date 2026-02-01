@@ -1,5 +1,5 @@
 // netlify/functions/proof_pdf.js
-// v7.3.0 — Single page certificate - tighter spacing
+// v7.4.0 — Single page certificate - NO bottom corners
 
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
@@ -25,10 +25,8 @@ exports.handler = async (event) => {
         Title: "Certificate of Proof of Existence",
         Author: "docuProof.io",
         Subject: `Proof ID: ${id}`,
-        Creator: "docuProof Certificate Generator v7.3.0"
-      },
-      autoFirstPage: true,
-      bufferPages: true
+        Creator: "docuProof Certificate Generator v7.4.0"
+      }
     });
 
     const chunks = [];
@@ -50,13 +48,12 @@ exports.handler = async (event) => {
 
     doc.rect(0, 0, pageW, pageH).fill("#ffffff");
 
+    // TOP corners only
     const cs = inch(0.45);
     const co = inch(0.25);
     doc.lineWidth(3).strokeColor(green);
     doc.moveTo(co, co + cs).lineTo(co, co).lineTo(co + cs, co).stroke();
     doc.moveTo(pageW - co - cs, co).lineTo(pageW - co, co).lineTo(pageW - co, co + cs).stroke();
-    doc.moveTo(co, pageH - co - cs).lineTo(co, pageH - co).lineTo(co + cs, pageH - co).stroke();
-    doc.moveTo(pageW - co - cs, pageH - co).lineTo(pageW - co, pageH - co).lineTo(pageW - co, pageH - co - cs).stroke();
 
     let y = inch(0.5);
 
@@ -165,10 +162,10 @@ exports.handler = async (event) => {
       iY += inch(0.11);
     }
 
-    const footY = pageH - inch(0.38);
-    doc.lineWidth(1.5).strokeColor(green).moveTo(centerX - inch(1.8), footY).lineTo(centerX + inch(1.8), footY).stroke();
+    // Footer - simple line and text, well above page bottom
+    doc.lineWidth(1.5).strokeColor(green).moveTo(centerX - inch(1.8), pageH - inch(0.6)).lineTo(centerX + inch(1.8), pageH - inch(0.6)).stroke();
     doc.font("Helvetica").fontSize(8).fillColor(gray);
-    doc.text("docuProof.io  •  Proof of Existence on the Blockchain", marginL, footY + inch(0.08), { width: contentW, align: "center" });
+    doc.text("docuProof.io  •  Proof of Existence on the Blockchain", marginL, pageH - inch(0.5), { width: contentW, align: "center" });
 
     doc.end();
     const pdf = await done;
@@ -182,7 +179,7 @@ exports.handler = async (event) => {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${outputFilename}"`,
         "Cache-Control": "no-store",
-        "x-docuproof-version": "proof_pdf v7.3.0",
+        "x-docuproof-version": "proof_pdf v7.4.0",
       },
       body: pdf.toString("base64"),
       isBase64Encoded: true,
