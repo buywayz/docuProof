@@ -1,15 +1,10 @@
 "use strict";
 
 /*
-  netlify/functions/verify_page.js
-  v2.0.0 - Fixed status display, better wording
+  netlify/functions/verify_page.js  v2.1.0
 
   Serves the Verify UI and calls JSON endpoints:
   - /.netlify/functions/anchor_status?id=...
-
-  Supports:
-  - /verify?id=PROOF_ID
-  - /v/PROOF_ID
 */
 
 exports.handler = async (event) => {
@@ -31,7 +26,10 @@ exports.handler = async (event) => {
   if (!initialId && event.path) {
     const parts = event.path.split("/").filter(Boolean);
     const last = parts[parts.length - 1] || "";
-    if (last && !last.includes("?")) initialId = last;
+    // Don't use "verify" as an ID
+    if (last && !last.includes("?") && last !== "verify" && last !== "v") {
+      initialId = last;
+    }
   }
 
   return {
@@ -59,52 +57,57 @@ function buildHtml(initialId) {
 <meta charset="utf-8" />
 <title>Verify • docuProof</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="/docuproof-logo.png">
 
 <style>
 :root {
-  --bg: #020714;
-  --panel: #050b1d;
-  --panel-soft: #070f22;
-  --border: #151b2e;
-  --text: #f7f9ff;
-  --muted: #9aa4c4;
-  --accent: #16ff70;
-  --pending: #f4d28a;
-  --pending-bg: rgba(244, 210, 138, 0.1);
+  --bg: #0a0d10;
+  --card: #12161c;
+  --border: #21262d;
+  --text: #e8eaed;
+  --muted: #8b949e;
+  --accent: #22c55e;
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: radial-gradient(circle at top, #061227 0, #01030a 55%);
+  background: var(--bg);
   color: var(--text);
+  min-height: 100vh;
 }
 
 .shell {
-  max-width: 1120px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 0 24px;
 }
 
+/* Header - matches other pages */
 .header {
+  border-bottom: 1px solid var(--border);
+  padding: 16px 0;
+  margin-bottom: 48px;
+}
+
+.header-inner {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 22px;
 }
 
 .logo {
   display: flex;
   gap: 12px;
   align-items: center;
+  text-decoration: none;
+  color: var(--text);
 }
 
-.logo-glyph {
-  width: 32px;
-  height: 32px;
-  background: center/contain no-repeat url("/docuproof-logo.png");
+.logo img {
+  width: 36px;
+  height: 36px;
 }
 
 .logo-text {
@@ -112,31 +115,43 @@ body {
 }
 
 .logo-title {
-  font-weight: 650;
+  font-weight: 700;
+  font-size: 18px;
 }
 
 .logo-sub {
   font-size: 11px;
-  letter-spacing: .14em;
+  letter-spacing: .08em;
   color: var(--muted);
   text-transform: uppercase;
 }
 
 .btn-primary {
   background: var(--accent);
-  color: #020513;
+  color: #0a0d10;
   border: none;
-  padding: 10px 20px;
+  padding: 12px 24px;
   border-radius: 999px;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 15px;
   cursor: pointer;
   text-decoration: none;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover {
+  background: #1ea550;
+}
+
+/* Main content */
+.content {
+  padding-bottom: 60px;
 }
 
 .layout {
   display: grid;
   grid-template-columns: 1.1fr 1fr;
-  gap: 22px;
+  gap: 24px;
 }
 
 @media (max-width: 900px) {
@@ -144,194 +159,259 @@ body {
 }
 
 .panel {
-  background: linear-gradient(145deg, var(--panel), var(--panel-soft));
+  background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 22px;
-  padding: 22px;
+  border-radius: 16px;
+  padding: 28px;
 }
 
 .panel h1 {
-  margin-top: 0;
-  font-size: 22px;
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.panel > p {
+  color: var(--muted);
+  margin-bottom: 24px;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
 .label {
   font-size: 11px;
-  letter-spacing: .16em;
+  letter-spacing: .12em;
   color: var(--muted);
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .input-row {
   display: flex;
-  gap: 10px;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 input {
   flex: 1;
-  border-radius: 999px;
-  padding: 10px 14px;
-  background: #0b1124;
+  border-radius: 12px;
+  padding: 14px 18px;
+  background: #1a1f24;
   border: 1px solid var(--border);
   color: var(--text);
-  font-size: 14px;
+  font-size: 16px;
+  outline: none;
 }
 
+input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+input::placeholder {
+  color: #6b7280;
+}
+
+/* Pills */
 .pill {
   display: inline-flex;
+  align-items: center;
   gap: 8px;
-  padding: 6px 14px;
+  padding: 8px 16px;
   border-radius: 999px;
-  font-size: 11px;
-  letter-spacing: .14em;
-  border: 1px solid rgba(255,255,255,.08);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 20px;
 }
 
 .pill-waiting {
-  background: rgba(255,255,255,.05);
+  background: #1a1f24;
   color: var(--muted);
+  border: 1px solid var(--border);
 }
 
 .pill-pending {
-  background: var(--pending-bg);
-  border-color: var(--pending);
-  color: var(--pending);
-  font-weight: 600;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #000;
 }
 
 .pill-success {
-  background: linear-gradient(135deg, #16ff70, #16ffab);
-  color: #020513;
-  font-weight: 600;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #000;
 }
 
 .pill-error {
-  background: rgba(255, 107, 107, 0.1);
-  border-color: #ff6b6b;
-  color: #ff6b6b;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
 }
 
+/* Fields */
 .field {
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
-  margin-top: 10px;
+  align-items: flex-start;
+  font-size: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.field:last-of-type {
+  border-bottom: none;
+}
+
+.field-label {
+  font-size: 11px;
+  letter-spacing: .12em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.field-value {
+  text-align: right;
+  color: var(--text);
 }
 
 .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  font-size: 13px;
 }
 
-.txid-block {
-  text-align: right;
+.block-link {
+  color: var(--accent);
+  text-decoration: none;
 }
 
-.txid-block a {
-  color: #7bf8b9;
+.block-link:hover {
+  text-decoration: underline;
 }
 
 .txid-full {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
   margin-top: 6px;
+  word-break: break-all;
 }
 
 .court-panel {
-  margin-top: 20px;
+  margin-top: 24px;
   border-top: 1px dashed rgba(255,255,255,.12);
-  padding-top: 16px;
-  font-size: 13px;
-  line-height: 1.5;
+  padding-top: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #c9d2db;
 }
 
+.court-panel strong {
+  color: var(--text);
+}
+
+/* Right panel */
+.info-panel h1 {
+  margin-bottom: 16px;
+}
+
+.info-panel p {
+  color: #c9d2db;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.info-panel strong {
+  color: var(--accent);
+}
+
+/* Footer */
 .footer {
   text-align: center;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
-  margin-top: 24px;
+  padding: 24px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 48px;
 }
 </style>
 </head>
 
 <body>
-<div class="shell">
 
 <header class="header">
-  <div class="logo">
-    <div class="logo-glyph"></div>
-    <div class="logo-text">
-      <div class="logo-title">docuProof</div>
-      <div class="logo-sub">Proof you can point to.</div>
+  <div class="shell">
+    <div class="header-inner">
+      <a href="/" class="logo">
+        <img src="/docuproof-logo.png" alt="docuProof">
+        <div class="logo-text">
+          <div class="logo-title">docuProof</div>
+          <div class="logo-sub">Proof you can point to.</div>
+        </div>
+      </a>
+      <a href="/start.html" class="btn-primary">Start · Generate</a>
     </div>
   </div>
-  <a href="/start.html" class="btn-primary">Start · Generate</a>
 </header>
 
-<main class="layout">
+<main class="content">
+  <div class="shell">
+    <div class="layout">
 
-<section class="panel">
-  <h1>Check a timestamped proof</h1>
-  <p>Paste the <strong>Proof ID</strong> from your certificate.</p>
+      <section class="panel">
+        <h1>Check a timestamped proof</h1>
+        <p>Paste the <strong>Proof ID</strong> from your certificate.</p>
 
-  <div class="label">Proof ID</div>
-  <div class="input-row">
-    <input id="proof-id" value="${esc(initialId)}" placeholder="e.g., cs_live_... or b5rks9n34a" />
-    <button id="btn-check" class="btn-primary">Check status</button>
+        <div class="label">Proof ID</div>
+        <div class="input-row">
+          <input id="proof-id" value="${esc(initialId)}" placeholder="e.g. cs_live_... or free_abc123..." />
+          <button id="btn-check" class="btn-primary">Check status</button>
+        </div>
+
+        <div id="pill-state" class="pill pill-waiting">Enter a Proof ID above</div>
+
+        <div class="field">
+          <div class="field-label">Anchor State</div>
+          <div id="anchor-state" class="field-value">—</div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Bitcoin Block</div>
+          <div id="bitcoin-block" class="field-value">—</div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Confirmations</div>
+          <div id="confirmations" class="field-value">—</div>
+        </div>
+
+        <div class="court-panel">
+          <strong>Court-facing verification</strong><br/>
+          This record indicates that a SHA-256 hash was timestamped and anchored
+          into the Bitcoin blockchain. This supports that a file with that hash
+          existed no later than the block confirmation time, subject to standard
+          Bitcoin and OpenTimestamps security assumptions.
+        </div>
+      </section>
+
+      <section class="panel info-panel">
+        <h1>How verification works</h1>
+        <p>
+          docuProof stores only a cryptographic fingerprint and a timestamp receipt.
+          Independent verification is performed via the Bitcoin blockchain and the OpenTimestamps protocol.
+        </p>
+        <p>
+          <strong>Pending proofs:</strong> After creation, proofs are queued for blockchain anchoring. This typically takes 1-3 hours as transactions are batched and confirmed by Bitcoin miners.
+        </p>
+        <p>
+          <strong>Anchored proofs:</strong> Once confirmed, your proof is permanently recorded on the Bitcoin blockchain and can be independently verified forever.
+        </p>
+      </section>
+
+    </div>
   </div>
-
-  <div id="pill-state" class="pill pill-waiting" style="margin-top:14px;">Enter a Proof ID above</div>
-
-  <div class="field">
-    <div class="label">Anchor state</div>
-    <div id="anchor-state">—</div>
-  </div>
-
-  <div class="field">
-    <div class="label">Bitcoin block</div>
-    <div id="bitcoin-block" class="mono">—</div>
-  </div>
-
-  <div class="field">
-    <div class="label">Confirmations</div>
-    <div id="confirmations">—</div>
-  </div>
-
-  <div class="court-panel">
-    <strong>Court-facing verification</strong><br/>
-    This record indicates that a SHA-256 hash was timestamped and anchored
-    into the Bitcoin blockchain. This supports that a file with that hash
-    existed no later than the block confirmation time, subject to standard
-    Bitcoin and OpenTimestamps security assumptions.
-  </div>
-</section>
-
-<section class="panel">
-  <h1>How verification works</h1>
-  <p>
-    docuProof stores only a cryptographic fingerprint and a timestamp receipt.
-    Independent verification is performed via the Bitcoin blockchain
-    and the OpenTimestamps protocol.
-  </p>
-  <p style="margin-top: 16px; color: var(--muted); font-size: 14px;">
-    <strong>Pending proofs:</strong> After creation, proofs are queued for blockchain anchoring. 
-    This typically takes 1-3 hours as transactions are batched and confirmed by Bitcoin miners.
-  </p>
-  <p style="margin-top: 12px; color: var(--muted); font-size: 14px;">
-    <strong>Anchored proofs:</strong> Once confirmed, your proof is permanently recorded 
-    on the Bitcoin blockchain and can be independently verified forever.
-  </p>
-</section>
-
 </main>
 
 <footer class="footer">
-© 2026 docuProof.io — Bitcoin-anchored proof of existence
+  <div class="shell">
+    © 2026 docuProof.io — Bitcoin-anchored proof of existence
+  </div>
 </footer>
-
-</div>
 
 <script>
 (function(){
@@ -342,88 +422,93 @@ input {
   const fieldBlock = document.getElementById("bitcoin-block");
   const fieldConf = document.getElementById("confirmations");
 
-  async function check(id){
+  function resetFields() {
+    fieldState.textContent = "—";
+    fieldBlock.innerHTML = "—";
+    fieldConf.textContent = "—";
+  }
+
+  function showNotFound() {
+    pill.className = "pill pill-error";
+    pill.textContent = "Proof not found";
+    fieldState.textContent = "No record found";
+    fieldBlock.innerHTML = "—";
+    fieldConf.textContent = "—";
+  }
+
+  function showPending() {
+    pill.className = "pill pill-pending";
+    pill.textContent = "⏳ Pending blockchain confirmation";
+    fieldState.textContent = "Queued for anchoring";
+    fieldBlock.innerHTML = "Awaiting confirmation";
+    fieldConf.textContent = "—";
+  }
+
+  function showAnchored(d) {
+    pill.className = "pill pill-success";
+    pill.textContent = "✓ Anchored on the Bitcoin blockchain";
+    fieldState.textContent = "Confirmed";
+    fieldConf.textContent = d.confirmations ?? "—";
+
+    // Show block with links
+    const block = d.blockHeight || d.block;
+    if (block) {
+      fieldBlock.innerHTML = 
+        '<a class="block-link" href="https://mempool.space/block/' + block + '" target="_blank">' + block + '</a>' +
+        ' · <a class="block-link" href="https://blockstream.info/block/' + block + '" target="_blank">blockstream</a>';
+    } else if (d.txid) {
+      const tx = d.txid;
+      const short = tx.slice(0,10) + "…" + tx.slice(-6);
+      fieldBlock.innerHTML = 
+        '<a class="block-link" href="https://mempool.space/tx/' + tx + '" target="_blank">' + short + '</a>' +
+        '<div class="txid-full">' + tx + '</div>';
+    }
+  }
+
+  async function check(id) {
     if (!id) {
       pill.className = "pill pill-waiting";
       pill.textContent = "Enter a Proof ID above";
-      fieldState.textContent = "—";
-      fieldBlock.innerHTML = "—";
-      fieldConf.textContent = "—";
+      resetFields();
       return;
     }
 
     pill.className = "pill pill-waiting";
     pill.textContent = "Checking…";
-    fieldState.textContent = "…";
-    fieldBlock.innerHTML = "…";
-    fieldConf.textContent = "…";
+    resetFields();
 
     try {
       const r = await fetch("/.netlify/functions/anchor_status?id=" + encodeURIComponent(id));
       const d = await r.json();
 
-      // Determine actual state
-      const state = (d.state || "").toUpperCase();
-      const blockHeight = d.blockHeight || d.block || null;
-      const confirmations = d.confirmations || 0;
-      const isResponseOk = d.ok !== false;
-      
-      // Check if actually anchored (has real block height)
-      const isAnchored = state === "ANCHORED" && blockHeight && Number(blockHeight) > 0;
-      const isPending = state === "PENDING" || state === "OTS_RECEIPT" || (isResponseOk && !isAnchored && state !== "NOT_FOUND" && state !== "ERROR");
-      const isNotFound = state === "NOT_FOUND" || !isResponseOk;
+      if (!r.ok || !d.ok) {
+        showNotFound();
+        return;
+      }
 
-      if (isAnchored) {
-        // Fully anchored
-        pill.className = "pill pill-success";
-        pill.textContent = "✓ Anchored on the Bitcoin blockchain";
-        fieldState.textContent = "Confirmed";
-        fieldConf.textContent = confirmations.toLocaleString();
-        
-        // Show block with link
-        const blockNum = Number(blockHeight).toLocaleString();
-        fieldBlock.innerHTML = 
-          '<a href="https://mempool.space/block/' + blockHeight + '" target="_blank" style="color: #7bf8b9;">#' + blockNum + '</a>' +
-          ' · <a href="https://blockstream.info/block/' + blockHeight + '" target="_blank" style="color: var(--muted); font-size: 11px;">blockstream</a>';
-          
-      } else if (isPending) {
-        // Pending - waiting for anchor
-        pill.className = "pill pill-pending";
-        pill.textContent = "⏳ Pending blockchain confirmation";
-        fieldState.textContent = "Queued for anchoring";
-        fieldBlock.innerHTML = "Awaiting confirmation";
-        fieldConf.textContent = "—";
-        
-      } else if (isNotFound) {
-        // Not found
-        pill.className = "pill pill-error";
-        pill.textContent = "Proof not found";
-        fieldState.textContent = "No record found";
-        fieldBlock.innerHTML = "—";
-        fieldConf.textContent = "—";
-        
+      // Check the state
+      const state = (d.state || "").toUpperCase();
+      const blockHeight = d.blockHeight || d.block || 0;
+
+      if (state === "ANCHORED" && blockHeight > 0) {
+        showAnchored(d);
+      } else if (state === "NOT_FOUND" || state === "ERROR") {
+        showNotFound();
       } else {
-        // Unknown state - treat as pending
-        pill.className = "pill pill-pending";
-        pill.textContent = "⏳ Processing";
-        fieldState.textContent = state || "Unknown";
-        fieldBlock.innerHTML = "—";
-        fieldConf.textContent = "—";
+        // PENDING, OTS_RECEIPT, or anchored without block height
+        showPending();
       }
 
     } catch (err) {
-      pill.className = "pill pill-error";
-      pill.textContent = "Error checking status";
-      fieldState.textContent = "Connection error";
-      fieldBlock.innerHTML = "—";
-      fieldConf.textContent = "—";
+      console.error("Check error:", err);
+      showNotFound();
     }
   }
 
   btn.onclick = () => check(input.value.trim());
   
-  // Auto-check if ID provided in URL
-  if (input.value) {
+  // Auto-check if ID provided
+  if (input.value && input.value.trim()) {
     check(input.value.trim());
   }
 })();
