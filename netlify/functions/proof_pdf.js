@@ -265,10 +265,10 @@ exports.handler = async (event) => {
          .fillColor(darkGreen)
          .text("CRYPTOGRAPHIC FINGERPRINT (SHA-256)", boxLeft + inch(0.25), hashBoxTop + inch(0.15));
       
-      doc.font("Courier")
-         .fontSize(8)
+      doc.font("Helvetica")
+         .fontSize(7)
          .fillColor(black)
-         .text(hash, boxLeft + inch(0.25), hashBoxTop + inch(0.4), { width: boxWidth - inch(0.5) });
+         .text(hash, boxLeft + inch(0.25), hashBoxTop + inch(0.4), { width: boxWidth - inch(0.5), characterSpacing: 0.5 });
       
       y = hashBoxTop + hashBoxHeight + inch(0.35);
     }
