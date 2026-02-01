@@ -914,12 +914,12 @@ a{color:var(--accent);text-decoration:none}
 <footer class="footer">
 <div class="footer-inner">
 <a href="/" class="footer-brand"><img src="/docuproof-logo.png" alt=""><span>docuProof</span></a>
-<div class="footer-links"><a href="/verify">Verify a Proof</a><a href="/app.html">Generate Proof</a><a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a><a href="mailto:support@docuproof.io">Contact</a></div>
+<div class="footer-links"><a href="/verify">Verify a Proof</a><a href="/app.html">Generate Proof</a><a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a><a href="/cdn-cgi/l/email-protection#87f4f2f7f7e8f5f3c7e3e8e4f2f7f5e8e8e1a9eee8">Contact</a></div>
 </div>
 <div class="footer-copy">© <span id="yr"></span> docuProof.io — Proof of Existence on the blockchain.<br><span style="color:#9ca3af;font-size:14px">docuProof provides cryptographic proof-of-existence only. Not a notary service.</span></div>
 </footer>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 document.getElementById('yr').textContent=new Date().getFullYear();
 
 // Camera capture functionality for "Take Photo" and "Take Selfie" buttons
@@ -1015,15 +1015,8 @@ function openFreeProof(source) {
         throw new Error(data.error || 'Failed to create proof');
       }
       
-      // Show success modal
-      document.getElementById('freeProofLink').href = data.verifyUrl;
-      document.getElementById('freeProofLink').textContent = data.verifyUrl;
-      document.getElementById('freeProofHash').textContent = data.hash;
-      document.getElementById('freeProofModal').style.display = 'flex';
-      
-      // Reset button
-      btn.textContent = originalText;
-      btn.disabled = false;
+      // Redirect directly to verify page
+      window.location.href = data.verifyUrl;
       
     } catch (err) {
       alert('Error: ' + err.message);
@@ -1036,13 +1029,3 @@ function openFreeProof(source) {
       });
     }
   };
-  
-  input.click();
-}
-
-function closeFreeProofModal() {
-  document.getElementById('freeProofModal').style.display = 'none';
-}
-</script>
-</body>
-</html>
