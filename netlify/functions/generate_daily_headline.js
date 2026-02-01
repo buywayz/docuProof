@@ -87,9 +87,10 @@ function generatePDF(date, headlines, weather) {
       doc.save().translate(pageW / 2, y).rotate(45).rect(-4, -4, 8, 8).fill(accent).restore();
       y += 35;
 
-      const weatherText = `${weather.city}: ${weather.temp}, ${weather.condition}`;
-      doc.roundedRect((pageW - 200) / 2, y, 200, 30, 15).fill("#1a1f27");
-      doc.font("Helvetica").fontSize(11).fillColor(textMuted).text(weatherText, 0, y + 8, { width: pageW, align: "center" });
+      const weatherTime = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/New_York' });
+      const weatherText = `${weather.city}: ${weather.temp}, ${weather.condition} at ${weatherTime} EST`;
+      doc.roundedRect((pageW - 280) / 2, y, 280, 30, 15).fill("#1a1f27");
+      doc.font("Helvetica").fontSize(10).fillColor(textMuted).text(weatherText, 0, y + 9, { width: pageW, align: "center" });
       y += 55;
 
       const boxX = 58, boxW = pageW - 116, boxH = 175;
@@ -121,9 +122,10 @@ function generatePDF(date, headlines, weather) {
 }
 
 exports.handler = async (event, context) => {
-  console.log("=== Daily Headline v4.2 ===");
+  console.log("=== Daily Headline v4.3 ===");
   try {
-    const now = new Date();
+    // Use EST/EDT timezone for date display (since headlines are US-based)
+    const now = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
     const [headlines, weather] = await Promise.all([fetchHeadlines(), fetchWeather()]);
     console.log("Data fetched");
     
