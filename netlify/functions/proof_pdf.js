@@ -1,5 +1,5 @@
 // netlify/functions/proof_pdf.js
-// v12.0.0 – Clear explanation of file + timestamp = proof
+// v13.0.0 – Explains hash/proof ID relationship, improved spacing
 
 const fs = require("fs");
 const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
@@ -27,7 +27,7 @@ exports.handler = async (event) => {
     pdfDoc.setTitle("Certificate of Proof of Existence");
     pdfDoc.setAuthor("docuProof.io");
     pdfDoc.setSubject(`Proof ID: ${id}`);
-    pdfDoc.setCreator("docuProof Certificate Generator v12.0.0");
+    pdfDoc.setCreator("docuProof Certificate Generator v13.0.0");
 
     const page = pdfDoc.addPage([612, 792]);
     const { width, height } = page.getSize();
@@ -46,9 +46,9 @@ exports.handler = async (event) => {
     const borderGray = hexToRgb("#e5e7eb");
     const bgGray = hexToRgb("#f9fafb");
     const logoBg = hexToRgb("#0f172a");
-    const highlightBg = hexToRgb("#f0fdf4"); // Light green background
+    const highlightBg = hexToRgb("#f0fdf4");
 
-    // Layout constants
+    // Layout
     const marginX = 50;
     const contentWidth = width - marginX * 2;
     const centerX = width / 2;
@@ -59,18 +59,17 @@ exports.handler = async (event) => {
     page.drawRectangle({ x: 25, y: 25, width: width - 50, height: height - 50, borderColor: green, borderWidth: 2 });
     page.drawRectangle({ x: 32, y: 32, width: width - 64, height: height - 64, borderColor: hexToRgb("#86efac"), borderWidth: 0.5 });
 
-    // Corner flourishes
     const flourishSize = 20;
     const fo = 25;
     page.drawRectangle({ x: fo - 5, y: height - fo - flourishSize + 5, width: flourishSize, height: flourishSize, color: green });
     page.drawRectangle({ x: width - fo - flourishSize + 5, y: height - fo - flourishSize + 5, width: flourishSize, height: flourishSize, color: green });
 
     // ══════════════════════════════════════════════════════════════════════
-    // HEADER SECTION
+    // HEADER
     // ══════════════════════════════════════════════════════════════════════
-    let y = height - 65;
+    let y = height - 62;
 
-    // Logo - properly sized with adequate spacing below
+    // Logo
     const logoPaths = ["./netlify/functions/assets/logo_nobg.png", "./netlify/functions/assets/logo.png", "./docuproof-logo.png"];
     let logoImage = null;
     for (const p of logoPaths) {
@@ -82,108 +81,93 @@ exports.handler = async (event) => {
       }
     }
 
-    const logoSize = 36;
+    const logoSize = 32;
     const logoPadding = 5;
     const logoBoxSize = logoSize + logoPadding * 2;
     
-    page.drawRectangle({
-      x: centerX - logoBoxSize / 2,
-      y: y - logoBoxSize,
-      width: logoBoxSize,
-      height: logoBoxSize,
-      color: logoBg,
-    });
-
+    page.drawRectangle({ x: centerX - logoBoxSize / 2, y: y - logoBoxSize, width: logoBoxSize, height: logoBoxSize, color: logoBg });
     if (logoImage) {
-      page.drawImage(logoImage, {
-        x: centerX - logoSize / 2,
-        y: y - logoBoxSize + logoPadding,
-        width: logoSize,
-        height: logoSize,
-      });
+      page.drawImage(logoImage, { x: centerX - logoSize / 2, y: y - logoBoxSize + logoPadding, width: logoSize, height: logoSize });
     }
-    y -= logoBoxSize + 18; // MORE SPACE after logo
+    y -= logoBoxSize + 14;
 
-    // Brand name
+    // Brand
     const brandText = "docuProof";
-    const brandWidth = helveticaBold.widthOfTextAtSize(brandText, 22);
-    page.drawText(brandText, { x: centerX - brandWidth / 2, y, size: 22, font: helveticaBold, color: green });
-    y -= 14;
+    const brandWidth = helveticaBold.widthOfTextAtSize(brandText, 20);
+    page.drawText(brandText, { x: centerX - brandWidth / 2, y, size: 20, font: helveticaBold, color: green });
+    y -= 12;
 
-    // Tagline
     const tagline = "Proof you can point to.";
     const taglineWidth = helveticaOblique.widthOfTextAtSize(tagline, 9);
     page.drawText(tagline, { x: centerX - taglineWidth / 2, y, size: 9, font: helveticaOblique, color: gray });
+    y -= 18;
+
+    // Title
+    const titleLine1 = "CERTIFICATE OF";
+    const titleLine1Width = helvetica.widthOfTextAtSize(titleLine1, 9);
+    page.drawText(titleLine1, { x: centerX - titleLine1Width / 2, y, size: 9, font: helvetica, color: lightGray });
     y -= 22;
 
-    // Certificate title
-    const titleLine1 = "CERTIFICATE OF";
-    const titleLine1Width = helvetica.widthOfTextAtSize(titleLine1, 10);
-    page.drawText(titleLine1, { x: centerX - titleLine1Width / 2, y, size: 10, font: helvetica, color: lightGray });
-    y -= 26;
-
     const mainTitle = "PROOF OF EXISTENCE";
-    const mainTitleWidth = helveticaBold.widthOfTextAtSize(mainTitle, 26);
-    page.drawText(mainTitle, { x: centerX - mainTitleWidth / 2, y, size: 26, font: helveticaBold, color: black });
-    y -= 12;
+    const mainTitleWidth = helveticaBold.widthOfTextAtSize(mainTitle, 24);
+    page.drawText(mainTitle, { x: centerX - mainTitleWidth / 2, y, size: 24, font: helveticaBold, color: black });
+    y -= 11;
 
     const subtitle = "Immutable Blockchain Timestamp";
     const subtitleWidth = helvetica.widthOfTextAtSize(subtitle, 8);
     page.drawText(subtitle, { x: centerX - subtitleWidth / 2, y, size: 8, font: helvetica, color: gray });
-    y -= 18;
+    y -= 14;
 
-    // Decorative divider
-    page.drawLine({ start: { x: centerX - 70, y }, end: { x: centerX + 70, y }, thickness: 1, color: green });
-    y -= 16;
+    page.drawLine({ start: { x: centerX - 60, y }, end: { x: centerX + 60, y }, thickness: 1, color: green });
+    y -= 14;
 
     // ══════════════════════════════════════════════════════════════════════
-    // KEY CONCEPT BOX - The most important thing to understand
+    // KEY CONCEPT BOX
     // ══════════════════════════════════════════════════════════════════════
-    const conceptBoxHeight = 48;
+    const conceptBoxHeight = 44;
     const conceptBoxY = y - conceptBoxHeight;
     
     page.drawRectangle({ x: marginX, y: conceptBoxY, width: contentWidth, height: conceptBoxHeight, color: highlightBg, borderColor: green, borderWidth: 1 });
     
     const keyConceptTitle = "HOW THIS PROOF WORKS";
-    const keyConceptTitleWidth = helveticaBold.widthOfTextAtSize(keyConceptTitle, 9);
-    page.drawText(keyConceptTitle, { x: centerX - keyConceptTitleWidth / 2, y: conceptBoxY + conceptBoxHeight - 14, size: 9, font: helveticaBold, color: darkGreen });
+    const keyConceptTitleWidth = helveticaBold.widthOfTextAtSize(keyConceptTitle, 8);
+    page.drawText(keyConceptTitle, { x: centerX - keyConceptTitleWidth / 2, y: conceptBoxY + conceptBoxHeight - 12, size: 8, font: helveticaBold, color: darkGreen });
     
     const keyLine1 = "This certificate is linked to a specific file. To prove the file existed on this date, you need BOTH:";
-    const keyLine1Width = helvetica.widthOfTextAtSize(keyLine1, 8);
-    page.drawText(keyLine1, { x: centerX - keyLine1Width / 2, y: conceptBoxY + conceptBoxHeight - 28, size: 8, font: helvetica, color: darkText });
+    const keyLine1Width = helvetica.widthOfTextAtSize(keyLine1, 7.5);
+    page.drawText(keyLine1, { x: centerX - keyLine1Width / 2, y: conceptBoxY + conceptBoxHeight - 24, size: 7.5, font: helvetica, color: darkText });
     
-    const keyLine2 = "Your Original File  +  This Timestamp Certificate  =  Verified Proof of Existence";
+    const keyLine2 = "Your Original File  +  This Certificate  =  Verified Proof";
     const keyLine2Width = helveticaBold.widthOfTextAtSize(keyLine2, 9);
     page.drawText(keyLine2, { x: centerX - keyLine2Width / 2, y: conceptBoxY + 8, size: 9, font: helveticaBold, color: darkGreen });
     
-    y = conceptBoxY - 14;
+    y = conceptBoxY - 16;
 
     // ══════════════════════════════════════════════════════════════════════
     // DOCUMENT DETAILS + QR CODE
     // ══════════════════════════════════════════════════════════════════════
-    const qrSize = 72;
-    const qrX = width - marginX - qrSize - 8;
+    const qrSize = 68;
+    const qrX = width - marginX - qrSize - 6;
 
     const blockDisplay = blockHeight ? `Bitcoin Block #${blockHeight}` : "Pending confirmation";
     const details = [
-      ["PROOF ID", id],
-      ["TIMESTAMPED FILE", display],
+      ["YOUR FILE", display],
       ["DATE & TIME", formatDate(createdAt)],
-      ["BLOCKCHAIN ANCHOR", blockDisplay],
+      ["BLOCKCHAIN RECORD", blockDisplay],
     ];
 
     let detailY = y;
     for (const [label, value] of details) {
       page.drawText(label, { x: marginX, y: detailY, size: 7, font: helveticaBold, color: darkGreen });
-      detailY -= 11;
+      detailY -= 12;
       page.drawText(value, { x: marginX, y: detailY, size: 10, font: helvetica, color: darkText });
-      detailY -= 16;
+      detailY -= 18;
     }
 
     // QR Code
-    const qrPng = await QRCode.toBuffer(verifyUrl, { width: 144, margin: 0, color: { dark: "#111827", light: "#ffffff" }, errorCorrectionLevel: "M" });
+    const qrPng = await QRCode.toBuffer(verifyUrl, { width: 136, margin: 0, color: { dark: "#111827", light: "#ffffff" }, errorCorrectionLevel: "M" });
     const qrImage = await pdfDoc.embedPng(qrPng);
-    const qrY = y - qrSize + 8;
+    const qrY = y - qrSize + 6;
     
     page.drawRectangle({ x: qrX - 4, y: qrY - 4, width: qrSize + 8, height: qrSize + 8, borderColor: borderGray, borderWidth: 1 });
     page.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize });
@@ -192,74 +176,87 @@ exports.handler = async (event) => {
     const qrLabelWidth = helveticaBold.widthOfTextAtSize(qrLabel, 6);
     page.drawText(qrLabel, { x: qrX + (qrSize - qrLabelWidth) / 2, y: qrY - 10, size: 6, font: helveticaBold, color: darkGreen });
 
-    y = Math.min(detailY, qrY - 16) - 6;
+    y = detailY - 8;
 
     // ══════════════════════════════════════════════════════════════════════
-    // SHA-256 FINGERPRINT
+    // UNDERSTANDING THE IDENTIFIERS
     // ══════════════════════════════════════════════════════════════════════
+    page.drawText("UNDERSTANDING YOUR PROOF", { x: marginX, y, size: 8, font: helveticaBold, color: darkGreen });
+    y -= 14;
+
+    // Proof ID explanation
+    page.drawText("Proof ID:", { x: marginX, y, size: 8, font: helveticaBold, color: darkText });
+    page.drawText("  " + id, { x: marginX + 50, y, size: 8, font: helvetica, color: darkText });
+    y -= 11;
+    const proofIdExplain = "Your unique reference number for this timestamp. Use this to look up your proof on docuProof.io.";
+    page.drawText(proofIdExplain, { x: marginX, y, size: 7, font: helveticaOblique, color: gray });
+    y -= 16;
+
+    // File Fingerprint explanation
     if (hash) {
-      page.drawText("FILE FINGERPRINT (SHA-256 HASH)", { x: marginX, y, size: 7, font: helveticaBold, color: darkGreen });
-      y -= 12;
-      page.drawRectangle({ x: marginX, y: y - 6, width: contentWidth, height: 18, color: bgGray });
-      page.drawText(hash, { x: marginX + 6, y: y, size: 7, font: helvetica, color: darkText });
-      y -= 22;
+      page.drawText("File Fingerprint (SHA-256 Hash):", { x: marginX, y, size: 8, font: helveticaBold, color: darkText });
+      y -= 11;
+      page.drawRectangle({ x: marginX, y: y - 4, width: contentWidth, height: 16, color: bgGray });
+      page.drawText(hash, { x: marginX + 6, y: y, size: 6.5, font: helvetica, color: darkText });
+      y -= 18;
+      
+      const hashExplain = "This is a unique \"digital fingerprint\" calculated from your exact file. If even one tiny bit of your file changes, the fingerprint would be completely different. This fingerprint—not the file itself—is what's recorded on the blockchain. That's why you need your original file to verify: we recalculate its fingerprint and check if it matches.";
+      const hashLines = wrapText(hashExplain, helvetica, 7, contentWidth);
+      for (const line of hashLines) {
+        page.drawText(line, { x: marginX, y, size: 7, font: helveticaOblique, color: gray });
+        y -= 10;
+      }
     }
+    y -= 10;
 
     // Divider
     page.drawLine({ start: { x: marginX, y }, end: { x: width - marginX, y }, thickness: 0.5, color: borderGray });
-    y -= 14;
-
-    // ══════════════════════════════════════════════════════════════════════
-    // SIMPLE EXPLANATION
-    // ══════════════════════════════════════════════════════════════════════
-    page.drawText("WHAT THIS MEANS", { x: marginX, y, size: 8, font: helveticaBold, color: darkGreen });
-    y -= 13;
-
-    const simpleExplain = "When you timestamped your file, we created a unique digital fingerprint (like a one-of-a-kind ID number) from it. This fingerprint was then recorded on the Bitcoin blockchain—a permanent, tamper-proof public ledger that no one can change or delete. If anyone ever questions when your file existed, you can prove it by showing that the fingerprint of your file matches this recorded timestamp.";
-    const simpleLines = wrapText(simpleExplain, helvetica, 8, contentWidth);
-    for (const line of simpleLines) {
-      page.drawText(line, { x: marginX, y, size: 8, font: helvetica, color: darkText });
-      y -= 11;
-    }
-    y -= 8;
+    y -= 16;
 
     // ══════════════════════════════════════════════════════════════════════
     // WHY THIS MATTERS
     // ══════════════════════════════════════════════════════════════════════
     page.drawText("WHY BLOCKCHAIN TIMESTAMPING MATTERS", { x: marginX, y, size: 8, font: helveticaBold, color: darkGreen });
-    y -= 12;
+    y -= 14;
 
-    const valueProps = [
-      ["Intellectual Property:", "Prove when you created inventions, designs, or creative works."],
-      ["Legal Evidence:", "Establish document authenticity for contracts and disputes."],
-      ["Business Compliance:", "Maintain verifiable audit trails for regulatory requirements."],
-      ["Personal Protection:", "Secure wills, property records, and important agreements."],
-    ];
-
-    for (const [title, desc] of valueProps) {
-      page.drawText("•  " + title, { x: marginX, y, size: 7, font: helveticaBold, color: darkText });
-      const titleWidth = helveticaBold.widthOfTextAtSize("•  " + title, 7);
-      page.drawText(" " + desc, { x: marginX + titleWidth, y, size: 7, font: helvetica, color: gray });
+    const whyText = "Traditional timestamps can be faked or altered. Blockchain timestamps cannot. Once recorded, your proof exists permanently on a decentralized network maintained by thousands of computers worldwide. No single person, company, or government can change or delete it.";
+    const whyLines = wrapText(whyText, helvetica, 8, contentWidth);
+    for (const line of whyLines) {
+      page.drawText(line, { x: marginX, y, size: 8, font: helvetica, color: darkText });
       y -= 12;
     }
-    y -= 6;
+    y -= 10;
+
+    // Use cases - more compact, single line each
+    const useCases = [
+      "• Intellectual Property — Prove when you created original work before filing patents or copyrights",
+      "• Legal Evidence — Establish document authenticity for contracts, agreements, and disputes",
+      "• Business Records — Maintain verifiable audit trails for compliance and regulations",
+      "• Personal Protection — Secure important documents like wills and property records",
+    ];
+
+    for (const useCase of useCases) {
+      page.drawText(useCase, { x: marginX, y, size: 7, font: helvetica, color: darkText });
+      y -= 12;
+    }
+    y -= 12;
 
     // ══════════════════════════════════════════════════════════════════════
     // HOW TO VERIFY
     // ══════════════════════════════════════════════════════════════════════
-    page.drawText("HOW TO VERIFY", { x: marginX, y, size: 8, font: helveticaBold, color: darkGreen });
-    y -= 12;
+    page.drawText("HOW TO VERIFY YOUR PROOF", { x: marginX, y, size: 8, font: helveticaBold, color: darkGreen });
+    y -= 14;
     
     const verifySteps = [
-      "1. Keep your original file safe—you'll need it to verify.",
-      "2. Scan the QR code or visit the verification URL.",
-      "3. Upload your original file to confirm the fingerprint matches.",
-      "4. The blockchain record proves your file existed on this date."
+      "1. Keep your original file safe — without it, you cannot verify your proof",
+      "2. Visit docuProof.io/v/" + id + " or scan the QR code",
+      "3. Upload your original file — we'll calculate its fingerprint",
+      "4. If the fingerprint matches, your proof is verified on the blockchain",
     ];
     
     for (const step of verifySteps) {
-      page.drawText(step, { x: marginX, y, size: 7, font: helvetica, color: darkText });
-      y -= 10;
+      page.drawText(step, { x: marginX, y, size: 7.5, font: helvetica, color: darkText });
+      y -= 12;
     }
 
     // ══════════════════════════════════════════════════════════════════════
@@ -286,7 +283,7 @@ exports.handler = async (event) => {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${outputFilename}"`,
         "Cache-Control": "no-store",
-        "x-docuproof-version": "proof_pdf v12.0.0",
+        "x-docuproof-version": "proof_pdf v13.0.0",
       },
       body: Buffer.from(pdfBytes).toString("base64"),
       isBase64Encoded: true,
