@@ -98,7 +98,7 @@ exports.handler = async (event) => {
        .stroke();
 
     // === LOGO WITH DARK BACKGROUND ===
-    let y = marginT + inch(0.3);
+    let y = marginT + inch(0.4);
 
     const logoPaths = [
       "./netlify/functions/assets/logo_nobg.png",
@@ -114,66 +114,67 @@ exports.handler = async (event) => {
     }
     
     if (logoUsed) {
-      const logoSize = inch(0.7);
-      const logoBgSize = logoSize + inch(0.25);
+      const logoSize = inch(0.75);
+      const logoBgPadding = inch(0.12);
+      const logoBgSize = logoSize + logoBgPadding * 2;
       const logoBgX = centerX - logoBgSize / 2;
       const logoX = centerX - logoSize / 2;
       
-      // Dark rounded background behind logo
-      doc.roundedRect(logoBgX, y - inch(0.05), logoBgSize, logoBgSize, 10)
+      // Dark rounded background behind logo (tighter padding)
+      doc.roundedRect(logoBgX, y, logoBgSize, logoBgSize, 8)
          .fill("#0a0d10");
       
-      doc.image(logoUsed, logoX, y + inch(0.075), { width: logoSize, height: logoSize });
-      y += logoBgSize + inch(0.15);
+      doc.image(logoUsed, logoX, y + logoBgPadding, { width: logoSize, height: logoSize });
+      y += logoBgSize + inch(0.25);
     }
 
     // === BRAND NAME ===
     doc.font("Helvetica-Bold")
-       .fontSize(18)
+       .fontSize(22)
        .fillColor(green)
        .text("docuProof", marginL, y, { width: contentW, align: "center" });
-    y += inch(0.25);
+    y += inch(0.3);
 
     // === TAGLINE ===
     doc.font("Helvetica-Oblique")
-       .fontSize(10)
+       .fontSize(12)
        .fillColor(gray)
        .text("Proof you can point to.", marginL, y, { width: contentW, align: "center" });
-    y += inch(0.35);
+    y += inch(0.45);
 
     // === DECORATIVE DOTS ===
     const dotY = y;
-    doc.circle(centerX - 20, dotY, 3).fill(green);
-    doc.circle(centerX, dotY, 3).fill(green);
-    doc.circle(centerX + 20, dotY, 3).fill(green);
-    y += inch(0.4);
+    doc.circle(centerX - 25, dotY, 4).fill(green);
+    doc.circle(centerX, dotY, 4).fill(green);
+    doc.circle(centerX + 25, dotY, 4).fill(green);
+    y += inch(0.5);
 
     // === CERTIFICATE OF ===
     doc.font("Helvetica")
-       .fontSize(10)
+       .fontSize(12)
        .fillColor(gray)
-       .text("CERTIFICATE OF", marginL, y, { width: contentW, align: "center", characterSpacing: 2 });
-    y += inch(0.25);
+       .text("CERTIFICATE OF", marginL, y, { width: contentW, align: "center", characterSpacing: 3 });
+    y += inch(0.35);
 
     // === PROOF OF EXISTENCE ===
     doc.font("Helvetica-Bold")
-       .fontSize(22)
+       .fontSize(28)
        .fillColor(black)
        .text("PROOF OF EXISTENCE", marginL, y, { width: contentW, align: "center" });
-    y += inch(0.3);
+    y += inch(0.4);
 
     // === SUBTITLE ===
     doc.font("Helvetica")
-       .fontSize(9)
+       .fontSize(11)
        .fillColor(lightGray)
        .text("Blockchain-Anchored Timestamp", marginL, y, { width: contentW, align: "center" });
-    y += inch(0.5);
+    y += inch(0.6);
 
     // === DOCUMENT DETAILS BOX ===
     const boxTop = y;
-    const boxLeft = marginL + inch(0.3);
-    const boxWidth = contentW - inch(0.6);
-    const boxHeight = inch(1.5);
+    const boxLeft = marginL + inch(0.2);
+    const boxWidth = contentW - inch(0.4);
+    const boxHeight = inch(2.0);
 
     // Box outline
     doc.lineWidth(1)
@@ -182,20 +183,20 @@ exports.handler = async (event) => {
        .stroke();
 
     // Header background
-    doc.rect(boxLeft, boxTop, boxWidth, inch(0.35))
+    doc.rect(boxLeft, boxTop, boxWidth, inch(0.45))
        .fill("#f9fafb");
 
     // Header text
     doc.font("Helvetica-Bold")
-       .fontSize(9)
+       .fontSize(11)
        .fillColor(darkGreen)
-       .text("DOCUMENT DETAILS", boxLeft + inch(0.2), boxTop + inch(0.12), { characterSpacing: 1 });
+       .text("DOCUMENT DETAILS", boxLeft + inch(0.25), boxTop + inch(0.15), { characterSpacing: 1 });
 
     // Details rows
-    const labelX = boxLeft + inch(0.2);
-    const valueX = boxLeft + inch(1.2);
-    let rowY = boxTop + inch(0.5);
-    const rowHeight = inch(0.25);
+    const labelX = boxLeft + inch(0.25);
+    const valueX = boxLeft + inch(1.5);
+    let rowY = boxTop + inch(0.65);
+    const rowHeight = inch(0.35);
 
     const blockDisplay = blockHeight ? `#${blockHeight}` : "Pending confirmation";
 
@@ -208,25 +209,25 @@ exports.handler = async (event) => {
 
     for (const [label, value] of details) {
       doc.font("Helvetica")
-         .fontSize(9)
+         .fontSize(11)
          .fillColor(gray)
          .text(label, labelX, rowY);
 
       doc.font("Helvetica-Bold")
-         .fontSize(9)
+         .fontSize(11)
          .fillColor(black)
-         .text(value, valueX, rowY, { width: boxWidth - inch(2.8) });
+         .text(value, valueX, rowY, { width: boxWidth - inch(3.2) });
 
       rowY += rowHeight;
     }
 
     // === QR CODE (inside box, right side) ===
-    const qrSize = inch(1.0);
-    const qrX = boxLeft + boxWidth - qrSize - inch(0.2);
-    const qrY = boxTop + inch(0.45);
+    const qrSize = inch(1.3);
+    const qrX = boxLeft + boxWidth - qrSize - inch(0.25);
+    const qrY = boxTop + inch(0.55);
 
     const qrPng = await QRCode.toBuffer(verifyUrl, {
-      width: 200,
+      width: 260,
       margin: 0,
       color: { dark: "#1a1a1a", light: "#ffffff" },
       errorCorrectionLevel: "M"
@@ -236,18 +237,18 @@ exports.handler = async (event) => {
 
     // QR label
     doc.font("Helvetica-Bold")
-       .fontSize(7)
+       .fontSize(8)
        .fillColor(black)
        .text("SCAN TO VERIFY", qrX - inch(0.05), qrY + qrSize - inch(0.05), { width: qrSize, align: "center" });
 
     // Short verify URL under QR
     const shortUrl = `docuproof.io/v/${id.slice(0, 8)}...`;
     doc.font("Helvetica")
-       .fontSize(6)
+       .fontSize(7)
        .fillColor(lightGray)
-       .text(shortUrl, qrX - inch(0.05), qrY + qrSize + inch(0.08), { width: qrSize, align: "center" });
+       .text(shortUrl, qrX - inch(0.05), qrY + qrSize + inch(0.1), { width: qrSize, align: "center" });
 
-    y = boxTop + boxHeight + inch(0.4);
+    y = boxTop + boxHeight + inch(0.5);
 
     // === RIP SECTION (if enabled) ===
     if (isRIP) {
@@ -273,20 +274,20 @@ exports.handler = async (event) => {
     }
 
     // === FOOTER ===
-    const footerY = pageH - marginT - inch(0.6);
+    const footerY = pageH - marginT - inch(0.7);
 
     // Decorative line
-    doc.lineWidth(1)
+    doc.lineWidth(2)
        .strokeColor(green)
-       .moveTo(centerX - inch(2), footerY)
-       .lineTo(centerX + inch(2), footerY)
+       .moveTo(centerX - inch(2.5), footerY)
+       .lineTo(centerX + inch(2.5), footerY)
        .stroke();
 
     // Footer text
     doc.font("Helvetica")
-       .fontSize(9)
+       .fontSize(11)
        .fillColor(gray)
-       .text("docuProof.io  •  Proof of Existence on the Blockchain", marginL, footerY + inch(0.15), {
+       .text("docuProof.io  •  Proof of Existence on the Blockchain", marginL, footerY + inch(0.2), {
          width: contentW,
          align: "center"
        });
