@@ -2,7 +2,7 @@
 // v2.0.0 - Creates a FREE proof using the SAME anchoring system as paid proofs
 // Integrates with _db.js and submit_proof.js for proper blockchain anchoring
 
-const { saveProof, appendToFeeds, saveAnchorStatus } = require("./_db");
+const { saveProof, appendToFeeds } = require("./_db");
 
 // Generate a unique proof ID for free proofs
 function generateProofId() {
@@ -85,15 +85,35 @@ exports.handler = async (event, context) => {
     await appendToFeeds(proofRecord);
     console.log(`Free proof added to feeds: ${proofId}`);
 
-    // Create initial anchor status (PENDING)
-    await saveAnchorStatus({
-      id: proofId,
-      state: 'PENDING',
-      hash: hash.toLowerCase(),
-      createdAt: now.toISOString(),
-      source: 'free_proof',
-    });
-    console.log(`Free proof anchor status created: ${proofId}`);
+    // Create initial anchor status directly in blob store
+    try {
+      const mod = await import("@netlify/blobs");
+      const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
+      const token = process.env.NETLIFY_BLOBS_TOKEN || process.env.NETLIFY_API_TOKEN;
+      
+      let store;
+      if (siteID && token) {
+        store = mod.getStore({ name: "proofs", siteID, token });
+      } else {
+        store = mod.getStore("proofs");
+      }
+      
+      const anchorStatus = {
+        id: proofId,
+        state: 'PENDING',
+        hash: hash.toLowerCase(),
+        createdAt: now.toISOString(),
+        source: 'free_proof',
+      };
+      
+      await store.set(`anchor:${proofId}.json`, JSON.stringify(anchorStatus), { 
+        contentType: "application/json" 
+      });
+      console.log(`Free proof anchor status created: ${proofId}`);
+    } catch (anchorErr) {
+      console.error(`Failed to create anchor status for ${proofId}:`, anchorErr);
+      // Continue anyway - the proof is still saved
+    }
 
     // Submit to OpenTimestamps for anchoring (same flow as paid proofs)
     const origin = getSiteOrigin();
