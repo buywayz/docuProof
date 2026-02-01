@@ -1350,6 +1350,7 @@
           <div class="card-buttons">
             <a href="#" onclick="openCamera('moment'); return false;" class="btn-free primary">Take Photo →</a>
           </div>
+          <p class="mobile-note">📱 Best on mobile — opens your camera directly</p>
         </div>
         
         <!-- Option 2: Timestamp Yourself -->
@@ -1361,6 +1362,7 @@
           <div class="card-buttons">
             <a href="#" onclick="openCamera('selfie'); return false;" class="btn-free primary">Take Selfie →</a>
           </div>
+          <p class="mobile-note">📱 Best on mobile — opens front camera</p>
         </div>
         
         <!-- Option 3: Timestamp Today's Headlines -->
@@ -1370,7 +1372,7 @@
           <p class="card-tagline">"Proof of this day in history."</p>
           <p>Download our daily headlines PDF — a time capsule of today. Timestamp it for blockchain-verified proof of this date.</p>
           <div class="card-buttons">
-            <a href="/.netlify/functions/daily_headline" class="btn-free secondary" download>Download Today's PDF</a>
+            <a href="/.netlify/functions/daily_headline" class="btn-free secondary" download>Download Today's Headline PDF</a>
             <span class="or-divider">then</span>
             <a href="#" onclick="openFreeProof('headlines'); return false;" class="btn-free primary">Upload & Timestamp →</a>
           </div>
@@ -1388,7 +1390,6 @@
         </div>
         
       </div>
-      
       <div class="free-proof-footer">
         <p>Your file never leaves your device until you upload. <a href="/privacy.html">See our privacy promise →</a></p>
       </div>
@@ -1432,78 +1433,6 @@
 </footer>
 
 
-<script>
-// Camera capture functionality for "Take Photo" and "Take Selfie" buttons
-function openCamera(type) {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.capture = type === 'selfie' ? 'user' : 'environment';
-  input.onchange = function(e) {
-    const file = e.target.files[0];
-    if (file) {
-      openFreeProofWithFile(file, type);
-    }
-  };
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  if (!isMobile) {
-    if (!confirm('📱 This works best on mobile where it opens your camera directly.\n\nOn desktop, you can still select a photo from your files.\n\nContinue?')) {
-      return;
-    }
-  }
-  input.click();
-}
-
-async function sha256Hex(file) {
-  const buf = await file.arrayBuffer();
-  const digest = await crypto.subtle.digest('SHA-256', buf);
-  return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-function openFreeProof(source) {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = source === 'screenshot' ? 'image/*' : '*/*';
-  input.onchange = function(e) {
-    const file = e.target.files[0];
-    if (file) {
-      openFreeProofWithFile(file, source);
-    }
-  };
-  input.click();
-}
-
-async function openFreeProofWithFile(file, source) {
-  try {
-    const hash = await sha256Hex(file);
-    
-    const response = await fetch('/.netlify/functions/create_free_proof', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        hash: hash,
-        filename: file.name,
-        source: source
-      })
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok || !data.ok) {
-      throw new Error(data.error || 'Failed to create proof');
-    }
-    
-    window.location.href = data.verifyUrl;
-    
-  } catch (err) {
-    alert('Error: ' + err.message);
-  }
-}
-
-function closeFreeProofModal() {
-  document.getElementById('freeProofModal').style.display = 'none';
-}
-</script>
-
+<script src="/docuproof-common.js"></script>
 </body>
 </html>

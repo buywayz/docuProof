@@ -1314,7 +1314,6 @@
         </div>
         
       </div>
-      
       <div class="free-proof-footer">
         <p>Your file never leaves your device until you upload. <a href="/privacy.html">See our privacy promise →</a></p>
       </div>
@@ -1358,106 +1357,6 @@
 </footer>
 
 
-<script>
-function openCamera(type) {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.capture = type === 'selfie' ? 'user' : 'environment';
-  input.onchange = function(e) {
-    const file = e.target.files[0];
-    if (file) {
-      openFreeProofWithFile(file, type);
-    }
-  };
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  if (!isMobile) {
-    if (!confirm('📱 This works best on mobile where it opens your camera directly.\n\nOn desktop, you can still select a photo from your files.\n\nContinue?')) {
-      return;
-    }
-  }
-  input.click();
-}
-
-async function sha256Hex(file) {
-  const buf = await file.arrayBuffer();
-  const digest = await crypto.subtle.digest('SHA-256', buf);
-  return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-function openFreeProof(source) {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = source === 'screenshot' ? 'image/*' : '*/*';
-  input.onchange = function(e) {
-    const file = e.target.files[0];
-    if (file) {
-      openFreeProofWithFile(file, source);
-    }
-  };
-  input.click();
-}
-
-async function openFreeProofWithFile(file, source) {
-  try {
-    // Compute hash locally
-    const hash = await sha256Hex(file);
-    
-    // Send to free proof endpoint
-    const response = await fetch('/.netlify/functions/create_free_proof', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        hash: hash,
-        filename: file.name,
-        source: source
-      })
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok || !data.ok) {
-      throw new Error(data.error || 'Failed to create proof');
-    }
-    
-    // Redirect directly to verify page
-    window.location.href = data.verifyUrl;
-    
-  } catch (err) {
-    alert('Error: ' + err.message);
-  }
-}
-
-function closeFreeProofModal() {
-  document.getElementById('freeProofModal').style.display = 'none';
-}
-</script>
-<!-- Free Proof Success Modal -->
-<div id="freeProofModal" class="free-proof-modal" style="display:none;">
-  <div class="free-proof-modal-content">
-    <div class="free-proof-modal-header">
-      <span class="free-proof-modal-icon">✅</span>
-      <h3>Proof Created!</h3>
-    </div>
-    <div class="free-proof-modal-body">
-      <p>Your file's unique fingerprint has been recorded and queued for blockchain anchoring.</p>
-      <div class="free-proof-result">
-        <div class="free-proof-field">
-          <label>Verification Link</label>
-          <div class="free-proof-value">
-            <a id="freeProofLink" href="#" target="_blank"></a>
-          </div>
-        </div>
-        <div class="free-proof-field">
-          <label>File Hash (SHA-256)</label>
-          <div class="free-proof-hash" id="freeProofHash"></div>
-        </div>
-      </div>
-      <p class="free-proof-note">🔒 Your file never left your device — only its cryptographic fingerprint was recorded. <a href="/app.html">Create another proof →</a></p>
-    </div>
-    <button class="btn-free primary" onclick="closeFreeProofModal()">Done</button>
-  </div>
-</div>
-
+<script src="/docuproof-common.js"></script>
 </body>
 </html>
