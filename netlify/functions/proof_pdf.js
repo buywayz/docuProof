@@ -114,18 +114,18 @@ exports.handler = async (event) => {
     }
     
     if (logoUsed) {
-      const logoSize = inch(0.75);
-      const logoBgPadding = inch(0.12);
+      const logoSize = inch(0.8);
+      const logoBgPadding = inch(0.06);
       const logoBgSize = logoSize + logoBgPadding * 2;
       const logoBgX = centerX - logoBgSize / 2;
       const logoX = centerX - logoSize / 2;
       
-      // Dark rounded background behind logo (tighter padding)
-      doc.roundedRect(logoBgX, y, logoBgSize, logoBgSize, 8)
+      // Dark rounded background behind logo (minimal padding)
+      doc.roundedRect(logoBgX, y, logoBgSize, logoBgSize, 6)
          .fill("#0a0d10");
       
       doc.image(logoUsed, logoX, y + logoBgPadding, { width: logoSize, height: logoSize });
-      y += logoBgSize + inch(0.25);
+      y += logoBgSize + inch(0.2);
     }
 
     // === BRAND NAME ===
@@ -248,7 +248,101 @@ exports.handler = async (event) => {
        .fillColor(lightGray)
        .text(shortUrl, qrX - inch(0.05), qrY + qrSize + inch(0.1), { width: qrSize, align: "center" });
 
-    y = boxTop + boxHeight + inch(0.5);
+    y = boxTop + boxHeight + inch(0.35);
+
+    // === SHA-256 HASH SECTION ===
+    if (hash) {
+      const hashBoxTop = y;
+      const hashBoxHeight = inch(0.65);
+      
+      doc.lineWidth(1)
+         .strokeColor(borderGray)
+         .rect(boxLeft, hashBoxTop, boxWidth, hashBoxHeight)
+         .stroke();
+      
+      doc.font("Helvetica-Bold")
+         .fontSize(9)
+         .fillColor(darkGreen)
+         .text("CRYPTOGRAPHIC FINGERPRINT (SHA-256)", boxLeft + inch(0.25), hashBoxTop + inch(0.15));
+      
+      doc.font("Courier")
+         .fontSize(8)
+         .fillColor(black)
+         .text(hash, boxLeft + inch(0.25), hashBoxTop + inch(0.4), { width: boxWidth - inch(0.5) });
+      
+      y = hashBoxTop + hashBoxHeight + inch(0.35);
+    }
+
+    // === LEGAL ATTESTATION ===
+    const attestBoxTop = y;
+    const attestBoxHeight = inch(1.6);
+    
+    doc.lineWidth(1)
+       .strokeColor(borderGray)
+       .rect(boxLeft, attestBoxTop, boxWidth, attestBoxHeight)
+       .stroke();
+    
+    // Header
+    doc.rect(boxLeft, attestBoxTop, boxWidth, inch(0.4))
+       .fill("#f9fafb");
+    
+    doc.font("Helvetica-Bold")
+       .fontSize(10)
+       .fillColor(darkGreen)
+       .text("LEGAL ATTESTATION", boxLeft + inch(0.25), attestBoxTop + inch(0.13));
+    
+    // Attestation text
+    const attestY = attestBoxTop + inch(0.55);
+    doc.font("Helvetica")
+       .fontSize(9)
+       .fillColor(black)
+       .text(
+         "This certificate attests that on the date and time indicated above, a cryptographic hash (SHA-256) of the referenced digital file was computed and submitted to the Bitcoin blockchain via the OpenTimestamps protocol.",
+         boxLeft + inch(0.25), attestY, { width: boxWidth - inch(0.5), lineGap: 2 }
+       );
+    
+    doc.text(
+      "The blockchain record provides tamper-evident proof that the file existed in its exact form at the timestamp recorded. This proof is independently verifiable by any party using the original file and standard cryptographic tools.",
+      boxLeft + inch(0.25), doc.y + inch(0.12), { width: boxWidth - inch(0.5), lineGap: 2 }
+    );
+    
+    y = attestBoxTop + attestBoxHeight + inch(0.35);
+
+    // === VERIFICATION INSTRUCTIONS ===
+    const instBoxTop = y;
+    const instBoxHeight = inch(1.3);
+    
+    doc.lineWidth(1)
+       .strokeColor(borderGray)
+       .rect(boxLeft, instBoxTop, boxWidth, instBoxHeight)
+       .stroke();
+    
+    doc.rect(boxLeft, instBoxTop, boxWidth, inch(0.4))
+       .fill("#f9fafb");
+    
+    doc.font("Helvetica-Bold")
+       .fontSize(10)
+       .fillColor(darkGreen)
+       .text("HOW TO VERIFY THIS PROOF", boxLeft + inch(0.25), instBoxTop + inch(0.13));
+    
+    const instructions = [
+      "1. Visit the verification URL or scan the QR code above",
+      "2. Upload your original file to compute its SHA-256 hash",
+      "3. Confirm the hash matches the recorded fingerprint",
+      "4. Verify the Bitcoin block confirmation on any block explorer"
+    ];
+    
+    let instY = instBoxTop + inch(0.52);
+    doc.font("Helvetica")
+       .fontSize(9)
+       .fillColor(black);
+    
+    for (const inst of instructions) {
+      doc.text(inst, boxLeft + inch(0.25), instY, { width: boxWidth - inch(0.5) });
+      instY += inch(0.18);
+    }
+
+    y = instBoxTop + instBoxHeight + inch(0.3);
 
     // === RIP SECTION (if enabled) ===
     if (isRIP) {
