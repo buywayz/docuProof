@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Terms of Service — docuProof</title>
+  <title>Terms of Service – docuProof</title>
   <meta name="description" content="docuProof Terms of Service. Read our terms and conditions.">
 
   <link rel="icon" href="/docuproof-logo.png">
@@ -36,7 +36,6 @@
     a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
-    /* Header */
     .header {
       border-bottom: 1px solid var(--border);
       background: var(--bg);
@@ -59,7 +58,6 @@
     .brand img { height: 32px; }
     .brand span { font-weight: 700; font-size: 18px; }
 
-    /* Content */
     .content {
       max-width: 900px;
       margin: 0 auto;
@@ -127,7 +125,6 @@
       color: var(--ink);
     }
 
-    /* Footer */
     .footer {
       border-top: 1px solid var(--border);
       padding: 32px 24px;
@@ -170,7 +167,7 @@
   <section class="hero">
     <h1>Terms of Service</h1>
     <p class="tagline">The rules and conditions for using docuProof.</p>
-    <p class="effective">Effective: January 13, 2026</p>
+    <p class="effective">Effective: February 1, 2026</p>
   </section>
 
   <div class="card">
@@ -277,4 +274,19 @@
 
 <footer class="footer">
   <div class="footer-inner">
-    <p>© <span id="year"></span> docuProof.io �
+    <p>© <span id="year"></span> docuProof.io — Proof of Existence on the blockchain</p>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/app.html">Generate Proof</a>
+      <a href="/verify">Verify</a>
+      <a href="/privacy.html">Privacy</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+
+</body>
+</html>
