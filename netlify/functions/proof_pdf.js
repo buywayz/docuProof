@@ -1,10 +1,11 @@
 // netlify/functions/proof_pdf.js
-// v7.4.0 — Single page certificate - NO bottom corners
+// v8.0.0 – Legal document styling, single page guaranteed, centered layout
 
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
 const QRCode = require("qrcode");
 
+// Convert inches to points (72 points per inch)
 function inch(n) { return n * 72; }
 
 exports.handler = async (event) => {
@@ -18,14 +19,26 @@ exports.handler = async (event) => {
   const filename = qp.filename || qp.displayName || "document";
 
   try {
+    // US Letter: 612 x 792 points (8.5" x 11")
+    const pageW = 612;
+    const pageH = 792;
+    const marginL = inch(0.75);
+    const marginR = inch(0.75);
+    const marginT = inch(0.6);
+    const marginB = inch(0.6);
+    const contentW = pageW - marginL - marginR;
+    const centerX = pageW / 2;
+
     const doc = new PDFDocument({
       size: "LETTER",
-      margins: { top: inch(0.4), bottom: inch(0.4), left: inch(0.6), right: inch(0.6) },
+      margins: { top: marginT, bottom: marginB, left: marginL, right: marginR },
+      autoFirstPage: true,
+      bufferPages: false, // Prevent automatic page creation
       info: {
         Title: "Certificate of Proof of Existence",
         Author: "docuProof.io",
         Subject: `Proof ID: ${id}`,
-        Creator: "docuProof Certificate Generator v7.4.0"
+        Creator: "docuProof Certificate Generator v8.0.0"
       }
     });
 
@@ -33,140 +46,246 @@ exports.handler = async (event) => {
     doc.on("data", (c) => chunks.push(c));
     const done = new Promise((resolve) => doc.on("end", () => resolve(Buffer.concat(chunks))));
 
-    const pageW = 612;
-    const pageH = 792;
-    const marginL = inch(0.6);
-    const contentW = pageW - marginL * 2;
-    const centerX = pageW / 2;
-
+    // Colors
     const green = "#22c55e";
-    const darkGreen = "#166534";
-    const black = "#1a1a1a";
-    const gray = "#6b7280";
-    const lightGray = "#9ca3af";
-    const borderGray = "#d1d5db";
+    const darkGreen = "#15803d";
+    const black = "#111827";
+    const gray = "#4b5563";
+    const lightGray = "#6b7280";
+    const borderColor = "#d1d5db";
+    const headerBg = "#f3f4f6";
 
+    // Fill white background
     doc.rect(0, 0, pageW, pageH).fill("#ffffff");
 
-    // TOP corners only
-    const cs = inch(0.45);
-    const co = inch(0.25);
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CORNER ACCENTS (top corners only)
+    // ═══════════════════════════════════════════════════════════════════════════
+    const cornerSize = inch(0.5);
+    const cornerOffset = inch(0.3);
     doc.lineWidth(3).strokeColor(green);
-    doc.moveTo(co, co + cs).lineTo(co, co).lineTo(co + cs, co).stroke();
-    doc.moveTo(pageW - co - cs, co).lineTo(pageW - co, co).lineTo(pageW - co, co + cs).stroke();
-
-    let y = inch(0.5);
-
-    const logoPaths = ["./netlify/functions/assets/logo_nobg.png", "./netlify/functions/assets/logo.png", "./docuproof-logo.png"];
-    let logoUsed = null;
-    for (const p of logoPaths) { if (fs.existsSync(p)) { logoUsed = p; break; } }
     
-    if (logoUsed) {
-      const logoSize = inch(0.6);
-      const pad = inch(0.04);
-      const bgSize = logoSize + pad * 2;
-      doc.roundedRect(centerX - bgSize/2, y, bgSize, bgSize, 5).fill("#0a0d10");
-      doc.image(logoUsed, centerX - logoSize/2, y + pad, { width: logoSize, height: logoSize });
-      y += bgSize + inch(0.1);
+    // Top-left corner
+    doc.moveTo(cornerOffset, cornerOffset + cornerSize)
+       .lineTo(cornerOffset, cornerOffset)
+       .lineTo(cornerOffset + cornerSize, cornerOffset)
+       .stroke();
+    
+    // Top-right corner
+    doc.moveTo(pageW - cornerOffset - cornerSize, cornerOffset)
+       .lineTo(pageW - cornerOffset, cornerOffset)
+       .lineTo(pageW - cornerOffset, cornerOffset + cornerSize)
+       .stroke();
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // HEADER SECTION
+    // ═══════════════════════════════════════════════════════════════════════════
+    let y = marginT + inch(0.2);
+
+    // Logo with dark background
+    const logoPaths = [
+      "./netlify/functions/assets/logo_nobg.png",
+      "./netlify/functions/assets/logo.png",
+      "./docuproof-logo.png"
+    ];
+    let logoUsed = null;
+    for (const p of logoPaths) {
+      if (fs.existsSync(p)) { logoUsed = p; break; }
     }
 
-    doc.font("Helvetica-Bold").fontSize(18).fillColor(green);
+    if (logoUsed) {
+      const logoSize = inch(0.65);
+      const logoPad = inch(0.06);
+      const bgSize = logoSize + logoPad * 2;
+      doc.roundedRect(centerX - bgSize / 2, y, bgSize, bgSize, 6).fill("#0f172a");
+      doc.image(logoUsed, centerX - logoSize / 2, y + logoPad, { width: logoSize, height: logoSize });
+      y += bgSize + inch(0.15);
+    }
+
+    // Brand name
+    doc.font("Helvetica-Bold").fontSize(20).fillColor(green);
     doc.text("docuProof", marginL, y, { width: contentW, align: "center" });
-    y += inch(0.22);
-
-    doc.font("Helvetica-Oblique").fontSize(9).fillColor(gray);
-    doc.text("Proof you can point to.", marginL, y, { width: contentW, align: "center" });
-    y += inch(0.2);
-
-    doc.circle(centerX - 18, y, 2.5).fill(green);
-    doc.circle(centerX, y, 2.5).fill(green);
-    doc.circle(centerX + 18, y, 2.5).fill(green);
-    y += inch(0.22);
-
-    doc.font("Helvetica").fontSize(9).fillColor(gray);
-    doc.text("CERTIFICATE OF", marginL, y, { width: contentW, align: "center", characterSpacing: 2 });
-    y += inch(0.18);
-
-    doc.font("Helvetica-Bold").fontSize(22).fillColor(black);
-    doc.text("PROOF OF EXISTENCE", marginL, y, { width: contentW, align: "center" });
-    y += inch(0.24);
-
-    doc.font("Helvetica").fontSize(8).fillColor(lightGray);
-    doc.text("Blockchain-Anchored Timestamp", marginL, y, { width: contentW, align: "center" });
     y += inch(0.28);
 
-    const boxL = marginL + inch(0.1);
-    const boxW = contentW - inch(0.2);
-    const boxH = inch(1.35);
-    const boxTop = y;
+    // Tagline
+    doc.font("Helvetica-Oblique").fontSize(10).fillColor(gray);
+    doc.text("Proof you can point to.", marginL, y, { width: contentW, align: "center" });
+    y += inch(0.22);
 
-    doc.lineWidth(1).strokeColor(borderGray).rect(boxL, boxTop, boxW, boxH).stroke();
-    doc.rect(boxL, boxTop, boxW, inch(0.28)).fill("#f8f9fa");
-    doc.font("Helvetica-Bold").fontSize(8).fillColor(darkGreen);
-    doc.text("DOCUMENT DETAILS", boxL + inch(0.18), boxTop + inch(0.08));
+    // Three dots
+    const dotRadius = 3;
+    const dotSpacing = 20;
+    doc.circle(centerX - dotSpacing, y, dotRadius).fill(green);
+    doc.circle(centerX, y, dotRadius).fill(green);
+    doc.circle(centerX + dotSpacing, y, dotRadius).fill(green);
+    y += inch(0.28);
 
-    const lblX = boxL + inch(0.18);
-    const valX = boxL + inch(1.15);
-    let rowY = boxTop + inch(0.4);
-    const rowH = inch(0.22);
+    // "CERTIFICATE OF"
+    doc.font("Helvetica").fontSize(11).fillColor(lightGray);
+    doc.text("CERTIFICATE OF", marginL, y, { width: contentW, align: "center", characterSpacing: 3 });
+    y += inch(0.22);
+
+    // "PROOF OF EXISTENCE"
+    doc.font("Helvetica-Bold").fontSize(26).fillColor(black);
+    doc.text("PROOF OF EXISTENCE", marginL, y, { width: contentW, align: "center" });
+    y += inch(0.32);
+
+    // Subtitle
+    doc.font("Helvetica").fontSize(9).fillColor(lightGray);
+    doc.text("Blockchain-Anchored Timestamp", marginL, y, { width: contentW, align: "center" });
+    y += inch(0.35);
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // DOCUMENT DETAILS BOX
+    // ═══════════════════════════════════════════════════════════════════════════
+    const boxMargin = inch(0.15);
+    const boxL = marginL + boxMargin;
+    const boxW = contentW - boxMargin * 2;
+    const detailsBoxH = inch(1.5);
+
+    // Box border
+    doc.lineWidth(1).strokeColor(borderColor);
+    doc.rect(boxL, y, boxW, detailsBoxH).stroke();
+
+    // Header background
+    const headerH = inch(0.32);
+    doc.rect(boxL, y, boxW, headerH).fill(headerBg);
+
+    // Header text
+    doc.font("Helvetica-Bold").fontSize(10).fillColor(darkGreen);
+    doc.text("DOCUMENT DETAILS", boxL + inch(0.2), y + inch(0.09));
+
+    // Detail rows
+    const labelX = boxL + inch(0.2);
+    const valueX = boxL + inch(1.3);
+    let rowY = y + headerH + inch(0.15);
+    const rowHeight = inch(0.28);
+
     const blockDisplay = blockHeight ? `#${blockHeight}` : "Pending confirmation";
+    const details = [
+      ["Proof ID:", id],
+      ["Document:", display],
+      ["Timestamp:", formatDate(createdAt)],
+      ["Block:", blockDisplay]
+    ];
 
-    const rows = [["Proof ID:", id], ["Document:", display], ["Timestamp:", formatDate(createdAt)], ["Block:", blockDisplay]];
-    for (const [lbl, val] of rows) {
-      doc.font("Helvetica").fontSize(9).fillColor(gray).text(lbl, lblX, rowY);
-      doc.font("Helvetica-Bold").fontSize(9).fillColor(black).text(val, valX, rowY, { width: boxW - inch(2.4) });
-      rowY += rowH;
+    doc.font("Helvetica").fontSize(11).fillColor(gray);
+    for (const [label, value] of details) {
+      doc.text(label, labelX, rowY);
+      doc.font("Helvetica-Bold").fillColor(black);
+      doc.text(value, valueX, rowY, { width: boxW - inch(2.5) });
+      doc.font("Helvetica").fillColor(gray);
+      rowY += rowHeight;
     }
 
-    const qrS = inch(0.88);
-    const qrX = boxL + boxW - qrS - inch(0.12);
-    const qrY = boxTop + inch(0.35);
-    const qrPng = await QRCode.toBuffer(verifyUrl, { width: 176, margin: 0, color: { dark: "#1a1a1a", light: "#ffffff" }, errorCorrectionLevel: "M" });
-    doc.image(qrPng, qrX, qrY, { width: qrS });
-    doc.font("Helvetica-Bold").fontSize(6).fillColor(black).text("SCAN TO VERIFY", qrX, qrY + qrS + inch(0.02), { width: qrS, align: "center" });
+    // QR Code
+    const qrSize = inch(0.95);
+    const qrX = boxL + boxW - qrSize - inch(0.15);
+    const qrY = y + headerH + inch(0.08);
+    const qrPng = await QRCode.toBuffer(verifyUrl, {
+      width: 190,
+      margin: 0,
+      color: { dark: "#111827", light: "#ffffff" },
+      errorCorrectionLevel: "M"
+    });
+    doc.image(qrPng, qrX, qrY, { width: qrSize });
+    
+    // "SCAN TO VERIFY" label
+    doc.font("Helvetica-Bold").fontSize(7).fillColor(black);
+    doc.text("SCAN TO VERIFY", qrX, qrY + qrSize + inch(0.04), { width: qrSize, align: "center" });
 
-    y = boxTop + boxH + inch(0.12);
+    y += detailsBoxH + inch(0.18);
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CRYPTOGRAPHIC FINGERPRINT BOX (if hash provided)
+    // ═══════════════════════════════════════════════════════════════════════════
     if (hash) {
-      const hH = inch(0.45);
-      doc.lineWidth(1).strokeColor(borderGray).rect(boxL, y, boxW, hH).stroke();
-      doc.font("Helvetica-Bold").fontSize(8).fillColor(darkGreen).text("CRYPTOGRAPHIC FINGERPRINT (SHA-256)", boxL + inch(0.18), y + inch(0.08));
-      doc.font("Helvetica").fontSize(6.5).fillColor(black).text(hash, boxL + inch(0.18), y + inch(0.26), { width: boxW - inch(0.36) });
-      y += hH + inch(0.1);
+      const hashBoxH = inch(0.55);
+      doc.lineWidth(1).strokeColor(borderColor);
+      doc.rect(boxL, y, boxW, hashBoxH).stroke();
+
+      doc.font("Helvetica-Bold").fontSize(9).fillColor(darkGreen);
+      doc.text("CRYPTOGRAPHIC FINGERPRINT (SHA-256)", boxL + inch(0.2), y + inch(0.1));
+
+      doc.font("Helvetica").fontSize(7.5).fillColor(black);
+      doc.text(hash, boxL + inch(0.2), y + inch(0.32), { width: boxW - inch(0.4) });
+
+      y += hashBoxH + inch(0.15);
     }
 
-    const attH = inch(0.95);
-    doc.lineWidth(1).strokeColor(borderGray).rect(boxL, y, boxW, attH).stroke();
-    doc.rect(boxL, y, boxW, inch(0.26)).fill("#f8f9fa");
-    doc.font("Helvetica-Bold").fontSize(8).fillColor(darkGreen).text("LEGAL ATTESTATION", boxL + inch(0.18), y + inch(0.07));
-    
-    const attText = "This certificate attests that on the date and time indicated above, a cryptographic hash (SHA-256) of the referenced digital file was computed and submitted to the Bitcoin blockchain via the OpenTimestamps protocol. The blockchain record provides tamper-evident proof that the file existed in its exact form at the timestamp recorded. This proof is independently verifiable by any party using the original file and standard cryptographic tools.";
-    doc.font("Helvetica").fontSize(7.5).fillColor(black).text(attText, boxL + inch(0.18), y + inch(0.34), { width: boxW - inch(0.36), lineGap: 0.5 });
-    y += attH + inch(0.1);
+    // ═══════════════════════════════════════════════════════════════════════════
+    // LEGAL ATTESTATION BOX
+    // ═══════════════════════════════════════════════════════════════════════════
+    const attBoxH = inch(1.1);
+    doc.lineWidth(1).strokeColor(borderColor);
+    doc.rect(boxL, y, boxW, attBoxH).stroke();
 
-    const instH = inch(0.8);
-    doc.lineWidth(1).strokeColor(borderGray).rect(boxL, y, boxW, instH).stroke();
-    doc.rect(boxL, y, boxW, inch(0.26)).fill("#f8f9fa");
-    doc.font("Helvetica-Bold").fontSize(8).fillColor(darkGreen).text("HOW TO VERIFY THIS PROOF", boxL + inch(0.18), y + inch(0.07));
+    // Header
+    doc.rect(boxL, y, boxW, headerH).fill(headerBg);
+    doc.font("Helvetica-Bold").fontSize(10).fillColor(darkGreen);
+    doc.text("LEGAL ATTESTATION", boxL + inch(0.2), y + inch(0.09));
+
+    // Attestation text
+    const attestationText = "This certificate attests that on the date and time indicated above, a cryptographic hash (SHA-256) of the referenced digital file was computed and submitted to the Bitcoin blockchain via the OpenTimestamps protocol. The blockchain record provides tamper-evident proof that the file existed in its exact form at the timestamp recorded. This proof is independently verifiable by any party using the original file and standard cryptographic tools.";
     
-    const insts = [
+    doc.font("Helvetica").fontSize(9).fillColor(black);
+    doc.text(attestationText, boxL + inch(0.2), y + headerH + inch(0.1), {
+      width: boxW - inch(0.4),
+      lineGap: 2,
+      align: "justify"
+    });
+
+    y += attBoxH + inch(0.15);
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // HOW TO VERIFY BOX
+    // ═══════════════════════════════════════════════════════════════════════════
+    const verifyBoxH = inch(0.95);
+    doc.lineWidth(1).strokeColor(borderColor);
+    doc.rect(boxL, y, boxW, verifyBoxH).stroke();
+
+    // Header
+    doc.rect(boxL, y, boxW, headerH).fill(headerBg);
+    doc.font("Helvetica-Bold").fontSize(10).fillColor(darkGreen);
+    doc.text("HOW TO VERIFY THIS PROOF", boxL + inch(0.2), y + inch(0.09));
+
+    // Verification steps
+    const steps = [
       "1. Visit the verification URL or scan the QR code",
       "2. Upload your original file to compute its SHA-256 hash",
       "3. Confirm the hash matches the recorded fingerprint",
       "4. Verify the Bitcoin block confirmation on any block explorer"
     ];
-    let iY = y + inch(0.34);
-    doc.font("Helvetica").fontSize(7.5).fillColor(black);
-    for (const inst of insts) {
-      doc.text(inst, boxL + inch(0.18), iY, { width: boxW - inch(0.36), continued: false });
-      iY += inch(0.11);
+
+    let stepY = y + headerH + inch(0.1);
+    doc.font("Helvetica").fontSize(9).fillColor(black);
+    for (const step of steps) {
+      doc.text(step, boxL + inch(0.2), stepY, { width: boxW - inch(0.4) });
+      stepY += inch(0.15);
     }
 
-    // Footer - simple line and text, well above page bottom
-    doc.lineWidth(1.5).strokeColor(green).moveTo(centerX - inch(1.8), pageH - inch(0.6)).lineTo(centerX + inch(1.8), pageH - inch(0.6)).stroke();
-    doc.font("Helvetica").fontSize(8).fillColor(gray);
-    doc.text("docuProof.io  •  Proof of Existence on the Blockchain", marginL, pageH - inch(0.5), { width: contentW, align: "center" });
+    // ═══════════════════════════════════════════════════════════════════════════
+    // FOOTER - positioned from bottom of page
+    // ═══════════════════════════════════════════════════════════════════════════
+    const footerLineY = pageH - inch(0.55);
+    const footerTextY = pageH - inch(0.42);
 
+    // Green decorative line
+    doc.lineWidth(2).strokeColor(green);
+    doc.moveTo(centerX - inch(2), footerLineY)
+       .lineTo(centerX + inch(2), footerLineY)
+       .stroke();
+
+    // Footer text
+    doc.font("Helvetica").fontSize(9).fillColor(gray);
+    doc.text("docuProof.io  •  Proof of Existence on the Blockchain", marginL, footerTextY, {
+      width: contentW,
+      align: "center"
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // FINALIZE
+    // ═══════════════════════════════════════════════════════════════════════════
     doc.end();
     const pdf = await done;
 
@@ -179,7 +298,7 @@ exports.handler = async (event) => {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${outputFilename}"`,
         "Cache-Control": "no-store",
-        "x-docuproof-version": "proof_pdf v7.4.0",
+        "x-docuproof-version": "proof_pdf v8.0.0",
       },
       body: pdf.toString("base64"),
       isBase64Encoded: true,
@@ -196,6 +315,8 @@ exports.handler = async (event) => {
 function formatDate(isoString) {
   try {
     const d = new Date(isoString);
-    return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-  } catch { return isoString; }
+    return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  } catch {
+    return isoString;
+  }
 }
