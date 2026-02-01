@@ -1,5 +1,5 @@
 // netlify/functions/proof_pdf.js
-// v7.1.0 — Single page certificate with fixed positioning
+// v7.2.0 — Single page certificate with fixed positioning
 
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
@@ -26,7 +26,7 @@ exports.handler = async (event) => {
         Title: "Certificate of Proof of Existence",
         Author: "docuProof.io",
         Subject: `Proof ID: ${id}`,
-        Creator: "docuProof Certificate Generator v7.1.0"
+        Creator: "docuProof Certificate Generator v7.2.0"
       },
       autoFirstPage: true,
       bufferPages: true
@@ -147,28 +147,28 @@ exports.handler = async (event) => {
 
     // SHA-256 Hash (if provided)
     if (hash) {
-      const hH = inch(0.48);
+      const hH = inch(0.52);
       doc.lineWidth(1).strokeColor(borderGray).rect(boxL, y, boxW, hH).stroke();
-      doc.font("Helvetica-Bold").fontSize(8).fillColor(darkGreen).text("CRYPTOGRAPHIC FINGERPRINT (SHA-256)", boxL + inch(0.2), y + inch(0.1));
-      doc.font("Helvetica").fontSize(6.5).fillColor(black).text(hash, boxL + inch(0.2), y + inch(0.28), { width: boxW - inch(0.4) });
-      y += hH + inch(0.15);
+      doc.font("Helvetica-Bold").fontSize(9).fillColor(darkGreen).text("CRYPTOGRAPHIC FINGERPRINT (SHA-256)", boxL + inch(0.2), y + inch(0.1));
+      doc.font("Helvetica").fontSize(7).fillColor(black).text(hash, boxL + inch(0.2), y + inch(0.3), { width: boxW - inch(0.4) });
+      y += hH + inch(0.12);
     }
 
     // Legal Attestation
-    const attH = inch(1.05);
+    const attH = inch(1.1);
     doc.lineWidth(1).strokeColor(borderGray).rect(boxL, y, boxW, attH).stroke();
-    doc.rect(boxL, y, boxW, inch(0.28)).fill("#f8f9fa");
-    doc.font("Helvetica-Bold").fontSize(8).fillColor(darkGreen).text("LEGAL ATTESTATION", boxL + inch(0.2), y + inch(0.08));
+    doc.rect(boxL, y, boxW, inch(0.3)).fill("#f8f9fa");
+    doc.font("Helvetica-Bold").fontSize(9).fillColor(darkGreen).text("LEGAL ATTESTATION", boxL + inch(0.2), y + inch(0.09));
     
     const attText = "This certificate attests that on the date and time indicated above, a cryptographic hash (SHA-256) of the referenced digital file was computed and submitted to the Bitcoin blockchain via the OpenTimestamps protocol. The blockchain record provides tamper-evident proof that the file existed in its exact form at the timestamp recorded. This proof is independently verifiable by any party using the original file and standard cryptographic tools.";
-    doc.font("Helvetica").fontSize(7.5).fillColor(black).text(attText, boxL + inch(0.2), y + inch(0.38), { width: boxW - inch(0.4), lineGap: 1 });
-    y += attH + inch(0.15);
+    doc.font("Helvetica").fontSize(8).fillColor(black).text(attText, boxL + inch(0.2), y + inch(0.4), { width: boxW - inch(0.4), lineGap: 1.5 });
+    y += attH + inch(0.12);
 
     // Verification Instructions
-    const instH = inch(0.85);
+    const instH = inch(0.9);
     doc.lineWidth(1).strokeColor(borderGray).rect(boxL, y, boxW, instH).stroke();
-    doc.rect(boxL, y, boxW, inch(0.28)).fill("#f8f9fa");
-    doc.font("Helvetica-Bold").fontSize(8).fillColor(darkGreen).text("HOW TO VERIFY THIS PROOF", boxL + inch(0.2), y + inch(0.08));
+    doc.rect(boxL, y, boxW, inch(0.3)).fill("#f8f9fa");
+    doc.font("Helvetica-Bold").fontSize(9).fillColor(darkGreen).text("HOW TO VERIFY THIS PROOF", boxL + inch(0.2), y + inch(0.09));
     
     const insts = [
       "1. Visit the verification URL or scan the QR code",
@@ -176,18 +176,18 @@ exports.handler = async (event) => {
       "3. Confirm the hash matches the recorded fingerprint",
       "4. Verify the Bitcoin block confirmation on any block explorer"
     ];
-    let iY = y + inch(0.38);
-    doc.font("Helvetica").fontSize(7.5).fillColor(black);
+    let iY = y + inch(0.4);
+    doc.font("Helvetica").fontSize(8).fillColor(black);
     for (const inst of insts) {
       doc.text(inst, boxL + inch(0.2), iY, { width: boxW - inch(0.4), continued: false });
-      iY += inch(0.12);
+      iY += inch(0.13);
     }
 
-    // Footer
-    const footY = pageH - inch(0.55);
+    // Footer - positioned from bottom
+    const footY = pageH - inch(0.45);
     doc.lineWidth(1.5).strokeColor(green).moveTo(centerX - inch(2), footY).lineTo(centerX + inch(2), footY).stroke();
     doc.font("Helvetica").fontSize(9).fillColor(gray);
-    doc.text("docuProof.io  •  Proof of Existence on the Blockchain", marginL, footY + inch(0.12), { width: contentW, align: "center" });
+    doc.text("docuProof.io  •  Proof of Existence on the Blockchain", marginL, footY + inch(0.1), { width: contentW, align: "center" });
 
     doc.end();
     const pdf = await done;
@@ -201,7 +201,7 @@ exports.handler = async (event) => {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${outputFilename}"`,
         "Cache-Control": "no-store",
-        "x-docuproof-version": "proof_pdf v7.1.0",
+        "x-docuproof-version": "proof_pdf v7.2.0",
       },
       body: pdf.toString("base64"),
       isBase64Encoded: true,
