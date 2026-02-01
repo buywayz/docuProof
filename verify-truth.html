@@ -1372,7 +1372,7 @@
           <div class="card-buttons">
             <a href="/.netlify/functions/daily_headline" class="btn-free secondary" download>Download Today's PDF</a>
             <span class="or-divider">then</span>
-            <a href="/app.html?source=headlines" class="btn-free primary">Upload & Timestamp →</a>
+            <a href="#" onclick="openFreeProof('headlines'); return false;" class="btn-free primary">Upload & Timestamp →</a>
           </div>
         </div>
         
@@ -1383,7 +1383,7 @@
           <p class="card-tagline">"My proof. My moment."</p>
           <p>Screenshot whatever matters — a news headline, a product price, a social post, a conversation. Your personal time capsule.</p>
           <div class="card-buttons">
-            <a href="/app.html?source=screenshot" class="btn-free primary">Upload Screenshot →</a>
+            <a href="#" onclick="openFreeProof('screenshot'); return false;" class="btn-free primary">Upload & Timestamp →</a>
           </div>
         </div>
         
@@ -1435,38 +1435,73 @@
 <script>
 // Camera capture functionality for "Take Photo" and "Take Selfie" buttons
 function openCamera(type) {
-  // Check if we're on a device that likely has a camera
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  
-  // Create a file input that triggers camera
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
-  input.capture = type === 'selfie' ? 'user' : 'environment'; // front or back camera
-  
+  input.capture = type === 'selfie' ? 'user' : 'environment';
   input.onchange = function(e) {
     const file = e.target.files[0];
     if (file) {
-      // Store file info and redirect to app
-      sessionStorage.setItem('docuproof_camera_file', file.name);
-      sessionStorage.setItem('docuproof_source', type);
-      
-      // Create a URL for the file and store it
-      const url = URL.createObjectURL(file);
-      sessionStorage.setItem('docuproof_file_url', url);
-      
-      // Redirect to app with the file
-      window.location.href = '/app.html?source=' + type + '&hasfile=true';
+      openFreeProofWithFile(file, type);
     }
   };
-  
-  // Check if camera/file access is supported
-  if (!isMobile && !navigator.mediaDevices) {
-    // Desktop without camera - show helpful message
-    alert('📱 For the best experience, try this on your phone!\n\nYou can also upload any photo from your computer by clicking the button again.');
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if (!isMobile) {
+    if (!confirm('📱 This works best on mobile where it opens your camera directly.\n\nOn desktop, you can still select a photo from your files.\n\nContinue?')) {
+      return;
+    }
   }
-  
   input.click();
+}
+
+async function sha256Hex(file) {
+  const buf = await file.arrayBuffer();
+  const digest = await crypto.subtle.digest('SHA-256', buf);
+  return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function openFreeProof(source) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = source === 'screenshot' ? 'image/*' : '*/*';
+  input.onchange = function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      openFreeProofWithFile(file, source);
+    }
+  };
+  input.click();
+}
+
+async function openFreeProofWithFile(file, source) {
+  try {
+    const hash = await sha256Hex(file);
+    
+    const response = await fetch('/.netlify/functions/create_free_proof', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hash: hash,
+        filename: file.name,
+        source: source
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || 'Failed to create proof');
+    }
+    
+    window.location.href = data.verifyUrl;
+    
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function closeFreeProofModal() {
+  document.getElementById('freeProofModal').style.display = 'none';
 }
 </script>
 

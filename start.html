@@ -989,12 +989,6 @@ function openFreeProof(source) {
     if (!file) return;
     
     try {
-      // Show loading state
-      const btn = event.target;
-      const originalText = btn.textContent;
-      btn.textContent = 'Processing...';
-      btn.disabled = true;
-      
       // Compute hash locally
       const hash = await sha256Hex(file);
       
@@ -1020,12 +1014,5 @@ function openFreeProof(source) {
       
     } catch (err) {
       alert('Error: ' + err.message);
-      // Reset button if we can find it
-      document.querySelectorAll('.btn-free.primary').forEach(b => {
-        if (b.disabled) {
-          b.disabled = false;
-          b.textContent = 'Upload & Timestamp →';
-        }
-      });
     }
   };

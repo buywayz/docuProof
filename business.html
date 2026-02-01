@@ -1367,14 +1367,7 @@ function openCamera(type) {
   input.onchange = function(e) {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        sessionStorage.setItem('docuproof_pending_file', event.target.result);
-        sessionStorage.setItem('docuproof_pending_filename', file.name);
-        sessionStorage.setItem('docuproof_pending_type', file.type);
-        window.location.href = '/app.html?source=' + type + '\&hasfile=true';
-      };
-      reader.readAsDataURL(file);
+      openFreeProofWithFile(file, type);
     }
   };
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -1384,6 +1377,59 @@ function openCamera(type) {
     }
   }
   input.click();
+}
+
+async function sha256Hex(file) {
+  const buf = await file.arrayBuffer();
+  const digest = await crypto.subtle.digest('SHA-256', buf);
+  return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function openFreeProof(source) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = source === 'screenshot' ? 'image/*' : '*/*';
+  input.onchange = function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      openFreeProofWithFile(file, source);
+    }
+  };
+  input.click();
+}
+
+async function openFreeProofWithFile(file, source) {
+  try {
+    // Compute hash locally
+    const hash = await sha256Hex(file);
+    
+    // Send to free proof endpoint
+    const response = await fetch('/.netlify/functions/create_free_proof', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        hash: hash,
+        filename: file.name,
+        source: source
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || 'Failed to create proof');
+    }
+    
+    // Redirect directly to verify page
+    window.location.href = data.verifyUrl;
+    
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+function closeFreeProofModal() {
+  document.getElementById('freeProofModal').style.display = 'none';
 }
 </script>
 <!-- Free Proof Success Modal -->
