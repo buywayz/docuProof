@@ -1,5 +1,5 @@
 // netlify/functions/proof_pdf.js
-// v16.0.0 – Clean rebuild from scratch
+// v16.1.0 – Fixed footer overlap
 
 const fs = require("fs");
 const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
@@ -23,7 +23,7 @@ exports.handler = async (event) => {
     const pdfDoc = await PDFDocument.create();
     pdfDoc.setTitle("Certificate of Proof of Existence");
     pdfDoc.setAuthor("docuProof.io");
-    pdfDoc.setCreator("docuProof v16.0.0");
+    pdfDoc.setCreator("docuProof v16.1.0");
 
     // US Letter: 612 x 792 points
     const page = pdfDoc.addPage([612, 792]);
@@ -42,9 +42,12 @@ exports.handler = async (event) => {
     const BORDER = hex("#d1d5db");
 
     // Margins
-    const M = 50; // margin
-    const CW = W - M * 2; // content width
-    const CX = W / 2; // center X
+    const M = 50;
+    const CW = W - M * 2;
+    const CX = W / 2;
+    
+    // Footer zone - content must stay ABOVE this
+    const FOOTER_ZONE = 75;
 
     // =========================================================================
     // BORDER & CORNERS
@@ -54,7 +57,7 @@ exports.handler = async (event) => {
     page.drawRectangle({ x: W - 35, y: H - 35, width: 20, height: 20, color: GREEN });
 
     // =========================================================================
-    // LOGO - centered at top
+    // LOGO
     // =========================================================================
     let Y = H - 50;
     
@@ -106,7 +109,7 @@ exports.handler = async (event) => {
     Y -= boxH + 20;
 
     // =========================================================================
-    // DETAILS SECTION (left) + QR CODE (right)
+    // DETAILS + QR CODE
     // =========================================================================
     const qrS = 80;
     const qrX = W - M - qrS;
@@ -154,27 +157,27 @@ exports.handler = async (event) => {
     // DIVIDER
     // =========================================================================
     page.drawLine({ start: { x: M, y: Y }, end: { x: W - M, y: Y }, thickness: 1, color: BORDER });
-    Y -= 20;
+    Y -= 18;
 
     // =========================================================================
     // EXPLANATION SECTIONS
     // =========================================================================
     
-    // Section: Understanding
+    // Understanding
     page.drawText("UNDERSTANDING YOUR PROOF", { x: M, y: Y, size: 10, font: fontBold, color: DARK_GREEN });
-    Y -= 16;
-    
-    const exp1 = "Your Proof ID is your lookup reference. The File Fingerprint is a unique code from your file—if anything changes, the fingerprint changes completely. This fingerprint is recorded on the Bitcoin blockchain. To verify, upload your file and we confirm the fingerprint matches.";
-    Y = drawWrappedText(page, exp1, M, Y, CW, 9, font, BLACK, 13);
-    Y -= 18;
-
-    // Section: Why It Matters
-    page.drawText("WHY IT MATTERS", { x: M, y: Y, size: 10, font: fontBold, color: DARK_GREEN });
-    Y -= 16;
-    
-    const exp2 = "Traditional timestamps can be faked. Blockchain timestamps cannot be altered by anyone—not companies, not governments. Your proof is permanent.";
-    Y = drawWrappedText(page, exp2, M, Y, CW, 9, font, BLACK, 13);
     Y -= 14;
+    
+    const exp1 = "Your Proof ID is your lookup reference. The File Fingerprint is a unique code from your file—if anything changes, the fingerprint changes. This fingerprint is recorded on Bitcoin. To verify, upload your file and we confirm it matches.";
+    Y = drawWrappedText(page, exp1, M, Y, CW, 9, font, BLACK, 12);
+    Y -= 14;
+
+    // Why It Matters
+    page.drawText("WHY IT MATTERS", { x: M, y: Y, size: 10, font: fontBold, color: DARK_GREEN });
+    Y -= 14;
+    
+    const exp2 = "Blockchain timestamps cannot be faked or altered. Your proof is permanent and verifiable by anyone.";
+    Y = drawWrappedText(page, exp2, M, Y, CW, 9, font, BLACK, 12);
+    Y -= 10;
     
     const uses = [
       "• Intellectual Property — Prove when you created work",
@@ -184,30 +187,31 @@ exports.handler = async (event) => {
     ];
     for (const u of uses) {
       page.drawText(u, { x: M, y: Y, size: 9, font, color: BLACK });
-      Y -= 14;
+      Y -= 13;
     }
-    Y -= 12;
+    Y -= 10;
 
-    // Section: How to Verify
+    // How to Verify
     page.drawText("HOW TO VERIFY", { x: M, y: Y, size: 10, font: fontBold, color: DARK_GREEN });
-    Y -= 16;
+    Y -= 14;
     
     const steps = [
-      "1. Keep your original file — you need it to verify",
-      "2. Go to docuproof.io/v/" + id + " or scan QR",
-      "3. Upload file — we calculate fingerprint",
-      "4. Match confirms your proof",
+      "1. Keep your original file safe",
+      "2. Visit docuproof.io/v/" + id + " or scan QR code",
+      "3. Upload your file to verify the fingerprint matches",
     ];
     for (const s of steps) {
-      page.drawText(s, { x: M, y: Y, size: 9, font, color: BLACK });
-      Y -= 14;
+      if (Y > FOOTER_ZONE) { // Only draw if above footer zone
+        page.drawText(s, { x: M, y: Y, size: 9, font, color: BLACK });
+        Y -= 13;
+      }
     }
 
     // =========================================================================
     // FOOTER - fixed position
     // =========================================================================
     const footerY = 45;
-    page.drawLine({ start: { x: M, y: footerY + 12 }, end: { x: W - M, y: footerY + 12 }, thickness: 2, color: GREEN });
+    page.drawLine({ start: { x: M, y: footerY + 15 }, end: { x: W - M, y: footerY + 15 }, thickness: 2, color: GREEN });
     page.drawText("docuProof.io", { x: M, y: footerY, size: 9, font: fontBold, color: DARK_GREEN });
     const fr = "Trusted Blockchain Timestamping";
     page.drawText(fr, { x: W - M - font.widthOfTextAtSize(fr, 9), y: footerY, size: 9, font, color: GRAY });
@@ -224,7 +228,7 @@ exports.handler = async (event) => {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${safeName}-docuProof.pdf"`,
         "Cache-Control": "no-store",
-        "x-version": "v16.0.0",
+        "x-version": "v16.1.0",
       },
       body: Buffer.from(pdfBytes).toString("base64"),
       isBase64Encoded: true,
