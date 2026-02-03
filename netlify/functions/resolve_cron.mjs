@@ -1,102 +1,212 @@
 // netlify/functions/resolve_cron.mjs
-// Scheduled resolver: walk a small index of recent IDs and backfill txid/confirmations.
-// ESM, no top-level await.
+// v2.0.0 - Fixed: correct store, proper anchor scanning, writes blockHeight + state
+// Scheduled hourly via netlify.toml: [functions."resolve_cron"] schedule = "@hourly"
+//
+// Flow:
+// 1. List all keys matching "anchor:*.json" in the "proofs" store
+// 2. For each that is NOT yet "ANCHORED", load the .ots receipt
+// 3. Call OTS sidecar /upgrade to check if Bitcoin has confirmed it
+// 4. If upgraded, persist blockHeight, state="ANCHORED", and updated receipt
 
-const OTS_SIDECAR_URL   = process.env.OTS_SIDECAR_URL;
-const NETLIFY_SITE_ID   = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
-const NETLIFY_API_TOKEN = process.env.NETLIFY_API_TOKEN || process.env.BLOBS_TOKEN;
-const BATCH_LIMIT = 40; // scan up to N ids per run
+const OTS_SIDECAR_URL = process.env.OTS_SIDECAR_URL;
+const BATCH_LIMIT = 40;
 
-function json(status, body){
-  return { statusCode: status, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
+function json(status, body) {
+  return {
+    statusCode: status,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  };
 }
 
-async function getStore(){
+async function getStore() {
   const mod = await import("@netlify/blobs");
   const gs = mod.getStore || (mod.default && mod.default.getStore);
-  if(!gs) throw new Error("getStore not available from @netlify/blobs");
+  if (!gs) throw new Error("getStore not available from @netlify/blobs");
+
+  // Try automatic binding first (works in Netlify runtime)
   try {
-    return gs("default");
-  } catch(e){
-    const msg = e?.message || "";
-    if(!/not been configured|requires the name of the store|is not configured/i.test(msg)) throw e;
-    if(!NETLIFY_SITE_ID || !NETLIFY_API_TOKEN) throw new Error("Netlify Blobs not bound and manual credentials missing. Set NETLIFY_SITE_ID and NETLIFY_API_TOKEN.");
-    return gs({ name:"default", siteID: NETLIFY_SITE_ID, token: NETLIFY_API_TOKEN });
+    return gs("proofs");
+  } catch (e) {
+    // Manual fallback
+    const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
+    const token = process.env.NETLIFY_BLOBS_TOKEN || process.env.NETLIFY_API_TOKEN || process.env.BLOBS_TOKEN;
+    if (!siteID || !token) {
+      throw new Error("Netlify Blobs not bound and manual credentials missing");
+    }
+    return gs({ name: "proofs", siteID, token });
   }
 }
 
-async function sidecarTxidFromReceipt(receiptBase64){
-  if(!OTS_SIDECAR_URL) throw new Error("OTS_SIDECAR_URL not configured");
-  const tries = ["txid-from-receipt","txid","verify"].map(p => `${OTS_SIDECAR_URL}/${p}`);
-  for(const url of tries){
-    try{
-      const r = await fetch(url, {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ receiptBase64 })
-      });
-      if(!r.ok) continue;
-      const j = await r.json();
-      return { txid: j.txid || null, confirmations: Number(j.confirmations) || 0 };
-    }catch{}
-  }
-  return { txid:null, confirmations:0 };
-}
+export const handler = async (_event) => {
+  try {
+    if (!OTS_SIDECAR_URL) {
+      return json(500, { ok: false, error: "OTS_SIDECAR_URL not configured" });
+    }
 
-export const handler = async (_event)=>{
-  try{
     const store = await getStore();
 
-    // Load index of recent IDs
-    const idxKey = "anchors/index.json";
-    const idxRaw = await store.get(idxKey, { type:"arrayBuffer" });
-    if(!idxRaw) return json(200, { ok:true, processed:0, note:"no index yet" });
+    // ─── Step 1: Find all pending anchors ───────────────────────────────
+    // List all blobs and filter for anchor:*.json keys
+    let anchorKeys = [];
+    try {
+      const list = await store.list({ prefix: "anchor:" });
+      if (list && list.blobs) {
+        anchorKeys = list.blobs
+          .map((b) => b.key || b.name || b)
+          .filter((k) => typeof k === "string" && k.endsWith(".json"));
+      }
+    } catch (listErr) {
+      console.error("resolve_cron: failed to list anchor keys:", listErr);
+      return json(500, { ok: false, error: "Failed to list anchor keys", detail: String(listErr) });
+    }
 
-    const ids = JSON.parse(Buffer.from(idxRaw).toString("utf8"));
-    if(!Array.isArray(ids) || ids.length === 0) return json(200, { ok:true, processed:0, note:"empty index" });
+    if (anchorKeys.length === 0) {
+      return json(200, { ok: true, processed: 0, note: "no anchor records found" });
+    }
 
-    const batch = ids.slice(0, BATCH_LIMIT);
-    let processed = 0, updated = 0, withTxid = 0;
+    // ─── Step 2: Process each pending anchor ────────────────────────────
+    const batch = anchorKeys.slice(0, BATCH_LIMIT);
+    let processed = 0;
+    let skipped = 0;
+    let upgraded = 0;
+    let errors = 0;
 
-    for(const id of batch){
-      try{
-        const statusKey = `anchor:${id}.json`;
-        const stRaw = await store.get(statusKey, { type:"arrayBuffer" });
-        if(!stRaw){ processed++; continue; }
-        const st = JSON.parse(Buffer.from(stRaw).toString("utf8"));
+    for (const anchorKey of batch) {
+      try {
+        // Read anchor status
+        const raw = await store.get(anchorKey, { type: "text" });
+        if (!raw) { processed++; continue; }
 
-        const candidates = [ st.receipt_ref, `ots/receipts/${id}.ots`, `ots:${id}.receipt` ].filter(Boolean);
-        let bytes = null;
-        for(const ref of candidates){
-          const b = await store.get(ref, { type:"arrayBuffer" });
-          if(b){ bytes = Buffer.from(b); break; }
+        let anchor;
+        try {
+          anchor = JSON.parse(raw);
+        } catch {
+          processed++;
+          continue;
         }
-        if(!bytes){ processed++; continue; }
 
-        const { txid, confirmations } = await sidecarTxidFromReceipt(bytes.toString("base64"));
+        // Skip if already anchored with blockHeight
+        if (anchor.state === "ANCHORED" && anchor.blockHeight && anchor.blockHeight > 0) {
+          skipped++;
+          processed++;
+          continue;
+        }
+
+        // Extract proof ID from key: "anchor:PROOFID.json"
+        const id = anchorKey.replace(/^anchor:/, "").replace(/\.json$/, "");
+        if (!id) { processed++; continue; }
+
+        // ─── Step 3: Load the .ots receipt ────────────────────────────
+        const receiptCandidates = [
+          `ots/receipts/${id}.ots`,
+          `ots:${id}.receipt`,
+        ];
+
+        let receiptBytes = null;
+        for (const rk of receiptCandidates) {
+          try {
+            const ab = await store.get(rk, { type: "arrayBuffer" });
+            if (ab && ab.byteLength > 0) {
+              receiptBytes = Buffer.from(ab);
+              break;
+            }
+          } catch {}
+        }
+
+        if (!receiptBytes) {
+          // No receipt found - can't upgrade
+          processed++;
+          continue;
+        }
+
+        const receiptB64 = receiptBytes.toString("base64");
+
+        // ─── Step 4: Call sidecar /upgrade ────────────────────────────
+        let upgradeResult = null;
+        try {
+          const resp = await fetch(`${OTS_SIDECAR_URL}/upgrade`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, receipt_b64: receiptB64 }),
+          });
+
+          if (resp.ok) {
+            upgradeResult = await resp.json();
+          } else {
+            const text = await resp.text().catch(() => "");
+            console.error(`resolve_cron: /upgrade failed for ${id}: ${resp.status} ${text}`);
+          }
+        } catch (fetchErr) {
+          console.error(`resolve_cron: /upgrade fetch error for ${id}:`, fetchErr);
+        }
+
+        if (!upgradeResult || !upgradeResult.ok) {
+          processed++;
+          continue;
+        }
+
+        // ─── Step 5: Update anchor record ─────────────────────────────
+        const newState = upgradeResult.state || "OTS_RECEIPT";
+        const txid = upgradeResult.txid || null;
+        const blockHeight = upgradeResult.blockHeight || upgradeResult.block_height || upgradeResult.block || null;
+        const confirmations = upgradeResult.confirmations || 0;
 
         let changed = false;
-        if(txid && txid !== st.txid){ st.txid = txid; changed = true; withTxid++; }
-        if(Number.isFinite(confirmations) && confirmations !== (st.confirmations ?? 0)){
-          st.confirmations = confirmations; changed = true;
+
+        // Check if we got a Bitcoin confirmation
+        if (newState === "ANCHORED" || blockHeight || txid) {
+          anchor.state = "ANCHORED";
+          anchor.txid = txid || anchor.txid || null;
+          anchor.blockHeight = blockHeight || anchor.blockHeight || null;
+          anchor.confirmations = confirmations || anchor.confirmations || 0;
+          changed = true;
+        } else if (newState !== anchor.state) {
+          anchor.state = newState;
+          changed = true;
         }
 
-        if(changed){
-          st.updatedAt = new Date().toISOString();
-          await store.set(statusKey, JSON.stringify(st), {
-            metadata:{ contentType:"application/json; charset=utf-8" }
-          });
-          updated++;
+        // Always try to save the upgraded receipt
+        if (upgradeResult.receipt_b64) {
+          try {
+            const upgradedBytes = Buffer.from(upgradeResult.receipt_b64, "base64");
+            await store.set(`ots/receipts/${id}.ots`, upgradedBytes, {
+              contentType: "application/octet-stream",
+            });
+          } catch (e) {
+            console.error(`resolve_cron: failed to save upgraded receipt for ${id}:`, e);
+          }
         }
+
+        if (changed) {
+          anchor.updatedAt = new Date().toISOString();
+          anchor.resolvedBy = "resolve_cron";
+          await store.set(anchorKey, JSON.stringify(anchor), {
+            contentType: "application/json",
+          });
+          upgraded++;
+          console.log(`resolve_cron: upgraded ${id} → state=${anchor.state}, block=${anchor.blockHeight}`);
+        }
+
         processed++;
-      }catch{
+      } catch (itemErr) {
+        console.error(`resolve_cron: error processing ${anchorKey}:`, itemErr);
+        errors++;
         processed++;
       }
     }
 
-    return json(200, { ok:true, processed, updated, withTxid, batch:batch.length, total:ids.length });
-  }catch(e){
+    return json(200, {
+      ok: true,
+      processed,
+      upgraded,
+      skipped,
+      errors,
+      total: anchorKeys.length,
+      batch: batch.length,
+    });
+  } catch (e) {
     console.error("resolve_cron error:", e);
-    return json(500, { error: e.message });
+    return json(500, { ok: false, error: e.message });
   }
 };
