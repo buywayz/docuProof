@@ -1,5 +1,5 @@
 // netlify/functions/resolve_now.js
-// CommonJS version to avoid Netlify ESM bundling crash.
+// v2.0.0 - Fixed: uses /upgrade-receipt endpoint with receiptBase64 field
 // Manually upgrade an OTS receipt via the sidecar and persist anchor JSON.
 //
 // Usage:
@@ -7,7 +7,6 @@
 
 let _storePromise = null;
 
-// Minimal, robust store getter mirroring _db.js behavior.
 async function getStoreSafe() {
   if (_storePromise) return _storePromise;
 
@@ -15,11 +14,9 @@ async function getStoreSafe() {
     try {
       const mod = await import("@netlify/blobs");
 
-      // First: try automatic environment binding (same as _db.js)
       try {
         return mod.getStore("proofs");
       } catch {
-        // Fallback: manual configuration if needed
         const siteID =
           process.env.NETLIFY_SITE_ID ||
           process.env.SITE_ID ||
@@ -87,7 +84,7 @@ exports.handler = async (event) => {
 
     const receiptKey = `ots/receipts/${id}.ots`;
 
-    // 1) Load the .ots receipt exactly where _db.setOtsReceipt wrote it
+    // 1) Load the .ots receipt
     let ab;
     try {
       ab = await store.get(receiptKey, { type: "arrayBuffer" });
@@ -112,18 +109,18 @@ exports.handler = async (event) => {
 
     const receiptB64 = Buffer.from(ab).toString("base64");
 
-    // 2) Call sidecar /upgrade
-    const upgradeResp = await fetch(`${sidecarBase}/upgrade`, {
+    // 2) Call sidecar /upgrade-receipt (correct endpoint and field name)
+    const upgradeResp = await fetch(`${sidecarBase}/upgrade-receipt`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, receipt_b64: receiptB64 }),
+      body: JSON.stringify({ id, receiptBase64: receiptB64 }),
     });
 
     if (!upgradeResp.ok) {
       const text = await upgradeResp.text().catch(() => "");
       return json(502, {
         ok: false,
-        error: "OTS sidecar /upgrade failed",
+        error: "OTS sidecar /upgrade-receipt failed",
         status: upgradeResp.status,
         detail: text,
         id,
@@ -132,10 +129,10 @@ exports.handler = async (event) => {
 
     const upgrade = await upgradeResp.json().catch(() => ({}));
 
-    if (!upgrade || upgrade.ok !== true || !upgrade.receipt_b64) {
+    if (!upgrade || upgrade.ok !== true) {
       return json(502, {
         ok: false,
-        error: "Invalid response from OTS sidecar /upgrade",
+        error: "Invalid response from OTS sidecar /upgrade-receipt",
         raw: upgrade,
         id,
       });
@@ -143,25 +140,32 @@ exports.handler = async (event) => {
 
     const state = upgrade.state || "OTS_RECEIPT";
     const txid = upgrade.txid || null;
+    const blockHeight = upgrade.blockHeight || upgrade.block_height || upgrade.block || null;
+    const confirmations = upgrade.confirmations || 0;
 
     // 3) Persist upgraded receipt back into the same store
-    try {
-      const upgradedBytes = Buffer.from(upgrade.receipt_b64, "base64");
-      await store.set(receiptKey, upgradedBytes, {
-        contentType: "application/octet-stream",
-      });
-    } catch (e) {
-      console.error("resolve_now: failed to persist upgraded receipt:", e);
-      // Non-fatal.
+    const upgradedReceipt = upgrade.receiptBase64 || upgrade.receipt_b64 || null;
+    if (upgradedReceipt) {
+      try {
+        const upgradedBytes = Buffer.from(upgradedReceipt, "base64");
+        await store.set(receiptKey, upgradedBytes, {
+          contentType: "application/octet-stream",
+        });
+      } catch (e) {
+        console.error("resolve_now: failed to persist upgraded receipt:", e);
+      }
     }
 
     // 4) Write anchor JSON so anchor_status can see it
     const anchorKey = `anchor:${id}.json`;
+    const isAnchored = (state === "ANCHORED" || state === "complete") && (blockHeight || txid);
+    
     const anchorDoc = {
       id,
-      state,
+      state: isAnchored ? "ANCHORED" : state,
       txid,
-      confirmations: 0,
+      blockHeight: blockHeight || null,
+      confirmations,
       updatedAt: new Date().toISOString(),
       source: "resolve_now",
     };
@@ -186,8 +190,10 @@ exports.handler = async (event) => {
       ok: true,
       id,
       anchorKey,
-      state,
+      state: anchorDoc.state,
       txid,
+      blockHeight: blockHeight || null,
+      confirmations,
     });
   } catch (e) {
     console.error("resolve_now error:", e);
