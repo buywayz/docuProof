@@ -1,5 +1,6 @@
 // netlify/functions/stripe_webhook.js
 // CommonJS runtime (Node 18 on Netlify)
+// v2.0.0 - FIXED: OTS submission now uses await instead of fire-and-forget
 const Stripe = require("stripe");
 const crypto = require("crypto");
 const { sendEmail } = require("./_email");
@@ -171,50 +172,50 @@ exports.handler = async (event) => {
       // Do not fail webhook on persistence hiccups
     }
 
-    // --- 3) Fire-and-forget anchoring job via submit_proof (non-blocking) ---
-    // CRITICAL: submit_proof must be keyed by canonicalId so verify works by canonicalId.
+    // --- 3) AWAIT anchoring job via submit_proof ---
+    // CRITICAL FIX: must await this call. Fire-and-forget gets killed
+    // when the Netlify function returns, so the OTS submission never completes.
     try {
       if (hash) {
         const submitUrl = `${origin}/.netlify/functions/submit_proof`;
-        const body = {
-          id: canonicalId, // <-- canonical id is the proof identity
+        const submitBody = {
+          id: canonicalId,
           hash,
           filename,
           displayName,
           customerEmail: to,
           source: "stripe_webhook",
-          stripeSessionId, // optional for debugging
+          stripeSessionId,
         };
 
-        fetch(submitUrl, {
+        console.log(`[stripe_webhook] Submitting to OTS: ${canonicalId}`);
+
+        const submitResp = await fetch(submitUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        })
-          .then((res) => {
-            if (!res.ok) {
-              console.error(
-                "submit_proof returned non-2xx:",
-                res.status,
-                res.statusText
-              );
-            }
-          })
-          .catch((err) => {
-            console.error("submit_proof fire-and-forget error:", err);
-          });
+          body: JSON.stringify(submitBody),
+        });
+
+        if (!submitResp.ok) {
+          const errText = await submitResp.text().catch(() => "");
+          console.error(
+            `[stripe_webhook] submit_proof returned ${submitResp.status}: ${errText}`
+          );
+        } else {
+          console.log(`[stripe_webhook] OTS submission succeeded for ${canonicalId}`);
+        }
       } else {
         console.warn(
-          `No hash in session metadata for ${stripeSessionId}; skipping submit_proof.`
+          `[stripe_webhook] No hash in session metadata for ${stripeSessionId}; skipping submit_proof.`
         );
       }
     } catch (submitErr) {
-      console.error("submit_proof scheduling error (non-fatal):", submitErr);
+      console.error("[stripe_webhook] submit_proof error (non-fatal):", submitErr);
     }
 
     // --- 4) Generate PDF certificate via proof_pdf (use canonical quickId) ---
     const qs = new URLSearchParams({
-      id: canonicalId, // <-- canonical id on the certificate
+      id: canonicalId,
       filename,
       displayName,
       quickId: canonicalId,
@@ -273,8 +274,8 @@ exports.handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({
         ok: true,
-        id: stripeSessionId,          // keep for Stripe/debug
-        canonicalId,                  // your real Proof ID
+        id: stripeSessionId,
+        canonicalId,
         verifyUrl: `${origin}/v/${canonicalId}`,
         livemode: !!obj.livemode,
       }),

@@ -1,159 +1,151 @@
 // netlify/functions/create_free_proof.js
-// v2.0.0 - Creates a FREE proof using the SAME anchoring system as paid proofs
-// Integrates with _db.js and submit_proof.js for proper blockchain anchoring
+// v3.0.0 - Creates a FREE proof with SYNCHRONOUS anchoring submission
+// CRITICAL FIX: Awaits OTS submission instead of fire-and-forget
+// (fire-and-forget gets killed when the Netlify function returns)
 
 const { saveProof, appendToFeeds } = require("./_db");
 
-// Generate a unique proof ID for free proofs
 function generateProofId() {
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).slice(2, 10);
   return `free_${timestamp}${random}`;
 }
 
-// Validate SHA-256 hash format
 function isValidSHA256(hash) {
-  return typeof hash === 'string' && /^[0-9a-fA-F]{64}$/i.test(hash);
+  return typeof hash === "string" && /^[0-9a-fA-F]{64}$/i.test(hash);
 }
 
-// Sanitize filename
 function sanitizeFilename(str, maxLength = 255) {
-  if (!str || typeof str !== 'string') return 'document';
-  return str
-    .replace(/[\x00-\x1F\x7F]/g, '')
-    .replace(/[<>:"/\\|?*]/g, '')
-    .replace(/\.\./g, '')
-    .trim()
-    .slice(0, maxLength) || 'document';
+  if (!str || typeof str !== "string") return "document";
+  return (
+    str
+      .replace(/[\x00-\x1F\x7F]/g, "")
+      .replace(/[<>:"/\\|?*]/g, "")
+      .replace(/\.\./g, "")
+      .trim()
+      .slice(0, maxLength) || "document"
+  );
 }
 
-// Get site origin for calling other functions
-function getSiteOrigin() {
-  return process.env.URL || "https://docuproof.io";
-}
-
-exports.handler = async (event, context) => {
-  // Only allow POST
-  if (event.httpMethod !== 'POST') {
+exports.handler = async (event) => {
+  if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ok: false, error: 'Method not allowed' })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ok: false, error: "Method not allowed" }),
     };
   }
 
   try {
-    const body = JSON.parse(event.body || '{}');
+    const body = JSON.parse(event.body || "{}");
     const { hash, filename, displayName, source } = body;
 
-    // Validate hash
     if (!hash || !isValidSHA256(hash)) {
       return {
         statusCode: 400,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          ok: false, 
-          error: 'Invalid hash. Must be a 64-character hexadecimal SHA-256 hash.' 
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ok: false,
+          error: "Invalid hash. Must be a 64-character hexadecimal SHA-256 hash.",
+        }),
       };
     }
 
-    // Generate proof ID
     const proofId = generateProofId();
     const now = new Date();
     const sanitizedFilename = sanitizeFilename(filename);
     const sanitizedDisplayName = sanitizeFilename(displayName) || sanitizedFilename;
+    const origin = process.env.URL || "https://docuproof.io";
 
-    // Create proof record using the same structure as paid proofs
+    // 1. Save proof record
     const proofRecord = {
       id: proofId,
       hash: hash.toLowerCase(),
       filename: sanitizedFilename,
       displayName: sanitizedDisplayName,
-      customerEmail: null, // No email for free proofs
+      customerEmail: null,
       createdAt: now.toISOString(),
-      source: source || 'free_proof',
-      type: 'free',
-      version: 2,
+      source: source || "free_proof",
+      type: "free",
+      version: 3,
     };
 
-    // Save proof record (same as paid proofs)
     await saveProof(proofRecord);
-    console.log(`Free proof record saved: ${proofId}`);
+    console.log(`[create_free_proof] Proof saved: ${proofId}`);
 
-    // Add to feeds (same as paid proofs)
+    // 2. Add to feeds
     await appendToFeeds(proofRecord);
-    console.log(`Free proof added to feeds: ${proofId}`);
+    console.log(`[create_free_proof] Added to feeds: ${proofId}`);
 
-    // Create initial anchor status directly in blob store
+    // 3. Create initial anchor status in blob store
     try {
       const mod = await import("@netlify/blobs");
       const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
       const token = process.env.NETLIFY_BLOBS_TOKEN || process.env.NETLIFY_API_TOKEN;
-      
+
       let store;
       if (siteID && token) {
         store = mod.getStore({ name: "proofs", siteID, token });
       } else {
         store = mod.getStore("proofs");
       }
-      
+
       const anchorStatus = {
         id: proofId,
-        state: 'PENDING',
+        state: "PENDING",
         hash: hash.toLowerCase(),
         createdAt: now.toISOString(),
-        source: 'free_proof',
+        source: "free_proof",
       };
-      
-      await store.set(`anchor:${proofId}.json`, JSON.stringify(anchorStatus), { 
-        contentType: "application/json" 
+
+      await store.set(`anchor:${proofId}.json`, JSON.stringify(anchorStatus), {
+        contentType: "application/json",
       });
-      console.log(`Free proof anchor status created: ${proofId}`);
+      console.log(`[create_free_proof] Anchor status created: ${proofId}`);
     } catch (anchorErr) {
-      console.error(`Failed to create anchor status for ${proofId}:`, anchorErr);
-      // Continue anyway - the proof is still saved
+      console.error(`[create_free_proof] Anchor status write failed for ${proofId}:`, anchorErr);
+      // Continue — proof is saved, OTS submission will still work
     }
 
-    // Submit to OpenTimestamps for anchoring (same flow as paid proofs)
-    const origin = getSiteOrigin();
-    const submitUrl = `${origin}/.netlify/functions/submit_proof`;
-    
-    const submitBody = {
-      id: proofId,
-      hash: hash.toLowerCase(),
-      filename: sanitizedFilename,
-      displayName: sanitizedDisplayName,
-      customerEmail: null,
-      source: 'free_proof',
-    };
+    // 4. CRITICAL: Submit to OTS synchronously (await, NOT fire-and-forget)
+    //    Call ots_submit directly via internal URL and WAIT for it to complete.
+    let otsOk = false;
+    let otsDetail = "";
+    try {
+      const otsUrl = `${origin}/.netlify/functions/ots_submit`;
+      console.log(`[create_free_proof] Submitting to OTS: ${proofId} → ${otsUrl}`);
 
-    console.log(`Submitting free proof for anchoring: ${proofId}`);
-    
-    // Fire and forget - don't wait for anchoring to complete
-    fetch(submitUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(submitBody),
-    }).then(res => {
-      if (res.ok) {
-        console.log(`Free proof submitted for anchoring: ${proofId}`);
+      const otsResp = await fetch(otsUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: proofId, hash: hash.toLowerCase() }),
+      });
+
+      const otsText = await otsResp.text();
+
+      if (otsResp.ok) {
+        let otsJson = {};
+        try { otsJson = JSON.parse(otsText); } catch {}
+        otsOk = otsJson.ok === true;
+        otsDetail = otsOk ? "receipt saved" : otsText;
+        console.log(`[create_free_proof] OTS submit result for ${proofId}: ok=${otsOk}`);
       } else {
-        console.error(`Free proof anchoring submission failed: ${proofId} - ${res.status}`);
+        otsDetail = `HTTP ${otsResp.status}: ${otsText}`;
+        console.error(`[create_free_proof] OTS submit failed for ${proofId}: ${otsDetail}`);
       }
-    }).catch(err => {
-      console.error(`Free proof anchoring submission error: ${proofId}`, err);
-    });
+    } catch (otsErr) {
+      otsDetail = String(otsErr);
+      console.error(`[create_free_proof] OTS submit error for ${proofId}:`, otsErr);
+    }
 
-    // Build verification URL
+    // 5. Return success — proof is saved regardless of OTS result
     const verifyUrl = `${origin}/v/${proofId}`;
 
-    // Return success response
     return {
       statusCode: 200,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store'
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store",
       },
       body: JSON.stringify({
         ok: true,
@@ -163,21 +155,23 @@ exports.handler = async (event, context) => {
         displayName: sanitizedDisplayName,
         createdAt: proofRecord.createdAt,
         verifyUrl: verifyUrl,
-        status: 'pending',
-        message: 'Your free proof has been created and queued for blockchain anchoring.',
-        note: 'Anchoring typically takes 1-3 hours. Check your verification link for status updates.'
-      })
+        status: otsOk ? "submitted" : "pending",
+        otsSubmitted: otsOk,
+        message: otsOk
+          ? "Your free proof has been created and submitted for blockchain anchoring."
+          : "Your free proof has been created. Blockchain anchoring will be retried automatically.",
+        note: "Anchoring typically takes 1-3 hours. Check your verification link for status updates.",
+      }),
     };
-
   } catch (err) {
-    console.error('Error creating free proof:', err);
+    console.error("[create_free_proof] Error:", err);
     return {
       statusCode: 500,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        ok: false, 
-        error: 'Failed to create proof. Please try again.' 
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ok: false,
+        error: "Failed to create proof. Please try again.",
+      }),
     };
   }
 };
