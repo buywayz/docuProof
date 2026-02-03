@@ -158,7 +158,7 @@ exports.handler = async (event) => {
 
     // 4) Write anchor JSON so anchor_status can see it
     const anchorKey = `anchor:${id}.json`;
-    const isAnchored = (state === "ANCHORED" || state === "complete") && (blockHeight || txid);
+    const isAnchored = blockHeight || txid;
     
     const anchorDoc = {
       id,

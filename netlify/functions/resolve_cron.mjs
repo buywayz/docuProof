@@ -167,9 +167,9 @@ export const handler = async (_event) => {
         }
 
         // Always try to save the upgraded receipt
-        if (upgradeResult.receipt_b64) {
+        if (upgradeResult.receiptBase64 || upgradeResult.receipt_b64) {
           try {
-            const upgradedBytes = Buffer.from(upgradeResult.receipt_b64, "base64");
+            const upgradedBytes = Buffer.from(upgradeResult.receiptBase64 || upgradeResult.receipt_b64, "base64");
             await store.set(`ots/receipts/${id}.ots`, upgradedBytes, {
               contentType: "application/octet-stream",
             });
