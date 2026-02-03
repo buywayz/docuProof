@@ -87,7 +87,7 @@ function generatePDF(date, headlines, weather) {
       doc.save().translate(pageW / 2, y).rotate(45).rect(-4, -4, 8, 8).fill(accent).restore();
       y += 35;
 
-      const weatherTime = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      const weatherTime = "9:00 AM";
       const weatherText = `${weather.city}: ${weather.temp}, ${weather.condition} at ${weatherTime} EST`;
       doc.roundedRect((pageW - 280) / 2, y, 280, 30, 15).fill("#1a1f27");
       doc.font("Helvetica").fontSize(10).fillColor(textMuted).text(weatherText, 0, y + 9, { width: pageW, align: "center" });
