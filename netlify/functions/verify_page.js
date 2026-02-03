@@ -346,7 +346,7 @@ body {
             This fingerprint &mdash; not your file &mdash; is being anchored to the Bitcoin blockchain.
           </p>
           <p>
-            Think of it like a <strong>digital notary stamp</strong>: once confirmed, anyone can verify your file existed
+            Think of it like a <strong>permanent seal stamped into the blockchain</strong>: once confirmed, anyone can verify your file existed
             at this exact moment, forever. Your file never left your device &mdash; only the fingerprint did.
           </p>
           <p>
@@ -412,7 +412,14 @@ body {
           </div>
 
           <div class="cert-teaser">
-            <img src="/docuProof_Certificate_Screenshot.png" alt="docuProof Certificate of Proof of Existence" />
+            <img src="/docuProof-Certificate-Screenshot.png" 
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='block';"
+                 alt="docuProof Certificate of Proof of Existence" />
+            <div style="display:none;padding:32px 20px;text-align:center;background:#1a1f24;">
+              <div style="font-size:48px;margin-bottom:12px;">&#x1f4dc;</div>
+              <div style="font-size:16px;font-weight:700;color:#22c55e;">Certificate of Proof of Existence</div>
+              <div style="font-size:13px;color:#8b949e;margin-top:6px;">Includes Proof ID, SHA-256 hash, blockchain block, QR code, and legal attestation</div>
+            </div>
             <div class="cert-teaser-label">
               Paid proofs include a PDF Certificate of Proof of Existence
             </div>
