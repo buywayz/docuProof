@@ -1,8 +1,8 @@
 // netlify/functions/submit_proof.js
+// v2.0.0 - FIXED: Converted from ESM to CommonJS for package.json "type":"commonjs"
 // Minimal bridge: accepts {id, hash} and forwards to ots_submit.
-// This is what stripe_webhook expects for fire-and-forget stamping.
 
-export async function handler(event) {
+exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -41,7 +41,6 @@ export async function handler(event) {
   }
 
   try {
-    // Forward the request to ots_submit
     const otsUrl = `${process.env.URL}/.netlify/functions/ots_submit`;
 
     const resp = await fetch(otsUrl, {
@@ -52,8 +51,7 @@ export async function handler(event) {
 
     if (!resp.ok) {
       const text = await resp.text();
-      console.error("submit_proof → ots_submit error:", resp.status, text);
-      // Fire-and-forget semantics: don't fail webhook
+      console.error("submit_proof -> ots_submit error:", resp.status, text);
       return {
         statusCode: 200,
         headers: { "content-type": "application/json" },
@@ -82,4 +80,4 @@ export async function handler(event) {
       }),
     };
   }
-}
+};

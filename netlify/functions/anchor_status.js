@@ -1,8 +1,8 @@
 // netlify/functions/anchor_status.js
-// v2.0.0 - Returns normalized anchoring status including blockHeight
-// ESM — Return normalized anchoring status for a given id.
+// v3.0.0 - FIXED: When anchor JSON says PENDING, also checks for receipt existence
+// Also converted from ESM export to CommonJS for package.json "type":"commonjs" consistency
 
-export const handler = async (event) => {
+exports.handler = async (event) => {
   try {
     if (event.httpMethod !== "GET") {
       return json(405, { error: "GET required" });
@@ -16,36 +16,44 @@ export const handler = async (event) => {
 
     const { getStore } = await import("@netlify/blobs");
 
-    // Keys we expect
     const anchorKey  = `anchor:${id}.json`;
     const receiptKey = `ots/receipts/${id}.ots`;
     const altReceipt = `ots:${id}.receipt`;
 
-    // Preferred read order for anchor JSON
     const anchorStores = [primary, "proofs", "docuproof", "ots", "default"];
     const anchor = await findFirstJson({ getStore, siteID, token, key: anchorKey, stores: anchorStores });
 
-    // If we found a canonical anchor JSON, normalize and return it
     if (anchor?.json) {
-      const { 
-        state = "OTS_RECEIPT", 
-        txid = null, 
+      let {
+        state = "OTS_RECEIPT",
+        txid = null,
         blockHeight = null,
-        confirmations = 0, 
+        confirmations = 0,
         updatedAt = null,
         createdAt = null
       } = anchor.json || {};
-      
-      // Determine if actually anchored (must have blockHeight)
+
+      // CRITICAL FIX: If state is bare PENDING, check if a receipt actually exists
+      // This handles the gap where ots_submit stored receipt but anchor JSON wasn't updated
+      if (state === "PENDING") {
+        const receiptStores = [primary, "proofs", "docuproof", "ots", "default"];
+        const receipt = await findFirstBytes({ getStore, siteID, token, key: receiptKey, stores: receiptStores })
+                     || await findFirstBytes({ getStore, siteID, token, key: altReceipt,  stores: receiptStores });
+
+        if (receipt) {
+          state = "OTS_RECEIPT";
+        }
+      }
+
       const isAnchored = state === "ANCHORED" && blockHeight && blockHeight > 0;
-      
+
       return json(200, {
         ok: true,
         id,
         state: isAnchored ? "ANCHORED" : (state === "ANCHORED" ? "PENDING" : state),
         txid,
         blockHeight: blockHeight || null,
-        block: blockHeight || null, // alias for compatibility
+        block: blockHeight || null,
         confirmations: isAnchored ? confirmations : 0,
         anchorKey,
         foundInStore: anchor.store,
@@ -54,17 +62,16 @@ export const handler = async (event) => {
       });
     }
 
-    // Otherwise, detect if a receipt exists anywhere we care about
+    // No anchor JSON found — check for receipt as before
     const receiptStores = [primary, "proofs", "docuproof", "ots", "default"];
     const receipt = await findFirstBytes({ getStore, siteID, token, key: receiptKey, stores: receiptStores })
-                || await findFirstBytes({ getStore, siteID, token, key: altReceipt,  stores: receiptStores });
+                 || await findFirstBytes({ getStore, siteID, token, key: altReceipt,  stores: receiptStores });
 
     if (receipt) {
-      // We can safely infer we're in OTS_RECEIPT (pending)
       return json(200, {
         ok: true,
         id,
-        state: "PENDING",
+        state: "OTS_RECEIPT",
         txid: null,
         blockHeight: null,
         block: null,
@@ -75,7 +82,6 @@ export const handler = async (event) => {
       });
     }
 
-    // Nothing found
     return json(404, {
       ok: false,
       id,
@@ -101,9 +107,9 @@ async function findFirstJson({ getStore, siteID, token, key, stores }) {
       if (t && t.length) {
         try {
           return { store: name, json: JSON.parse(t) };
-        } catch { /* malformed json in this store; continue */ }
+        } catch {}
       }
-    } catch { /* continue */ }
+    } catch {}
   }
   return null;
 }
@@ -114,7 +120,7 @@ async function findFirstBytes({ getStore, siteID, token, key, stores }) {
     try {
       const ab = await store.get(key, { type: "arrayBuffer" });
       if (ab && ab.byteLength > 0) return { store: name, bytes: ab.byteLength };
-    } catch { /* continue */ }
+    } catch {}
   }
   return null;
 }
