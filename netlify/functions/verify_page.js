@@ -1,14 +1,14 @@
 "use strict";
 
 /*
-  netlify/functions/verify_page.js  v3.0.0
+  netlify/functions/verify_page.js  v4.0.0
 
   Redesigned verify/proof status page with:
-  - Email capture for prospect database
+  - Email capture for prospect database (orange themed)
   - Blockchain explainer (what the hash is, what's on the blockchain)
   - Mempool.space link to visually see the proof
   - Certificate teaser for paid upsell
-  - Copyable Proof ID
+  - Share buttons with targeted landing page picker
   - Works for both free and paid flows
 */
 
@@ -151,23 +151,75 @@ body {
 .pill-success { background: linear-gradient(135deg, #22c55e, #16a34a); color: #000; }
 .pill-error { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
 
-/* Proof ID box */
-.proof-id-box {
-  background: #1a1f24; border: 1px solid var(--border); border-radius: 12px;
-  padding: 14px 18px; margin-bottom: 16px;
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+/* Share section */
+.share-section { margin-bottom: 16px; position: relative; }
+.share-heading {
+  font-size: 14px; font-weight: 600; color: var(--text);
+  margin-bottom: 10px; line-height: 1.4;
 }
-.proof-id-value {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 15px; color: var(--accent); word-break: break-all;
+.share-heading span { color: var(--accent); }
+.share-buttons {
+  display: flex; gap: 10px; flex-wrap: wrap; position: relative;
 }
-.copy-btn {
-  background: none; border: 1px solid var(--border); border-radius: 8px;
-  padding: 6px 12px; color: var(--muted); font-size: 12px;
-  cursor: pointer; white-space: nowrap; transition: all 0.2s;
+.share-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 16px; border-radius: 10px;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+  text-decoration: none; border: 1px solid var(--border);
+  background: #1a1f24; color: var(--text); font-family: inherit;
 }
-.copy-btn:hover { border-color: var(--accent); color: var(--accent); }
-.copy-btn.copied { border-color: var(--accent); color: var(--accent); }
+.share-btn:hover {
+  border-color: var(--accent); color: var(--accent);
+  background: rgba(34, 197, 94, 0.08);
+}
+.share-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+/* Share popover */
+.share-popover {
+  display: none; position: absolute; top: 100%; left: 0;
+  margin-top: 8px; background: #1e2328;
+  border: 1px solid var(--border); border-radius: 12px;
+  padding: 6px; min-width: 260px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5); z-index: 100;
+  animation: popIn 0.15s ease-out;
+}
+.share-popover.show { display: block; }
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.popover-title {
+  font-size: 11px; letter-spacing: .08em; color: var(--muted);
+  text-transform: uppercase; padding: 8px 12px 4px;
+}
+.popover-option {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 8px;
+  cursor: pointer; transition: background 0.15s;
+  border: none; background: none; width: 100%;
+  text-align: left; color: var(--text); font-size: 13px;
+  font-family: inherit;
+}
+.popover-option:hover { background: rgba(34, 197, 94, 0.1); }
+.popover-option .pop-icon { font-size: 16px; width: 24px; text-align: center; flex-shrink: 0; }
+.popover-option .pop-label { font-weight: 600; color: var(--text); }
+.popover-option .pop-desc { font-size: 11px; color: var(--dim); margin-top: 1px; }
+
+/* Toast */
+.toast {
+  display: none; position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent); color: #000; font-weight: 700; font-size: 14px;
+  padding: 12px 24px; border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  animation: toastIn 0.25s ease-out; z-index: 200;
+}
+.toast.show { display: block; }
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
 
 /* Fields */
 .field {
@@ -191,12 +243,12 @@ body {
 .explainer p { margin: 0 0 10px; }
 .explainer p:last-child { margin-bottom: 0; }
 
-/* Email capture */
+/* Email capture — orange themed */
 .email-section {
   margin-top: 20px; padding-top: 20px;
   border-top: 1px dashed rgba(255,255,255,0.1);
 }
-.email-section h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.email-section h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: #f59e0b; }
 .email-section > p { font-size: 13px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
 .email-row { display: flex; gap: 10px; }
 .email-row input {
@@ -207,11 +259,12 @@ body {
 .email-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
 .email-row input::placeholder { color: var(--dim); }
 .email-row button {
-  background: var(--accent); color: #0a0d10; border: none;
+  background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; border: none;
   padding: 12px 20px; border-radius: 10px; font-weight: 700;
-  font-size: 14px; cursor: pointer; white-space: nowrap; transition: background 0.2s;
+  font-size: 14px; cursor: pointer; white-space: nowrap; transition: all 0.2s;
+  font-family: inherit;
 }
-.email-row button:hover { background: var(--accent-hover); }
+.email-row button:hover { filter: brightness(1.1); }
 .email-row button:disabled { opacity: 0.5; cursor: default; }
 .email-success {
   display: none; padding: 12px 16px; background: var(--ok-bg);
@@ -317,11 +370,48 @@ body {
 
         <div id="pill-state" class="pill pill-waiting">Enter a Proof ID above</div>
 
-        <div id="proofIdDisplay" style="display:none;">
-          <div class="section-title">Your Proof ID</div>
-          <div class="proof-id-box">
-            <span class="proof-id-value" id="proofIdValue"></span>
-            <button class="copy-btn" id="copyBtn">Copy</button>
+        <div id="shareSection" style="display:none;">
+          <div class="share-heading">Know someone who needs proof? <span>Share docuProof.</span></div>
+          <div class="share-buttons" id="shareButtons">
+            <button class="share-btn" data-action="copy" onclick="window._shareOpen(event,'copy')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              Copy Link
+            </button>
+            <button class="share-btn" data-action="twitter" onclick="window._shareOpen(event,'twitter')">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              Post
+            </button>
+            <button class="share-btn" data-action="linkedin" onclick="window._shareOpen(event,'linkedin')">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+              Share
+            </button>
+            <button class="share-btn" data-action="email" onclick="window._shareOpen(event,'email')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              Email
+            </button>
+            <div class="share-popover" id="sharePopover">
+              <div class="popover-title">Share for&hellip;</div>
+              <button class="popover-option" onclick="window._shareGo('business')">
+                <span class="pop-icon">&#x1f3e2;</span>
+                <div><div class="pop-label">A business</div><div class="pop-desc">Contracts, IP, audit trails</div></div>
+              </button>
+              <button class="popover-option" onclick="window._shareGo('personal')">
+                <span class="pop-icon">&#x1f464;</span>
+                <div><div class="pop-label">An individual</div><div class="pop-desc">Wills, photos, personal records</div></div>
+              </button>
+              <button class="popover-option" onclick="window._shareGo('verify-truth')">
+                <span class="pop-icon">&#x1f50d;</span>
+                <div><div class="pop-label">Verifying truth</div><div class="pop-desc">Journalism, evidence, accountability</div></div>
+              </button>
+              <button class="popover-option" onclick="window._shareGo('tech')">
+                <span class="pop-icon">&#x1f680;</span>
+                <div><div class="pop-label">Tech community</div><div class="pop-desc">Product Hunt, developer circles</div></div>
+              </button>
+              <button class="popover-option" onclick="window._shareGo('general')">
+                <span class="pop-icon">&#x1f517;</span>
+                <div><div class="pop-label">General</div><div class="pop-desc">The main docuProof page</div></div>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -356,7 +446,7 @@ body {
         </div>
 
         <div class="email-section" id="emailSection" style="display:none;">
-          <h3>Don&rsquo;t lose your proof</h3>
+          <h3>&#x26a0; Don&rsquo;t lose your proof</h3>
           <p>
             Enter your email and we&rsquo;ll send you your Proof ID plus a notification when
             it&rsquo;s permanently anchored on the Bitcoin blockchain.
@@ -443,6 +533,8 @@ body {
   </div>
 </footer>
 
+<div class="toast" id="shareToast"></div>
+
 <script>
 (function(){
   var input = document.getElementById("proof-id");
@@ -451,8 +543,7 @@ body {
   var fieldState = document.getElementById("anchor-state");
   var fieldBlock = document.getElementById("bitcoin-block");
   var fieldConf = document.getElementById("confirmations");
-  var proofIdDisplay = document.getElementById("proofIdDisplay");
-  var proofIdValue = document.getElementById("proofIdValue");
+  var shareSection = document.getElementById("shareSection");
   var statusFields = document.getElementById("statusFields");
   var explainerBox = document.getElementById("explainerBox");
   var emailSection = document.getElementById("emailSection");
@@ -460,9 +551,67 @@ body {
   var rightLoaded = document.getElementById("rightLoaded");
   var rightProofId = document.getElementById("rightProofId");
   var bvContent = document.getElementById("bvContent");
-  var copyBtn = document.getElementById("copyBtn");
   var emailBtn = document.getElementById("emailBtn");
   var currentProofId = "";
+
+  // Share infrastructure
+  var sharePopover = document.getElementById("sharePopover");
+  var shareToast = document.getElementById("shareToast");
+  var pendingAction = "";
+  var sharePages = {
+    "business":      "https://docuproof.io/business.html",
+    "personal":      "https://docuproof.io/personal.html",
+    "verify-truth":  "https://docuproof.io/verify-truth.html",
+    "tech":          "https://docuproof.io/launch.html",
+    "general":       "https://docuproof.io/start.html"
+  };
+  var shareText = "I just timestamped a file on the Bitcoin blockchain with docuProof \\u2014 permanent, tamper-proof proof of existence.";
+
+  window._shareOpen = function(e, action) {
+    e.stopPropagation();
+    pendingAction = action;
+    var btnEl = e.currentTarget;
+    var rect = btnEl.getBoundingClientRect();
+    var container = btnEl.parentElement.getBoundingClientRect();
+    sharePopover.style.left = Math.max(0, rect.left - container.left) + "px";
+    sharePopover.classList.add("show");
+  };
+
+  window._shareGo = function(page) {
+    var url = sharePages[page];
+    sharePopover.classList.remove("show");
+
+    if (pendingAction === "copy") {
+      navigator.clipboard.writeText(url).then(function() {
+        showToast("\\u2713 Link copied!");
+      });
+    } else if (pendingAction === "twitter") {
+      var tweetUrl = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(shareText) + "&url=" + encodeURIComponent(url);
+      window.open(tweetUrl, "_blank", "width=550,height=420");
+    } else if (pendingAction === "linkedin") {
+      var liUrl = "https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent(url);
+      window.open(liUrl, "_blank", "width=550,height=420");
+    } else if (pendingAction === "email") {
+      var subject = encodeURIComponent("Check out docuProof \\u2014 blockchain-anchored proof of existence");
+      var body = encodeURIComponent(shareText + "\\n\\n" + url);
+      window.location.href = "mailto:?subject=" + subject + "&body=" + body;
+    }
+
+    pendingAction = "";
+  };
+
+  function showToast(msg) {
+    shareToast.textContent = msg;
+    shareToast.classList.add("show");
+    setTimeout(function() { shareToast.classList.remove("show"); }, 2500);
+  }
+
+  // Close popover when clicking outside
+  document.addEventListener("click", function(e) {
+    if (!e.target.closest(".share-buttons")) {
+      sharePopover.classList.remove("show");
+    }
+  });
 
   function resetFields() {
     fieldState.textContent = "\\u2014";
@@ -472,8 +621,7 @@ body {
 
   function showProofLoaded(id) {
     currentProofId = id;
-    proofIdValue.textContent = id;
-    proofIdDisplay.style.display = "block";
+    shareSection.style.display = "block";
     statusFields.style.display = "block";
     explainerBox.style.display = "block";
     emailSection.style.display = "block";
@@ -561,21 +709,13 @@ body {
     }
   }
 
-  // Copy proof ID
-  function doCopy() {
+  // Right panel proof ID click to copy
+  rightProofId.addEventListener("click", function() {
     if (!currentProofId) return;
     navigator.clipboard.writeText(currentProofId).then(function() {
-      copyBtn.textContent = "Copied!";
-      copyBtn.classList.add("copied");
-      setTimeout(function() {
-        copyBtn.textContent = "Copy";
-        copyBtn.classList.remove("copied");
-      }, 2000);
+      showToast("\\u2713 Proof ID copied!");
     });
-  }
-
-  copyBtn.addEventListener("click", doCopy);
-  rightProofId.addEventListener("click", doCopy);
+  });
 
   // Email capture
   emailBtn.addEventListener("click", async function() {
