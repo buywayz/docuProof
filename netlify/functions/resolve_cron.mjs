@@ -1,5 +1,5 @@
 // netlify/functions/resolve_cron.mjs
-// v2.0.0 - Fixed: correct store, proper anchor scanning, writes blockHeight + state
+// v3.0.0 - Added: sends "anchored" notification email via Postmark when proof confirms
 // Scheduled hourly via netlify.toml: [functions."resolve_cron"] schedule = "@hourly"
 //
 // Flow:
@@ -35,6 +35,23 @@ async function getStore() {
       throw new Error("Netlify Blobs not bound and manual credentials missing");
     }
     return gs({ name: "proofs", siteID, token });
+  }
+}
+
+async function getEmailStore() {
+  const mod = await import("@netlify/blobs");
+  const gs = mod.getStore || (mod.default && mod.default.getStore);
+  if (!gs) throw new Error("getStore not available from @netlify/blobs");
+
+  try {
+    return gs("email-prospects");
+  } catch (e) {
+    const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
+    const token = process.env.NETLIFY_BLOBS_TOKEN || process.env.NETLIFY_API_TOKEN || process.env.BLOBS_TOKEN;
+    if (!siteID || !token) {
+      throw new Error("Netlify Blobs not bound and manual credentials missing");
+    }
+    return gs({ name: "email-prospects", siteID, token });
   }
 }
 
@@ -186,6 +203,80 @@ export const handler = async (_event) => {
           });
           upgraded++;
           console.log(`resolve_cron: upgraded ${id} → state=${anchor.state}, block=${anchor.blockHeight}`);
+
+          // Send "anchored" notification email if we have one on file
+          if (anchor.state === "ANCHORED" && anchor.blockHeight) {
+            try {
+              const emailStore = await getEmailStore();
+              const emailRaw = await emailStore.get(`proof:${id}`, { type: "text" });
+              if (emailRaw) {
+                const emailRecord = JSON.parse(emailRaw);
+                const email = emailRecord.email;
+                if (email && process.env.POSTMARK_SERVER_TOKEN) {
+                  const verifyUrl = `https://docuproof.io/v/${id}`;
+                  const mempoolUrl = `https://mempool.space/block/${anchor.blockHeight}`;
+                  await fetch("https://api.postmarkapp.com/email", {
+                    method: "POST",
+                    headers: {
+                      "Accept": "application/json",
+                      "Content-Type": "application/json",
+                      "X-Postmark-Server-Token": process.env.POSTMARK_SERVER_TOKEN,
+                    },
+                    body: JSON.stringify({
+                      From: "docuProof <noreply@docuproof.io>",
+                      To: email,
+                      Subject: `✓ Your proof is anchored — Bitcoin Block #${anchor.blockHeight}`,
+                      HtmlBody: `
+                        <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; background: #0a0d10; color: #e8eaed; padding: 32px; border-radius: 12px;">
+                          <div style="text-align: center; margin-bottom: 24px;">
+                            <h1 style="color: #22c55e; margin: 0;">docuProof</h1>
+                            <p style="color: #8b949e; margin: 4px 0 0;">Proof you can point to.</p>
+                          </div>
+                          
+                          <div style="background: #0d1912; border: 1px solid #1e5131; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center;">
+                            <p style="font-size: 24px; margin: 0 0 8px;">&#x2705;</p>
+                            <p style="color: #22c55e; font-size: 18px; font-weight: 700; margin: 0;">Your proof is permanently anchored</p>
+                          </div>
+
+                          <div style="background: #12161c; border: 1px solid #21262d; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                            <p style="color: #8b949e; font-size: 13px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 0.1em;">Proof ID</p>
+                            <p style="font-family: monospace; font-size: 16px; color: #22c55e; margin: 0 0 16px; word-break: break-all;">${id}</p>
+                            <p style="color: #8b949e; font-size: 13px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 0.1em;">Bitcoin Block</p>
+                            <p style="font-size: 16px; color: #e8eaed; margin: 0;">#${anchor.blockHeight}</p>
+                          </div>
+                          
+                          <p style="color: #c9d2db; line-height: 1.6;">
+                            Your file's fingerprint is now permanently recorded on the Bitcoin blockchain. 
+                            It can never be altered or removed. Anyone can independently verify it existed at the moment you timestamped it.
+                          </p>
+                          
+                          <div style="text-align: center; margin: 24px 0;">
+                            <a href="${verifyUrl}" style="display: inline-block; background: #22c55e; color: #0a0d10; padding: 14px 32px; border-radius: 999px; text-decoration: none; font-weight: 700; font-size: 16px;">View Your Proof</a>
+                          </div>
+
+                          <div style="text-align: center; margin: 12px 0 24px;">
+                            <a href="${mempoolUrl}" style="color: #22c55e; font-size: 13px; text-decoration: none;">View Bitcoin Block #${anchor.blockHeight} on Mempool.space →</a>
+                          </div>
+                          
+                          <div style="border-top: 1px solid #21262d; padding-top: 16px; margin-top: 24px; text-align: center;">
+                            <p style="color: #6b7280; font-size: 13px; margin: 0;">
+                              docuProof.io — Bitcoin-anchored proof of existence
+                            </p>
+                          </div>
+                        </div>
+                      `,
+                      TextBody: `Your proof is anchored!\n\nProof ID: ${id}\nBitcoin Block: #${anchor.blockHeight}\n\nYour file's fingerprint is now permanently recorded on the Bitcoin blockchain.\n\nView your proof: ${verifyUrl}\nView on Mempool: ${mempoolUrl}\n\ndocuProof.io — Proof you can point to.`,
+                      MessageStream: "outbound",
+                    }),
+                  });
+                  console.log(`resolve_cron: anchored email sent to ${email} for ${id}`);
+                }
+              }
+            } catch (emailErr) {
+              console.error(`resolve_cron: failed to send anchored email for ${id}:`, emailErr);
+              // Don't fail the upgrade if email fails
+            }
+          }
         }
 
         processed++;
