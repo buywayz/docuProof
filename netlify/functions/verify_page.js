@@ -1,7 +1,10 @@
 "use strict";
 
 /*
-  netlify/functions/verify_page.js  v4.0.0
+  netlify/functions/verify_page.js  v5.0.0
+
+  Changes from v4.0.0:
+  - Share heading + rpi-label colors changed to orange (#f59e0b)
 
   Redesigned verify/proof status page with:
   - Email capture for prospect database (orange themed)
@@ -154,10 +157,10 @@ body {
 /* Share section */
 .share-section { margin-bottom: 16px; position: relative; }
 .share-heading {
-  font-size: 14px; font-weight: 600; color: var(--text);
+  font-size: 14px; font-weight: 600; color: #f59e0b;
   margin-bottom: 10px; line-height: 1.4;
 }
-.share-heading span { color: var(--accent); }
+.share-heading span { color: #f59e0b; }
 .share-buttons {
   display: flex; gap: 10px; flex-wrap: wrap; position: relative;
 }
@@ -301,7 +304,7 @@ body {
   padding: 14px 16px; margin: 16px 0;
 }
 .right-proof-id .rpi-label {
-  font-size: 11px; letter-spacing: .1em; color: var(--muted);
+  font-size: 11px; letter-spacing: .1em; color: #f59e0b;
   text-transform: uppercase; margin-bottom: 6px;
 }
 .right-proof-id .rpi-value {

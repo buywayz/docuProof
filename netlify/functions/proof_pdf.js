@@ -1,5 +1,5 @@
 // netlify/functions/proof_pdf.js
-// v16.1.0 – Fixed footer overlap
+// v17.0.0 – Hash is now always passed by resolve_cron; added validation warning if missing
 
 const fs = require("fs");
 const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
@@ -14,6 +14,9 @@ exports.handler = async (event) => {
   const id = qp.id || "unknown";
   const displayName = qp.displayName || "Untitled";
   const hash = qp.hash || "N/A";
+  if (!qp.hash) {
+    console.warn(`[proof_pdf] WARNING: No hash provided for proof ${id}. Certificate will show N/A.`);
+  }
   const verifyUrl = qp.verifyUrl || `https://docuproof.io/v/${encodeURIComponent(id)}`;
   const blockHeight = qp.block || qp.blockHeight || null;
   const createdAt = qp.createdAt || new Date().toISOString();
@@ -23,7 +26,7 @@ exports.handler = async (event) => {
     const pdfDoc = await PDFDocument.create();
     pdfDoc.setTitle("Certificate of Proof of Existence");
     pdfDoc.setAuthor("docuProof.io");
-    pdfDoc.setCreator("docuProof v16.1.0");
+    pdfDoc.setCreator("docuProof v17.0.0");
 
     // US Letter: 612 x 792 points
     const page = pdfDoc.addPage([612, 792]);

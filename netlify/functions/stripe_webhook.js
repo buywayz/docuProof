@@ -1,6 +1,8 @@
 // netlify/functions/stripe_webhook.js
 // CommonJS runtime (Node 18 on Netlify)
-// v2.0.0 - FIXED: OTS submission now uses await instead of fire-and-forget
+// v3.0.0 - Certificate PDF deferred to resolve_cron (sent after anchoring with block number)
+//         - Writes email to email-prospects store so resolve_cron can find it
+//         - Initial email is receipt-only (no PDF attachment)
 const Stripe = require("stripe");
 const crypto = require("crypto");
 const { sendEmail } = require("./_email");
@@ -172,6 +174,32 @@ exports.handler = async (event) => {
       // Do not fail webhook on persistence hiccups
     }
 
+    // --- 2b) Write to email-prospects store so resolve_cron can find email ---
+    try {
+      const blobMod = await import("@netlify/blobs");
+      const gs = blobMod.getStore || (blobMod.default && blobMod.default.getStore);
+      let emailStore;
+      const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
+      const blobToken = process.env.NETLIFY_BLOBS_TOKEN || process.env.NETLIFY_API_TOKEN;
+      try {
+        emailStore = gs("email-prospects");
+      } catch {
+        emailStore = gs({ name: "email-prospects", siteID, token: blobToken });
+      }
+
+      const emailRecord = JSON.stringify({
+        email: to,
+        proofId: canonicalId,
+        source: "paid",
+        capturedAt: emailMarkTime,
+      });
+      await emailStore.set(`email:${to}`, emailRecord);
+      await emailStore.set(`proof:${canonicalId}`, emailRecord);
+      console.log(`[stripe_webhook] Email saved to email-prospects for ${canonicalId}`);
+    } catch (epErr) {
+      console.error("[stripe_webhook] email-prospects write error (non-fatal):", epErr);
+    }
+
     // --- 3) AWAIT anchoring job via submit_proof ---
     // CRITICAL FIX: must await this call. Fire-and-forget gets killed
     // when the Netlify function returns, so the OTS submission never completes.
@@ -213,56 +241,56 @@ exports.handler = async (event) => {
       console.error("[stripe_webhook] submit_proof error (non-fatal):", submitErr);
     }
 
-    // --- 4) Generate PDF certificate via proof_pdf (use canonical quickId) ---
-    const qs = new URLSearchParams({
-      id: canonicalId,
-      filename,
-      displayName,
-      quickId: canonicalId,
-    }).toString();
-
-    const pdfUrl = `${origin}/.netlify/functions/proof_pdf?${qs}`;
-    let pdfB64 = null;
+    // --- 4) Send receipt email (NO certificate yet — cert comes after anchoring) ---
+    // The PDF certificate will be generated and attached by resolve_cron.mjs
+    // once the proof is ANCHORED, so it includes the Bitcoin block number.
     try {
-      const pdfRes = await fetch(pdfUrl, { method: "GET" });
-      if (!pdfRes.ok) {
-        const errText = await pdfRes.text().catch(() => "");
-        console.error(`proof_pdf failed ${pdfRes.status}: ${errText}`);
-      } else {
-        pdfB64 = await arrayBufferToBase64(await pdfRes.arrayBuffer());
-      }
-    } catch (e) {
-      console.error("Error calling proof_pdf:", e);
-    }
-
-    // --- 5) Email certificate via Postmark (best-effort) --------------------
-    try {
-      const attachments = [];
-      if (pdfB64) {
-        attachments.push({
-          Name: filename.endsWith(".pdf") ? filename : `${filename}.pdf`,
-          Content: pdfB64,
-          ContentType: "application/pdf",
-        });
-      }
-
       const verifyUrl = `${origin}/v/${canonicalId}`;
 
       await sendEmail({
         to,
-        subject: `Your Proof Certificate: ${displayName}`,
+        subject: `Your docuProof — Proof ID: ${canonicalId}`,
         htmlBody: `
-          <p>Thanks for using docuProof.io.</p>
-          <p>Your proof certificate is attached as a PDF.</p>
-          <p><strong>Proof ID:</strong> <code>${canonicalId}</code></p>
-          <p>Verify any time at <a href="${verifyUrl}">${verifyUrl}</a></p>
+          <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; background: #0a0d10; color: #e8eaed; padding: 32px; border-radius: 12px;">
+            <div style="text-align: center; margin-bottom: 24px;">
+              <h1 style="color: #22c55e; margin: 0;">docuProof</h1>
+              <p style="color: #8b949e; margin: 4px 0 0;">Proof you can point to.</p>
+            </div>
+
+            <div style="background: #12161c; border: 1px solid #21262d; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+              <p style="color: #8b949e; font-size: 13px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 0.1em;">Your Proof ID</p>
+              <p style="font-family: monospace; font-size: 18px; color: #22c55e; margin: 0; word-break: break-all;">${canonicalId}</p>
+            </div>
+
+            <p style="color: #c9d2db; line-height: 1.6;">
+              Your file's unique fingerprint has been submitted for anchoring on the Bitcoin blockchain.
+              This typically takes 1–3 hours.
+            </p>
+            <p style="color: #c9d2db; line-height: 1.6;">
+              <strong style="color: #e8eaed;">Your PDF Certificate of Proof</strong> will be emailed to you
+              once your proof is permanently anchored — it will include the Bitcoin block number
+              and all the details needed for legal verification.
+            </p>
+
+            <div style="text-align: center; margin: 24px 0;">
+              <a href="${verifyUrl}" style="display: inline-block; background: #22c55e; color: #0a0d10; padding: 14px 32px; border-radius: 999px; text-decoration: none; font-weight: 700; font-size: 16px;">Check Your Proof Status</a>
+            </div>
+
+            <div style="border-top: 1px solid #21262d; padding-top: 16px; margin-top: 24px; text-align: center;">
+              <p style="color: #6b7280; font-size: 13px; margin: 0;">
+                docuProof.io — Bitcoin-anchored proof of existence
+              </p>
+            </div>
+          </div>
         `,
         textBody:
           `Thanks for using docuProof.io.\n\n` +
-          `Your proof certificate is attached (PDF).\n` +
-          `Proof ID: ${canonicalId}\n` +
-          `Verify any time at ${verifyUrl}\n`,
-        attachments,
+          `Your Proof ID: ${canonicalId}\n\n` +
+          `Your file's fingerprint has been submitted for anchoring on the Bitcoin blockchain.\n` +
+          `This typically takes 1-3 hours.\n\n` +
+          `Your PDF Certificate of Proof will be emailed to you once anchoring is complete.\n\n` +
+          `Check your proof status: ${verifyUrl}\n\n` +
+          `docuProof.io — Proof you can point to.\n`,
       });
     } catch (emailErr) {
       // Log but DO NOT throw (avoid Stripe retry storms / dupes)

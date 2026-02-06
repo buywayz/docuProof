@@ -1,5 +1,5 @@
 // netlify/functions/proof_pdf_meta.js
-// v7.0.0 — Updated to fetch blockHeight from anchor status record
+// v8.0.0 — FIXED: Now passes hash to proof_pdf (was missing, caused "N/A" on certificate)
 // Helper: given ?id=..., look up proof metadata AND anchor status in Blobs
 // and redirect to proof_pdf with all fields filled in.
 
@@ -72,6 +72,7 @@ exports.handler = async (event) => {
   let filename = "document";
   let displayName = "Untitled";
   let createdAt = new Date().toISOString();
+  let hash = null;
   let blockHeight = null;
   let verifyUrl = `https://docuproof.io/v/${encodeURIComponent(id)}`;
 
@@ -88,6 +89,9 @@ exports.handler = async (event) => {
       if (proof.createdAt && typeof proof.createdAt === "string") {
         createdAt = proof.createdAt;
       }
+      if (proof.hash && typeof proof.hash === "string") {
+        hash = proof.hash;
+      }
     }
   } catch (e) {
     console.error("proof_pdf_meta getProof error:", e);
@@ -99,6 +103,10 @@ exports.handler = async (event) => {
     if (anchor && typeof anchor === "object") {
       if (anchor.blockHeight && typeof anchor.blockHeight === "number") {
         blockHeight = anchor.blockHeight;
+      }
+      // Fallback: get hash from anchor record if not found in proof record
+      if (!hash && anchor.hash && typeof anchor.hash === "string") {
+        hash = anchor.hash;
       }
     }
   } catch (e) {
@@ -112,6 +120,11 @@ exports.handler = async (event) => {
     verifyUrl,
     createdAt,
   });
+
+  // Add hash if available
+  if (hash) {
+    params.set("hash", hash);
+  }
 
   // Add block number if available
   if (blockHeight) {

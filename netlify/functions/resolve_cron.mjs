@@ -1,5 +1,7 @@
 // netlify/functions/resolve_cron.mjs
-// v3.0.0 - Added: sends "anchored" notification email via Postmark when proof confirms
+// v4.0.0 - Generates + attaches PDF certificate when proof reaches ANCHORED
+//         - Fallback email lookup: checks proofs store (customerEmail) if email-prospects has no record
+//         - Certificate includes hash, block number, verify URL — court-ready
 // Scheduled hourly via netlify.toml: [functions."resolve_cron"] schedule = "@hourly"
 //
 // Flow:
@@ -9,6 +11,7 @@
 // 4. If upgraded, persist blockHeight, state="ANCHORED", and updated receipt
 
 const OTS_SIDECAR_URL = process.env.OTS_SIDECAR_URL;
+const SITE_ORIGIN = process.env.URL || "https://docuproof.io";
 const BATCH_LIMIT = 40;
 
 function json(status, body) {
@@ -204,73 +207,154 @@ export const handler = async (_event) => {
           upgraded++;
           console.log(`resolve_cron: upgraded ${id} → state=${anchor.state}, block=${anchor.blockHeight}`);
 
-          // Send "anchored" notification email if we have one on file
+          // Send "anchored" notification email with PDF certificate
           if (anchor.state === "ANCHORED" && anchor.blockHeight) {
             try {
-              const emailStore = await getEmailStore();
-              const emailRaw = await emailStore.get(`proof:${id}`, { type: "text" });
-              if (emailRaw) {
-                const emailRecord = JSON.parse(emailRaw);
-                const email = emailRecord.email;
-                if (email && process.env.POSTMARK_SERVER_TOKEN) {
-                  const verifyUrl = `https://docuproof.io/v/${id}`;
-                  const mempoolUrl = `https://mempool.space/block/${anchor.blockHeight}`;
-                  await fetch("https://api.postmarkapp.com/email", {
-                    method: "POST",
-                    headers: {
-                      "Accept": "application/json",
-                      "Content-Type": "application/json",
-                      "X-Postmark-Server-Token": process.env.POSTMARK_SERVER_TOKEN,
-                    },
-                    body: JSON.stringify({
-                      From: "docuProof <noreply@docuproof.io>",
-                      To: email,
-                      Subject: `✓ Your proof is anchored — Bitcoin Block #${anchor.blockHeight}`,
-                      HtmlBody: `
-                        <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; background: #0a0d10; color: #e8eaed; padding: 32px; border-radius: 12px;">
-                          <div style="text-align: center; margin-bottom: 24px;">
-                            <h1 style="color: #22c55e; margin: 0;">docuProof</h1>
-                            <p style="color: #8b949e; margin: 4px 0 0;">Proof you can point to.</p>
-                          </div>
-                          
-                          <div style="background: #0d1912; border: 1px solid #1e5131; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center;">
-                            <p style="font-size: 24px; margin: 0 0 8px;">&#x2705;</p>
-                            <p style="color: #22c55e; font-size: 18px; font-weight: 700; margin: 0;">Your proof is permanently anchored</p>
-                          </div>
+              // --- Find email: try email-prospects first, then proofs store ---
+              let recipientEmail = null;
+              let proofHash = anchor.hash || null;
+              let proofFilename = null;
+              let proofDisplayName = null;
+              let proofCreatedAt = anchor.createdAt || null;
 
-                          <div style="background: #12161c; border: 1px solid #21262d; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-                            <p style="color: #8b949e; font-size: 13px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 0.1em;">Proof ID</p>
-                            <p style="font-family: monospace; font-size: 16px; color: #22c55e; margin: 0 0 16px; word-break: break-all;">${id}</p>
-                            <p style="color: #8b949e; font-size: 13px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 0.1em;">Bitcoin Block</p>
-                            <p style="font-size: 16px; color: #e8eaed; margin: 0;">#${anchor.blockHeight}</p>
-                          </div>
-                          
-                          <p style="color: #c9d2db; line-height: 1.6;">
-                            Your file's fingerprint is now permanently recorded on the Bitcoin blockchain. 
-                            It can never be altered or removed. Anyone can independently verify it existed at the moment you timestamped it.
-                          </p>
-                          
-                          <div style="text-align: center; margin: 24px 0;">
-                            <a href="${verifyUrl}" style="display: inline-block; background: #22c55e; color: #0a0d10; padding: 14px 32px; border-radius: 999px; text-decoration: none; font-weight: 700; font-size: 16px;">View Your Proof</a>
-                          </div>
-
-                          <div style="text-align: center; margin: 12px 0 24px;">
-                            <a href="${mempoolUrl}" style="color: #22c55e; font-size: 13px; text-decoration: none;">View Bitcoin Block #${anchor.blockHeight} on Mempool.space →</a>
-                          </div>
-                          
-                          <div style="border-top: 1px solid #21262d; padding-top: 16px; margin-top: 24px; text-align: center;">
-                            <p style="color: #6b7280; font-size: 13px; margin: 0;">
-                              docuProof.io — Bitcoin-anchored proof of existence
-                            </p>
-                          </div>
-                        </div>
-                      `,
-                      TextBody: `Your proof is anchored!\n\nProof ID: ${id}\nBitcoin Block: #${anchor.blockHeight}\n\nYour file's fingerprint is now permanently recorded on the Bitcoin blockchain.\n\nView your proof: ${verifyUrl}\nView on Mempool: ${mempoolUrl}\n\ndocuProof.io — Proof you can point to.`,
-                      MessageStream: "outbound",
-                    }),
-                  });
-                  console.log(`resolve_cron: anchored email sent to ${email} for ${id}`);
+              // Try email-prospects store
+              try {
+                const emailStore = await getEmailStore();
+                const emailRaw = await emailStore.get(`proof:${id}`, { type: "text" });
+                if (emailRaw) {
+                  const emailRecord = JSON.parse(emailRaw);
+                  recipientEmail = emailRecord.email;
                 }
+              } catch (epErr) {
+                console.log(`resolve_cron: email-prospects lookup failed for ${id}:`, epErr.message);
+              }
+
+              // Fallback: check the proofs store for customerEmail (paid proofs via Stripe)
+              if (!recipientEmail) {
+                try {
+                  // Try common proof record key patterns
+                  const proofKeys = [`proof:${id}`, `proof:${id}.json`, id];
+                  for (const pk of proofKeys) {
+                    try {
+                      const proofRaw = await store.get(pk, { type: "text" });
+                      if (proofRaw) {
+                        const proofRecord = JSON.parse(proofRaw);
+                        if (proofRecord.customerEmail) {
+                          recipientEmail = proofRecord.customerEmail;
+                          proofHash = proofHash || proofRecord.hash;
+                          proofFilename = proofRecord.filename;
+                          proofDisplayName = proofRecord.displayName;
+                          proofCreatedAt = proofCreatedAt || proofRecord.createdAt;
+                          break;
+                        }
+                      }
+                    } catch {}
+                  }
+                } catch (proofErr) {
+                  console.log(`resolve_cron: proofs store email fallback failed for ${id}:`, proofErr.message);
+                }
+              }
+
+              if (recipientEmail && process.env.POSTMARK_SERVER_TOKEN) {
+                const verifyUrl = `https://docuproof.io/v/${id}`;
+                const mempoolUrl = `https://mempool.space/block/${anchor.blockHeight}`;
+
+                // --- Generate PDF certificate with all details ---
+                let pdfB64 = null;
+                try {
+                  const pdfParams = new URLSearchParams({
+                    id: id,
+                    hash: proofHash || "",
+                    displayName: proofDisplayName || "Document Proof",
+                    filename: proofFilename || "document",
+                    block: String(anchor.blockHeight),
+                    blockHeight: String(anchor.blockHeight),
+                    verifyUrl: verifyUrl,
+                    createdAt: proofCreatedAt || anchor.createdAt || "",
+                  });
+                  const pdfUrl = `${SITE_ORIGIN}/.netlify/functions/proof_pdf?${pdfParams.toString()}`;
+                  const pdfResp = await fetch(pdfUrl, { method: "GET" });
+                  if (pdfResp.ok) {
+                    const pdfBuf = Buffer.from(await pdfResp.arrayBuffer());
+                    pdfB64 = pdfBuf.toString("base64");
+                    console.log(`resolve_cron: PDF certificate generated for ${id}`);
+                  } else {
+                    console.error(`resolve_cron: proof_pdf returned ${pdfResp.status} for ${id}`);
+                  }
+                } catch (pdfErr) {
+                  console.error(`resolve_cron: PDF generation failed for ${id}:`, pdfErr);
+                }
+
+                // --- Build email with PDF attachment ---
+                const emailPayload = {
+                  From: "docuProof <noreply@docuproof.io>",
+                  To: recipientEmail,
+                  Subject: `✓ Your proof is anchored — Bitcoin Block #${anchor.blockHeight}`,
+                  HtmlBody: `
+                    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; background: #0a0d10; color: #e8eaed; padding: 32px; border-radius: 12px;">
+                      <div style="text-align: center; margin-bottom: 24px;">
+                        <h1 style="color: #22c55e; margin: 0;">docuProof</h1>
+                        <p style="color: #8b949e; margin: 4px 0 0;">Proof you can point to.</p>
+                      </div>
+                      
+                      <div style="background: #0d1912; border: 1px solid #1e5131; border-radius: 12px; padding: 20px; margin-bottom: 20px; text-align: center;">
+                        <p style="font-size: 24px; margin: 0 0 8px;">&#x2705;</p>
+                        <p style="color: #22c55e; font-size: 18px; font-weight: 700; margin: 0;">Your proof is permanently anchored</p>
+                      </div>
+
+                      <div style="background: #12161c; border: 1px solid #21262d; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                        <p style="color: #8b949e; font-size: 13px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 0.1em;">Proof ID</p>
+                        <p style="font-family: monospace; font-size: 16px; color: #22c55e; margin: 0 0 16px; word-break: break-all;">${id}</p>
+                        <p style="color: #8b949e; font-size: 13px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 0.1em;">Bitcoin Block</p>
+                        <p style="font-size: 16px; color: #e8eaed; margin: 0;">#${anchor.blockHeight}</p>
+                      </div>
+                      
+                      <p style="color: #c9d2db; line-height: 1.6;">
+                        Your file's fingerprint is now permanently recorded on the Bitcoin blockchain. 
+                        It can never be altered or removed. Anyone can independently verify it existed at the moment you timestamped it.
+                      </p>
+
+                      ${pdfB64 ? '<p style="color: #c9d2db; line-height: 1.6;"><strong style="color: #e8eaed;">Your Certificate of Proof is attached as a PDF.</strong> This is your court-ready documentation — keep it with your original file.</p>' : ''}
+                      
+                      <div style="text-align: center; margin: 24px 0;">
+                        <a href="${verifyUrl}" style="display: inline-block; background: #22c55e; color: #0a0d10; padding: 14px 32px; border-radius: 999px; text-decoration: none; font-weight: 700; font-size: 16px;">View Your Proof</a>
+                      </div>
+
+                      <div style="text-align: center; margin: 12px 0 24px;">
+                        <a href="${mempoolUrl}" style="color: #22c55e; font-size: 13px; text-decoration: none;">View Bitcoin Block #${anchor.blockHeight} on Mempool.space →</a>
+                      </div>
+                      
+                      <div style="border-top: 1px solid #21262d; padding-top: 16px; margin-top: 24px; text-align: center;">
+                        <p style="color: #6b7280; font-size: 13px; margin: 0;">
+                          docuProof.io — Bitcoin-anchored proof of existence
+                        </p>
+                      </div>
+                    </div>
+                  `,
+                  TextBody: `Your proof is anchored!\n\nProof ID: ${id}\nBitcoin Block: #${anchor.blockHeight}\n\nYour file's fingerprint is now permanently recorded on the Bitcoin blockchain.\n\n${pdfB64 ? 'Your Certificate of Proof is attached as a PDF.\n\n' : ''}View your proof: ${verifyUrl}\nView on Mempool: ${mempoolUrl}\n\ndocuProof.io — Proof you can point to.`,
+                  MessageStream: "outbound",
+                };
+
+                // Attach PDF if generated
+                if (pdfB64) {
+                  const safeName = (proofFilename || "document").replace(/[^a-zA-Z0-9-_]/g, "_").slice(0, 50);
+                  emailPayload.Attachments = [{
+                    Name: `${safeName}-docuProof-Certificate.pdf`,
+                    Content: pdfB64,
+                    ContentType: "application/pdf",
+                  }];
+                }
+
+                await fetch("https://api.postmarkapp.com/email", {
+                  method: "POST",
+                  headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "X-Postmark-Server-Token": process.env.POSTMARK_SERVER_TOKEN,
+                  },
+                  body: JSON.stringify(emailPayload),
+                });
+                console.log(`resolve_cron: anchored email${pdfB64 ? ' + certificate' : ''} sent to ${recipientEmail} for ${id}`);
               }
             } catch (emailErr) {
               console.error(`resolve_cron: failed to send anchored email for ${id}:`, emailErr);
