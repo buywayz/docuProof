@@ -317,11 +317,11 @@ export const handler = async (_event) => {
                       ${pdfB64 ? '<p style="color: #c9d2db; line-height: 1.6;"><strong style="color: #e8eaed;">Your Certificate of Proof is attached as a PDF.</strong> This is your court-ready documentation — keep it with your original file.</p>' : ''}
                       
                       <div style="text-align: center; margin: 24px 0;">
-                        <a href="${verifyUrl}" style="display: inline-block; background: #22c55e; color: #0a0d10; padding: 14px 32px; border-radius: 999px; text-decoration: none; font-weight: 700; font-size: 16px;">View Your Proof</a>
+                        <a href="${mempoolUrl}" style="display: inline-block; background: #22c55e; color: #0a0d10; padding: 14px 32px; border-radius: 999px; text-decoration: none; font-weight: 700; font-size: 16px;">View Your Proof on the Blockchain</a>
                       </div>
 
                       <div style="text-align: center; margin: 12px 0 24px;">
-                        <a href="${mempoolUrl}" style="color: #22c55e; font-size: 13px; text-decoration: none;">View Bitcoin Block #${anchor.blockHeight} on Mempool.space →</a>
+                        <a href="${verifyUrl}" style="color: #22c55e; font-size: 13px; text-decoration: none;">View proof details on docuProof.io →</a>
                       </div>
                       
                       <div style="border-top: 1px solid #21262d; padding-top: 16px; margin-top: 24px; text-align: center;">

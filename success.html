@@ -540,7 +540,7 @@
   .wall-title {
     font-size: 18px;
     font-weight: 700;
-    color: var(--ink);
+    color: #f59e0b;
     margin: 0 0 4px;
   }
   .wall-subtitle {
@@ -780,7 +780,6 @@
       <!-- Actions -->
       <div class="actions">
         <button id="openVerify" class="primary" disabled>Check Status</button>
-        <button id="dlPdf" disabled>Download PDF Certificate</button>
       </div>
 
       <div class="helper-box" id="helperBox">
@@ -796,12 +795,12 @@
       
       <p style="font-size:14px;color:var(--muted);margin:0 0 12px;">
         <strong style="color:var(--ink);">Right now:</strong><br>
-        Your PDF certificate is ready. Check your email for a copy.
+        Your file's fingerprint has been submitted for anchoring on the Bitcoin blockchain. Check your email for your Proof ID receipt.
       </p>
       
       <p style="font-size:14px;color:var(--muted);margin:0 0 12px;">
         <strong style="color:var(--ink);">Soon:</strong><br>
-        Your proof will be anchored to the blockchain's blockchain. You'll get an email with the block number when it's complete.
+        Your proof will be anchored to the blockchain. You'll get an email with the block number and your PDF Certificate of Proof when it's complete.
       </p>
       
       <p style="font-size:14px;color:var(--muted);margin:0 0 12px;">
@@ -1075,7 +1074,6 @@
   const blockValue  = $("blockValue");
   const helperText  = $("helperText");
   const openVerify  = $("openVerify");
-  const dlPdf       = $("dlPdf");
 
   // Store proof hash for RIP verification
   let proofHash = null;
@@ -1098,14 +1096,6 @@
 
     openVerify.disabled = false;
     openVerify.onclick = function () { window.open(verifyUrl, '_blank'); };
-
-    dlPdf.disabled = false;
-    dlPdf.onclick = function () {
-      window.open(
-        "/.netlify/functions/proof_pdf_meta?id=" + encodeURIComponent(canonicalId),
-        '_blank'
-      );
-    };
 
     try {
       const u = new URL(location.href);
