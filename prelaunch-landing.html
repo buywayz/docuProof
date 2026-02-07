@@ -1014,8 +1014,12 @@
         
         <div class="cta-success" id="cta-success">
           <div class="icon">🎉</div>
-          <h3>Check your inbox!</h3>
-          <p>Your free proof code is on its way.</p>
+          <h3>Here's your free code!</h3>
+          <p style="margin-bottom:16px;">Use this at checkout to get your first proof free:</p>
+          <div style="display:inline-block;background:#0a0d12;border:2px solid var(--accent);border-radius:10px;padding:14px 28px;font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--accent);letter-spacing:2px;user-select:all;cursor:pointer;" onclick="navigator.clipboard.writeText('DOCUPROOF-IT');this.querySelector('span').textContent='Copied!';setTimeout(()=>this.querySelector('span').textContent='DOCUPROOF-IT',1500)">
+            <span>DOCUPROOF-IT</span>
+          </div>
+          <p style="margin-top:14px;font-size:14px;color:var(--text-muted);">Click the code to copy it · <a href="/app.html" style="color:var(--accent);text-decoration:none;font-weight:600;">Start your proof now →</a></p>
         </div>
       </div>
     </div>
