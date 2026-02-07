@@ -21,11 +21,13 @@ exports.handler = async (event) => {
     ("https://docuproof.local" + (event.path || "/verify"));
 
   let initialId = "";
+  let sourcePaid = false;
 
   try {
     const url = new URL(rawUrl);
     const qsId = (url.searchParams.get("id") || "").trim();
     if (qsId) initialId = qsId;
+    sourcePaid = url.searchParams.get("source") === "paid";
   } catch {
     // ignore
   }
@@ -45,7 +47,7 @@ exports.handler = async (event) => {
       "content-type": "text/html; charset=utf-8",
       "cache-control": "no-store",
     },
-    body: buildHtml(initialId),
+    body: buildHtml(initialId, sourcePaid),
   };
 };
 
@@ -57,7 +59,7 @@ function esc(s) {
     .replace(/"/g, "&quot;");
 }
 
-function buildHtml(initialId) {
+function buildHtml(initialId, sourcePaid) {
   const yr = new Date().getFullYear();
   return `<!doctype html>
 <html lang="en">
@@ -449,6 +451,15 @@ body {
         </div>
 
         <div class="email-section" id="emailSection" style="display:none;">
+${sourcePaid ? `
+          <div style="padding:12px 16px;background:#0d1912;border:1px solid #1e5131;border-radius:10px;">
+            <p style="color:#9af3b4;font-size:14px;font-weight:600;margin:0 0 8px;">&#10003; Your PDF Certificate will be emailed once your proof is anchored.</p>
+            <p style="color:#8b949e;font-size:13px;margin:0;">It will include the Bitcoin block number and all details needed for legal verification.</p>
+          </div>
+          <div style="margin-top:16px;text-align:center;">
+            <a href="/proof-gallery.html" style="color:var(--accent);font-size:14px;font-weight:600;text-decoration:none;">Add your proof to The Proof Gallery &rarr;</a>
+          </div>
+` : `
           <h3>&#x26a0; Don&rsquo;t lose your proof</h3>
           <p>
             Enter your email and we&rsquo;ll send you your Proof ID plus a notification when
@@ -461,6 +472,7 @@ body {
           <div class="email-success" id="emailSuccess">
             &#10003; Sent! Check your inbox for your proof details.
           </div>
+`}
         </div>
 
       </section>
@@ -720,7 +732,8 @@ body {
     });
   });
 
-  // Email capture
+  // Email capture (only present for non-paid flows)
+  if (emailBtn) {
   emailBtn.addEventListener("click", async function() {
     var emailInput = document.getElementById("emailInput");
     var emailRow = document.getElementById("emailRow");
@@ -759,6 +772,7 @@ body {
       emailInput.style.borderColor = "#ef4444";
     }
   });
+  } // end if(emailBtn)
 
   // Check button + Enter key
   btn.addEventListener("click", function() { check(input.value.trim()); });

@@ -245,7 +245,7 @@ exports.handler = async (event) => {
     // The PDF certificate will be generated and attached by resolve_cron.mjs
     // once the proof is ANCHORED, so it includes the Bitcoin block number.
     try {
-      const verifyUrl = `${origin}/v/${canonicalId}`;
+      const verifyUrl = `${origin}/.netlify/functions/verify_page?id=${encodeURIComponent(canonicalId)}&source=paid`;
 
       await sendEmail({
         to,

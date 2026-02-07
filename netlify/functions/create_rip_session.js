@@ -1,13 +1,38 @@
 // netlify/functions/create_rip_session.js
-// v1.0.0 - Creates a Stripe Checkout session for the RIP (Redundant Identity Preservation) upsell
-// Called from the verify page "Yes, Protect My Proof →" button
+// v2.0.0 - Creates a Stripe Checkout session for the RIP (Redundant Identity Preservation) upsell
+// Called from success.html "Yes, Protect My Proof →" button
 // Expects: ?id=PROOF_ID (query string)
+// Fixed: success_url now returns to success.html (not verify page)
+// Fixed: Pre-fills customer email from email-prospects store
 
 const Stripe = require("stripe");
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2024-06-20",
 });
+
+async function lookupEmail(proofId) {
+  try {
+    const mod = await import("@netlify/blobs");
+    const gs = mod.getStore || (mod.default && mod.default.getStore);
+    let store;
+    try {
+      store = gs("email-prospects");
+    } catch {
+      const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
+      const token = process.env.NETLIFY_BLOBS_TOKEN || process.env.NETLIFY_API_TOKEN;
+      store = gs({ name: "email-prospects", siteID, token });
+    }
+    const raw = await store.get(`proof:${proofId}`, { type: "text" });
+    if (raw) {
+      const record = JSON.parse(raw);
+      if (record.email) return record.email;
+    }
+  } catch (e) {
+    console.log("create_rip_session: email lookup failed:", e.message);
+  }
+  return null;
+}
 
 exports.handler = async (event) => {
   const headers = {
@@ -46,7 +71,10 @@ exports.handler = async (event) => {
     }
 
     const origin = (process.env.URL || "https://docuproof.io").replace(/\/$/, "");
-    const verifyUrl = `${origin}/v/${proofId}`;
+
+    // Success URL goes back to success.html with rip_paid flag
+    const successUrl = `${origin}/success.html?id=${encodeURIComponent(proofId)}&rip_paid=true`;
+    const cancelUrl = `${origin}/success.html?id=${encodeURIComponent(proofId)}`;
 
     // RIP price — $2.00 for redundant storage preservation
     // Stripe Price: price_1Sr0CzIn2dWVc65RNAAuefwL (product: prod_TodTY3ku5nQUOx)
@@ -54,8 +82,8 @@ exports.handler = async (event) => {
 
     const sessionConfig = {
       mode: "payment",
-      success_url: `${verifyUrl}?rip=success`,
-      cancel_url: `${verifyUrl}?rip=cancelled`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       metadata: {
         proofId,
         product: "rip",
@@ -63,6 +91,12 @@ exports.handler = async (event) => {
       },
       line_items: [{ price: ripPriceId, quantity: 1 }],
     };
+
+    // Pre-fill customer email if we can find it
+    const email = await lookupEmail(proofId);
+    if (email) {
+      sessionConfig.customer_email = email;
+    }
 
     const session = await stripe.checkout.sessions.create(sessionConfig);
 
