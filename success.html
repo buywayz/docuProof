@@ -818,21 +818,21 @@
   </section>
 
   <!-- Scroll hint -->
-  <div id="scrollHint" style="text-align:center;padding:8px 0 4px;opacity:0.6;transition:opacity 0.5s;">
-    <div style="font-size:13px;color:var(--muted);margin-bottom:4px;">More below</div>
-    <div style="animation:scrollBounce 2s infinite;color:var(--accent);font-size:20px;">↓</div>
+  <div id="scrollHint" style="text-align:center;padding:16px 0 8px;opacity:1;transition:opacity 0.5s;">
+    <div style="font-size:14px;color:#f59e0b;margin-bottom:6px;font-weight:600;">Keep scrolling — there's more below</div>
+    <div style="animation:scrollBounce 1.5s infinite;color:#f59e0b;font-size:24px;">↓</div>
   </div>
   <style>
     @keyframes scrollBounce {
       0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(6px); }
+      50% { transform: translateY(8px); }
     }
   </style>
   <script>
     // Hide scroll hint once user scrolls past it
     window.addEventListener('scroll', function() {
       var hint = document.getElementById('scrollHint');
-      if (hint && window.scrollY > 200) {
+      if (hint && window.scrollY > 400) {
         hint.style.opacity = '0';
         hint.style.pointerEvents = 'none';
       }
