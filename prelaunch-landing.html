@@ -1045,20 +1045,20 @@
   </div>
 </footer>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 // Form handler that submits directly to Mailerlite
 document.getElementById('signup-form').addEventListener('submit', function(e) {
   e.preventDefault();
   
-  const email = document.getElementById('email-input').value;
-  const button = this.querySelector('button');
+  var email = document.getElementById('email-input').value;
+  var button = this.querySelector('button');
   
   // Disable button while submitting
   button.disabled = true;
   button.textContent = 'Sending...';
   
   // Submit to Mailerlite's form endpoint
-  const formData = new FormData();
+  var formData = new FormData();
   formData.append('fields[email]', email);
   formData.append('ml-submit', '1');
   formData.append('anticsrf', 'true');
@@ -1069,11 +1069,17 @@ document.getElementById('signup-form').addEventListener('submit', function(e) {
     mode: 'no-cors'
   })
   .then(function() {
-    // Show success state
+    // Show success state with code
     document.getElementById('cta-form-container').style.display = 'none';
     document.getElementById('cta-success').classList.add('show');
   })
   .catch(function(error) {
     console.error('Subscription error:', error);
-    // Show success anyway (no-cors doesn't return response)
-    document.getElementByI
+    // Show success anyway (no-cors doesn't return readable response)
+    document.getElementById('cta-form-container').style.display = 'none';
+    document.getElementById('cta-success').classList.add('show');
+  });
+});
+</script>
+</body>
+</html>
