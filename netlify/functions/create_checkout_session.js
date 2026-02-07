@@ -68,6 +68,7 @@ async function createStripeSession(payload) {
   const session = await stripe.checkout.sessions.create({
     mode: isSubscription ? 'subscription' : 'payment',
     customer_email: email || undefined,
+    allow_promotion_codes: true,
     line_items: [
       {
         price: priceId,

@@ -815,6 +815,28 @@
     </aside>
   </section>
 
+  <!-- Scroll hint -->
+  <div id="scrollHint" style="text-align:center;padding:8px 0 4px;opacity:0.6;transition:opacity 0.5s;">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:4px;">More below</div>
+    <div style="animation:scrollBounce 2s infinite;color:var(--accent);font-size:20px;">↓</div>
+  </div>
+  <style>
+    @keyframes scrollBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(6px); }
+    }
+  </style>
+  <script>
+    // Hide scroll hint once user scrolls past it
+    window.addEventListener('scroll', function() {
+      var hint = document.getElementById('scrollHint');
+      if (hint && window.scrollY > 200) {
+        hint.style.opacity = '0';
+        hint.style.pointerEvents = 'none';
+      }
+    }, { passive: true });
+  </script>
+
   <!-- RIP Add-on Section -->
   <section class="rip-section" id="ripSection">
     <!-- Initial Upsell Offer -->
