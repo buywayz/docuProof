@@ -1,5 +1,8 @@
 // netlify/functions/_db.js
 // Persistence via Netlify Blobs (with safe dynamic import for CJS functions).
+// v2.0.0 — FIX: normalizeRecord now preserves extra fields (ripPurchased, etc.)
+//           Previously stripped all fields not in the hardcoded base schema,
+//           so RIP purchase data was silently dropped by saveProof().
 
 // Memoized dynamic import so we only resolve the module once per cold start.
 let _storePromise = null;
@@ -17,7 +20,7 @@ async function getStoreSafe() {
         // Named store "proofs"
         return mod.getStore("proofs");
       } catch {
-        // Manual fallback if environment isn’t fully configured
+        // Manual fallback if environment isn't fully configured
         const siteID =
           process.env.NETLIFY_SITE_ID ||
           process.env.SITE_ID ||
@@ -60,16 +63,18 @@ function normalizeRecord(meta) {
   }
   const now = new Date().toISOString();
 
-  const base = {
-    id: meta.id,
-    filename: meta.filename || null,
-    displayName: meta.displayName || null,
-    hash: meta.hash || null,
-    customerEmail: meta.customerEmail || meta.email || null,
-    createdAt: meta.createdAt || now,
-    source: meta.source || "stripe_webhook",
-    version: 1,
-  };
+  // Start with all incoming fields preserved (e.g. ripPurchased, ripPurchasedAt, stripe, etc.)
+  const base = { ...meta };
+
+  // Ensure required fields have defaults
+  base.id = meta.id;
+  base.filename = meta.filename || null;
+  base.displayName = meta.displayName || null;
+  base.hash = meta.hash || null;
+  base.customerEmail = meta.customerEmail || meta.email || null;
+  base.createdAt = meta.createdAt || now;
+  base.source = meta.source || "stripe_webhook";
+  base.version = meta.version || 1;
 
   // Optional email metadata for idempotency
   if (meta.emailSentAt) {
@@ -77,6 +82,11 @@ function normalizeRecord(meta) {
   }
   if (typeof meta.emailCount === "number") {
     base.emailCount = meta.emailCount;
+  }
+
+  // Clean up the alternate 'email' key if customerEmail was set from it
+  if (base.email && base.customerEmail) {
+    delete base.email;
   }
 
   return base;
@@ -144,7 +154,7 @@ async function appendToFeeds(record) {
 
 /**
  * Read recent proofs from the rolling feeds.
- * If email is provided, returns that user’s feed; otherwise global feed.
+ * If email is provided, returns that user's feed; otherwise global feed.
  */
 async function listProofs({ email, limit = 50 } = {}) {
   const store = await getStoreSafe();
