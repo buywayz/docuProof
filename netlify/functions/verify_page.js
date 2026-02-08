@@ -519,12 +519,11 @@ body {
               <div style="font-size:16px;font-weight:700;color:#22c55e;">Certificate of Proof of Existence</div>
               <div style="font-size:13px;color:#8b949e;margin-top:6px;">Includes Proof ID, SHA-256 hash, blockchain block, QR code, and legal attestation</div>
             </div>
-            <div class="cert-teaser-label">
-              Paid proofs include a PDF Certificate of Proof of Existence
-            </div>
+            <a href="/app.html" style="display:block;text-align:center;padding:12px 16px;background:#12161c;border-top:1px solid #21262d;color:#22c55e;font-weight:700;font-size:14px;text-decoration:none;transition:background 0.2s;" onmouseover="this.style.background='rgba(34,197,94,0.08)'" onmouseout="this.style.background='#12161c'">
+              Generate a paid proof &rarr;
+            </a>
             <div class="cert-teaser-sublabel">
               Court-ready documentation with QR verification, blockchain details, and legal attestation.
-              <a href="/app.html">Generate a paid proof &rarr;</a>
             </div>
           </div>
 
@@ -644,12 +643,16 @@ body {
   function updateEmailSection(isPaid) {
     var paidContent = document.getElementById("emailPaidContent");
     var freeContent = document.getElementById("emailFreeContent");
+    var certTeaser = document.getElementById("certTeaser");
     if (isPaid) {
       paidContent.style.display = "block";
       freeContent.style.display = "none";
+      // Hide cert upsell teaser — paid user already getting their cert
+      if (certTeaser) certTeaser.style.display = "none";
     } else {
       paidContent.style.display = "none";
       freeContent.style.display = "block";
+      if (certTeaser) certTeaser.style.display = "block";
     }
   }
 
