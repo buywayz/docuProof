@@ -217,9 +217,9 @@ exports.handler = async (event) => {
     // =========================================================================
     // FILE FINGERPRINT
     // =========================================================================
-    Y -= 14;
+    Y -= 4;
     page.drawText("FILE FINGERPRINT (SHA-256)", { x: M, y: Y, size: 8, font: sansBold, color: GOLD });
-    Y -= 16;
+    Y -= 20;
     page.drawRectangle({ x: M, y: Y - 6, width: CW, height: 22, color: FIELD_BG, borderColor: RULE, borderWidth: 0.5 });
     page.drawText(hash, { x: M + 8, y: Y, size: 7.5, font: sans, color: DARK });
     Y -= 28;
