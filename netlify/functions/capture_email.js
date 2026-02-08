@@ -1,8 +1,83 @@
 // netlify/functions/capture_email.js
 // Stores prospect email + proof ID for list building
+// Writes to Google Sheets + Netlify Blobs
 // Optionally sends proof details via Postmark
 
 const { getStore } = require("@netlify/blobs");
+const crypto = require("crypto");
+
+// Google Sheets helper — uses raw REST API (no npm dependency needed)
+async function appendToGoogleSheet(email, source, capturedAt) {
+  const sheetId = process.env.GOOGLE_SHEET_ID;
+  const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const privateKey = (process.env.GOOGLE_PRIVATE_KEY || "").replace(/\\n/g, "\n");
+
+  if (!sheetId || !clientEmail || !privateKey) {
+    console.warn("Google Sheets env vars missing — skipping sheet append");
+    return;
+  }
+
+  try {
+    // Build JWT
+    const header = { alg: "RS256", typ: "JWT" };
+    const now = Math.floor(Date.now() / 1000);
+    const claim = {
+      iss: clientEmail,
+      scope: "https://www.googleapis.com/auth/spreadsheets",
+      aud: "https://oauth2.googleapis.com/token",
+      iat: now,
+      exp: now + 3600,
+    };
+
+    const encode = (obj) =>
+      Buffer.from(JSON.stringify(obj)).toString("base64url");
+
+    const unsigned = encode(header) + "." + encode(claim);
+    const signer = crypto.createSign("RSA-SHA256");
+    signer.update(unsigned);
+    const signature = signer.sign(privateKey, "base64url");
+    const jwt = unsigned + "." + signature;
+
+    // Exchange JWT for access token
+    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
+    });
+
+    if (!tokenRes.ok) {
+      const errText = await tokenRes.text();
+      console.error("Google token error:", errText);
+      return;
+    }
+
+    const tokenData = await tokenRes.json();
+    const accessToken = tokenData.access_token;
+
+    // Append row to Sheet1
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1!A:C:append?valueInputOption=USER_ENTERED`;
+    const appendRes = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        values: [[email, source, capturedAt]],
+      }),
+    });
+
+    if (!appendRes.ok) {
+      const errText = await appendRes.text();
+      console.error("Google Sheets append error:", errText);
+    } else {
+      console.log(`Google Sheets: appended row for ${email}`);
+    }
+  } catch (err) {
+    console.error("Google Sheets error:", err);
+    // Don't fail the request if Sheets fails
+  }
+}
 
 exports.handler = async (event) => {
   const headers = {
@@ -24,17 +99,15 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || "{}");
     const email = (body.email || "").trim().toLowerCase();
     const proofId = (body.proofId || "").trim();
-    const source = body.source || "free"; // "free" or "paid"
+    const source = body.source || "free"; // "free", "paid", "prelaunch-landing", etc.
 
     if (!email || !email.includes("@")) {
       return { statusCode: 400, headers, body: JSON.stringify({ ok: false, error: "Valid email required" }) };
     }
 
-    if (!proofId) {
-      return { statusCode: 400, headers, body: JSON.stringify({ ok: false, error: "Proof ID required" }) };
-    }
+    const capturedAt = new Date().toISOString();
 
-    // Store to blobs
+    // Store to Netlify Blobs
     const store = getStore({
       name: "email-prospects",
       siteID: process.env.NETLIFY_SITE_ID,
@@ -43,20 +116,26 @@ exports.handler = async (event) => {
 
     const record = {
       email,
-      proofId,
+      proofId: proofId || null,
       source,
-      capturedAt: new Date().toISOString(),
+      capturedAt,
     };
 
-    // Key by email so we can dedupe, but also store by proof ID for lookup
+    // Key by email so we can dedupe
     await store.set(`email:${email}`, JSON.stringify(record));
-    await store.set(`proof:${proofId}`, JSON.stringify(record));
+    // Also store by proof ID if provided
+    if (proofId) {
+      await store.set(`proof:${proofId}`, JSON.stringify(record));
+    }
 
-    console.log(`Email captured: ${email} for proof ${proofId} (${source})`);
+    console.log(`Email captured: ${email} (source: ${source}${proofId ? `, proof: ${proofId}` : ""})`);
 
-    // Send proof details email via Postmark if configured
+    // Append to Google Sheet
+    await appendToGoogleSheet(email, source, capturedAt);
+
+    // Send proof details email via Postmark if configured AND proofId provided
     const postmarkToken = process.env.POSTMARK_SERVER_TOKEN;
-    if (postmarkToken) {
+    if (postmarkToken && proofId) {
       try {
         const verifyUrl = `https://docuproof.io/v/${proofId}`;
         
@@ -111,14 +190,13 @@ exports.handler = async (event) => {
         console.log(`Proof details email sent to ${email}`);
       } catch (emailErr) {
         console.error("Postmark send error:", emailErr);
-        // Don't fail the request if email fails — we already captured the address
       }
     }
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ ok: true, message: "Email saved and proof details sent" }),
+      body: JSON.stringify({ ok: true, message: "Email saved" }),
     };
 
   } catch (err) {
