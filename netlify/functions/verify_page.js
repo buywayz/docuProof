@@ -1,14 +1,14 @@
 "use strict";
 
 /*
-  netlify/functions/verify_page.js  v5.1.0
+  netlify/functions/verify_page.js  v5.2.0
 
-  Changes from v5.0.0:
-  - FIX: Email capture section is now hidden dynamically via JS after checking
-    whether proof has a customerEmail (paid proof), instead of relying on
-    ?source=paid URL param which gets lost on subsequent visits
-  - Still supports ?source=paid as an immediate hint (no flash of wrong content)
-  - Share heading + rpi-label colors: orange (#f59e0b)
+  Changes from v5.1.0:
+  - Removed certificate screenshot from right panel (privacy risk — showed sample
+    with personal details visible to gallery visitors and shared links)
+  - Replaced with icon-based cert description (pending) that updates to anchored
+    proof summary with Mempool link when proof is confirmed
+  - No personal info (name, filename, company) is ever shown on the verify page
 */
 
 exports.handler = async (event) => {
@@ -513,11 +513,8 @@ body {
             </div>
           </div>
 
-          <div class="cert-teaser">
-            <img src="/docuProof-Certificate-Screenshot.png" 
-                 onerror="this.style.display='none';this.nextElementSibling.style.display='block';"
-                 alt="docuProof Certificate of Proof of Existence" />
-            <div style="display:none;padding:32px 20px;text-align:center;background:#1a1f24;">
+          <div class="cert-teaser" id="certTeaser">
+            <div style="padding:24px 20px;text-align:center;background:#1a1f24;">
               <div style="font-size:48px;margin-bottom:12px;">&#x1f4dc;</div>
               <div style="font-size:16px;font-weight:700;color:#22c55e;">Certificate of Proof of Existence</div>
               <div style="font-size:13px;color:#8b949e;margin-top:6px;">Includes Proof ID, SHA-256 hash, blockchain block, QR code, and legal attestation</div>
@@ -689,6 +686,20 @@ body {
         '<a class="bv-link" href="https://mempool.space/block/' + block + '" target="_blank" rel="noopener">' +
         '\\ud83d\\udd17 View Bitcoin Block #' + block + ' on Mempool.space</a>' +
         '<p style="margin-top:10px;font-size:12px;color:#8b949e;">This is the actual Bitcoin block where your proof is permanently recorded. Anyone can independently verify it.</p>';
+
+      // Update cert teaser to show anchored proof info (no personal details)
+      var certTeaser = document.getElementById("certTeaser");
+      if (certTeaser) {
+        certTeaser.innerHTML =
+          '<div style="padding:24px 20px;text-align:center;background:#0d1912;border:1px solid #1e5131;">' +
+            '<div style="font-size:36px;margin-bottom:10px;">\\u2705</div>' +
+            '<div style="font-size:16px;font-weight:700;color:#22c55e;margin-bottom:4px;">Proof Anchored</div>' +
+            '<div style="font-size:13px;color:#8b949e;">Bitcoin Block #' + block + '</div>' +
+          '</div>' +
+          '<div style="padding:14px 16px;text-align:center;background:#1a1f24;">' +
+            '<a href="https://mempool.space/block/' + block + '" target="_blank" rel="noopener" style="color:#22c55e;font-weight:600;font-size:14px;text-decoration:none;">View on Mempool.space \\u2192</a>' +
+          '</div>';
+      }
     } else if (d.txid) {
       var tx = d.txid;
       var short = tx.slice(0,10) + "\\u2026" + tx.slice(-6);
