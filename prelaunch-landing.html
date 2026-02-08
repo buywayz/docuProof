@@ -1046,36 +1046,30 @@
 </footer>
 
 <script>
-// Form handler that submits directly to Mailerlite
+// Form handler — capture email + reveal code
 document.getElementById('signup-form').addEventListener('submit', function(e) {
   e.preventDefault();
   
   var email = document.getElementById('email-input').value;
-  var button = this.querySelector('button');
+  if (!email) return;
   
-  // Disable button while submitting
+  var button = this.querySelector('button');
   button.disabled = true;
   button.textContent = 'Sending...';
   
-  // Submit to Mailerlite's form endpoint
-  var formData = new FormData();
-  formData.append('fields[email]', email);
-  formData.append('ml-submit', '1');
-  formData.append('anticsrf', 'true');
-  
-  fetch('https://assets.mailerlite.com/jsonp/2048907/forms/177059916378277634/subscribe', {
+  // Save email to backend
+  fetch('/.netlify/functions/capture_email', {
     method: 'POST',
-    body: formData,
-    mode: 'no-cors'
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email, source: 'prelaunch-landing' })
   })
   .then(function() {
-    // Show success state with code
+    // Show code regardless of response
     document.getElementById('cta-form-container').style.display = 'none';
     document.getElementById('cta-success').classList.add('show');
   })
-  .catch(function(error) {
-    console.error('Subscription error:', error);
-    // Show success anyway (no-cors doesn't return readable response)
+  .catch(function() {
+    // Still show code even if capture fails
     document.getElementById('cta-form-container').style.display = 'none';
     document.getElementById('cta-success').classList.add('show');
   });
