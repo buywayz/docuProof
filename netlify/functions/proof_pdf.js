@@ -14,6 +14,7 @@ exports.handler = async (event) => {
   const id = qp.id || "unknown";
   const displayName = qp.displayName || "Untitled";
   const hash = qp.hash || "N/A";
+  const isRip = qp.rip === "true" || qp.rip === "1";
   if (!qp.hash) {
     console.warn(`[proof_pdf] WARNING: No hash provided for proof ${id}. Certificate will show N/A.`);
   }
@@ -26,7 +27,7 @@ exports.handler = async (event) => {
     const pdfDoc = await PDFDocument.create();
     pdfDoc.setTitle("Certificate of Proof of Existence");
     pdfDoc.setAuthor("docuProof.io");
-    pdfDoc.setCreator("docuProof v17.0.0");
+    pdfDoc.setCreator("docuProof v18.0.0");
 
     // US Letter: 612 x 792 points
     const page = pdfDoc.addPage([612, 792]);
@@ -90,6 +91,15 @@ exports.handler = async (event) => {
     page.drawText(t2, { x: CX - fontBold.widthOfTextAtSize(t2, 26)/2, y: Y, size: 26, font: fontBold, color: BLACK });
     Y -= 14;
     
+    if (isRip) {
+      const ripBadge = "REDUNDANT IDENTITY PRESERVATION (RIP) VERIFIED";
+      const ripBadgeW = fontBold.widthOfTextAtSize(ripBadge, 8);
+      const ripBadgePad = 8;
+      page.drawRectangle({ x: CX - (ripBadgeW + ripBadgePad * 2)/2, y: Y - 4, width: ripBadgeW + ripBadgePad * 2, height: 16, color: GREEN });
+      page.drawText(ripBadge, { x: CX - ripBadgeW/2, y: Y, size: 8, font: fontBold, color: hex("#071109") });
+      Y -= 20;
+    }
+    
     const t3 = "Immutable Blockchain Timestamp";
     page.drawText(t3, { x: CX - font.widthOfTextAtSize(t3, 9)/2, y: Y, size: 9, font, color: GRAY });
     Y -= 16;
@@ -100,14 +110,21 @@ exports.handler = async (event) => {
     // =========================================================================
     // HOW IT WORKS BOX
     // =========================================================================
-    const boxH = 50;
+    const boxH = isRip ? 62 : 50;
     page.drawRectangle({ x: M, y: Y - boxH, width: CW, height: boxH, color: LIGHT_BG, borderColor: GREEN, borderWidth: 1 });
     
-    const b1 = "HOW THIS PROOF WORKS";
+    const b1 = isRip ? "HOW THIS RIP-ENHANCED PROOF WORKS" : "HOW THIS PROOF WORKS";
     page.drawText(b1, { x: CX - fontBold.widthOfTextAtSize(b1, 10)/2, y: Y - 16, size: 10, font: fontBold, color: DARK_GREEN });
     
-    const b2 = "To prove your file existed on this date, you need:  Your Original File + This Certificate";
-    page.drawText(b2, { x: CX - font.widthOfTextAtSize(b2, 9)/2, y: Y - 34, size: 9, font, color: BLACK });
+    if (isRip) {
+      const b2a = "This proof includes Redundant Identity Preservation. Three verified identical copies";
+      const b2b = "of the original file exist in separate locations, ensuring survivability and authenticity.";
+      page.drawText(b2a, { x: CX - font.widthOfTextAtSize(b2a, 9)/2, y: Y - 32, size: 9, font, color: BLACK });
+      page.drawText(b2b, { x: CX - font.widthOfTextAtSize(b2b, 9)/2, y: Y - 44, size: 9, font, color: BLACK });
+    } else {
+      const b2 = "To prove your file existed on this date, you need:  Your Original File + This Certificate";
+      page.drawText(b2, { x: CX - font.widthOfTextAtSize(b2, 9)/2, y: Y - 34, size: 9, font, color: BLACK });
+    }
     
     Y -= boxH + 20;
 
@@ -194,11 +211,26 @@ exports.handler = async (event) => {
     }
     Y -= 10;
 
+    // RIP Redundancy section (only for RIP certificates)
+    if (isRip) {
+      page.drawText("REDUNDANT IDENTITY PRESERVATION", { x: M, y: Y, size: 10, font: fontBold, color: DARK_GREEN });
+      Y -= 14;
+
+      const ripExp = "This proof has been enhanced with RIP verification. Three identical copies of the original file have been cryptographically verified against the blockchain-anchored hash. Storing these copies in separate physical or cloud locations ensures that your proof survives even if one copy is lost, corrupted, or destroyed.";
+      Y = drawWrappedText(page, ripExp, M, Y, CW, 9, font, BLACK, 12);
+      Y -= 10;
+    }
+
     // How to Verify
     page.drawText("HOW TO VERIFY", { x: M, y: Y, size: 10, font: fontBold, color: DARK_GREEN });
     Y -= 14;
     
-    const steps = [
+    const steps = isRip ? [
+      "1. Keep your original file and two backup copies in separate locations",
+      "2. Visit docuproof.io/v/" + id + " or scan QR code",
+      "3. Upload any of your three copies to verify the fingerprint matches",
+      "4. All three copies are cryptographically identical to the blockchain record",
+    ] : [
       "1. Keep your original file safe",
       "2. Visit docuproof.io/v/" + id + " or scan QR code",
       "3. Upload your file to verify the fingerprint matches",

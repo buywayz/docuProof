@@ -86,6 +86,106 @@ exports.handler = async (event) => {
   const stripeSessionId = obj.id; // cs_live_... or cs_test_...
   const md = obj.metadata || {};
 
+  // --- Log promo code usage ---
+  try {
+    if (obj.total_details?.breakdown?.discounts?.length) {
+      for (const d of obj.total_details.breakdown.discounts) {
+        const promoName = d.discount?.promotion_code || d.discount?.coupon?.name || "unknown";
+        const couponId = d.discount?.coupon?.id || "unknown";
+        const amountOff = d.amount || 0;
+        console.log(`[PROMO] Code used: ${promoName} (coupon: ${couponId}, discount: ${amountOff})`);
+      }
+    }
+    // Also check for discount directly on session
+    if (obj.discount || obj.discounts?.length) {
+      const discounts = obj.discounts || (obj.discount ? [obj.discount] : []);
+      for (const d of discounts) {
+        const disc = d.discount || d;
+        console.log(`[PROMO] Session discount: coupon=${disc.coupon?.name || disc.coupon?.id || "unknown"}, promo=${disc.promotion_code || "none"}`);
+      }
+    }
+  } catch (promoErr) {
+    console.warn("[PROMO] Error logging promo code (non-fatal):", promoErr.message);
+  }
+
+  // --- Handle RIP purchases separately ---
+  if (md.product === "rip") {
+    const ripProofId = md.proofId || md.proof_id || null;
+    console.log(`[stripe_webhook] RIP purchase for proof: ${ripProofId}`);
+
+    try {
+      // Record RIP purchase on the proof record
+      if (ripProofId) {
+        const existingProof = await getProof(ripProofId).catch(() => null);
+        if (existingProof) {
+          await saveProof({
+            ...existingProof,
+            id: ripProofId,
+            ripPurchased: true,
+            ripPurchasedAt: new Date().toISOString(),
+            ripStripeSession: stripeSessionId,
+          });
+          console.log(`[stripe_webhook] RIP recorded for proof ${ripProofId}`);
+        } else {
+          console.warn(`[stripe_webhook] RIP purchase: proof ${ripProofId} not found in store`);
+        }
+      }
+
+      // Log to Google Sheets if configured
+      try {
+        const crypto = require("crypto");
+        const sheetId = process.env.GOOGLE_SHEET_ID;
+        const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+        const privateKey = (process.env.GOOGLE_PRIVATE_KEY || "").replace(/\\n/g, "\n");
+
+        if (sheetId && clientEmail && privateKey) {
+          const header = { alg: "RS256", typ: "JWT" };
+          const now = Math.floor(Date.now() / 1000);
+          const claim = {
+            iss: clientEmail,
+            scope: "https://www.googleapis.com/auth/spreadsheets",
+            aud: "https://oauth2.googleapis.com/token",
+            iat: now,
+            exp: now + 3600,
+          };
+          const encode = (o) => Buffer.from(JSON.stringify(o)).toString("base64url");
+          const unsigned = encode(header) + "." + encode(claim);
+          const signer = crypto.createSign("RSA-SHA256");
+          signer.update(unsigned);
+          const signature = signer.sign(privateKey, "base64url");
+          const jwt = unsigned + "." + signature;
+
+          const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
+          });
+          if (tokenRes.ok) {
+            const tokenData = await tokenRes.json();
+            await fetch(
+              `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1!A:C:append?valueInputOption=USER_ENTERED`,
+              {
+                method: "POST",
+                headers: { Authorization: `Bearer ${tokenData.access_token}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ values: [[obj.customer_email || "unknown", "rip-purchase", new Date().toISOString()]] }),
+              }
+            );
+            console.log(`[stripe_webhook] RIP purchase logged to Google Sheets`);
+          }
+        }
+      } catch (sheetErr) {
+        console.warn("[stripe_webhook] Google Sheets log error (non-fatal):", sheetErr.message);
+      }
+    } catch (ripErr) {
+      console.error("[stripe_webhook] RIP handler error (non-fatal):", ripErr);
+    }
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ ok: true, product: "rip", proofId: ripProofId, stripeSessionId }),
+    };
+  }
+
   const canonicalId = canonicalIdFromSession(stripeSessionId, md);
   const origin = siteOrigin(event);
   if (!origin) {
