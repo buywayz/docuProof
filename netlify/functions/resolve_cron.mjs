@@ -216,6 +216,7 @@ export const handler = async (_event) => {
               let proofFilename = null;
               let proofDisplayName = null;
               let proofCreatedAt = anchor.createdAt || null;
+              let proofRipPurchased = false;
 
               // Try email-prospects store
               try {
@@ -245,6 +246,7 @@ export const handler = async (_event) => {
                           proofFilename = proofRecord.filename;
                           proofDisplayName = proofRecord.displayName;
                           proofCreatedAt = proofCreatedAt || proofRecord.createdAt;
+                          proofRipPurchased = !!proofRecord.ripPurchased;
                           break;
                         }
                       }
@@ -272,6 +274,10 @@ export const handler = async (_event) => {
                     verifyUrl: verifyUrl,
                     createdAt: proofCreatedAt || anchor.createdAt || "",
                   });
+                  if (proofRipPurchased) {
+                    pdfParams.set("rip", "true");
+                    console.log(`resolve_cron: RIP-enhanced certificate for ${id}`);
+                  }
                   const pdfUrl = `${SITE_ORIGIN}/.netlify/functions/proof_pdf?${pdfParams.toString()}`;
                   const pdfResp = await fetch(pdfUrl, { method: "GET" });
                   if (pdfResp.ok) {
@@ -315,6 +321,7 @@ export const handler = async (_event) => {
                       </p>
 
                       ${pdfB64 ? '<p style="color: #c9d2db; line-height: 1.6;"><strong style="color: #e8eaed;">Your Certificate of Proof is attached as a PDF.</strong> This is your court-ready documentation — keep it with your original file.</p>' : ''}
+                      ${pdfB64 && proofRipPurchased ? '<p style="color: #c9d2db; line-height: 1.6;">Your certificate includes <strong style="color: #22c55e;">RIP (Redundant Identity Preservation) Verified</strong> status, documenting that three identical copies of your file were cryptographically verified.</p>' : ''}
                       
                       <div style="text-align: center; margin: 24px 0;">
                         <a href="${mempoolUrl}" style="display: inline-block; background: #22c55e; color: #0a0d10; padding: 14px 32px; border-radius: 999px; text-decoration: none; font-weight: 700; font-size: 16px;">View Your Proof on the Blockchain</a>

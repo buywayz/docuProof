@@ -55,8 +55,8 @@ exports.handler = async (event) => {
     const sansBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
     // Colors — warm, official palette
-    const CREAM = hex("#faf8f0");
-    const CREAM_DARK = hex("#f0ece0");
+    const CREAM = hex("#f5f0e0");
+    const CREAM_DARK = hex("#ebe4cc");
     const GOLD = hex("#8b7535");
     const GOLD_LIGHT = hex("#c9a84c");
     const DARK = hex("#1a1a1a");
@@ -170,7 +170,7 @@ exports.handler = async (event) => {
     const qrY = Y - qrS;
 
     // QR
-    const qrBuf = await QRCode.toBuffer(verifyUrl, { width: 160, margin: 0, color: { dark: "#1a1a1a", light: "#faf8f0" } });
+    const qrBuf = await QRCode.toBuffer(verifyUrl, { width: 160, margin: 0, color: { dark: "#1a1a1a", light: "#f5f0e0" } });
     const qrImg = await pdfDoc.embedPng(qrBuf);
     page.drawRectangle({ x: qrX - 4, y: qrY - 4, width: qrS + 8, height: qrS + 8, borderColor: RULE, borderWidth: 0.75 });
     page.drawImage(qrImg, { x: qrX, y: qrY, width: qrS, height: qrS });
