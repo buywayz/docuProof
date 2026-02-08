@@ -1,6 +1,8 @@
 // netlify/functions/resolve_cron.mjs
-// v4.0.0 - Generates + attaches PDF certificate when proof reaches ANCHORED
-//         - Fallback email lookup: checks proofs store (customerEmail) if email-prospects has no record
+// v5.1.0 - FIX: Always reads proof record for filename, displayName, ripPurchased
+//         - Previously these were only read in the email fallback path, so paid proofs
+//           (which had email in email-prospects) never got metadata → blank fields + no RIP
+//         - Proof record is now read FIRST, email-prospects used as fallback for email only
 //         - Certificate includes hash, block number, verify URL — court-ready
 // Scheduled hourly via netlify.toml: [functions."resolve_cron"] schedule = "@hourly"
 //
@@ -218,42 +220,45 @@ export const handler = async (_event) => {
               let proofCreatedAt = anchor.createdAt || null;
               let proofRipPurchased = false;
 
-              // Try email-prospects store
+              // --- ALWAYS read proof record for metadata (filename, displayName, RIP) ---
+              // This must happen regardless of how we find the email, because
+              // email-prospects only stores the email, not proof metadata.
               try {
-                const emailStore = await getEmailStore();
-                const emailRaw = await emailStore.get(`proof:${id}`, { type: "text" });
-                if (emailRaw) {
-                  const emailRecord = JSON.parse(emailRaw);
-                  recipientEmail = emailRecord.email;
+                const proofKeys = [`proof:${id}`, `proof:${id}.json`, id];
+                for (const pk of proofKeys) {
+                  try {
+                    const proofRaw = await store.get(pk, { type: "text" });
+                    if (proofRaw) {
+                      const proofRecord = JSON.parse(proofRaw);
+                      proofHash = proofHash || proofRecord.hash || null;
+                      proofFilename = proofRecord.filename || proofFilename;
+                      proofDisplayName = proofRecord.displayName || proofDisplayName;
+                      proofCreatedAt = proofCreatedAt || proofRecord.createdAt || null;
+                      proofRipPurchased = !!proofRecord.ripPurchased;
+                      // Also grab email from proof record as a candidate
+                      if (proofRecord.customerEmail) {
+                        recipientEmail = proofRecord.customerEmail;
+                      }
+                      console.log(`resolve_cron: proof record found for ${id} via key "${pk}" — filename="${proofRecord.filename}", displayName="${proofRecord.displayName}", rip=${proofRecord.ripPurchased}`);
+                      break;
+                    }
+                  } catch {}
                 }
-              } catch (epErr) {
-                console.log(`resolve_cron: email-prospects lookup failed for ${id}:`, epErr.message);
+              } catch (proofErr) {
+                console.log(`resolve_cron: proofs store lookup failed for ${id}:`, proofErr.message);
               }
 
-              // Fallback: check the proofs store for customerEmail (paid proofs via Stripe)
+              // --- Also try email-prospects store (may have email even if proof record didn't) ---
               if (!recipientEmail) {
                 try {
-                  // Try common proof record key patterns
-                  const proofKeys = [`proof:${id}`, `proof:${id}.json`, id];
-                  for (const pk of proofKeys) {
-                    try {
-                      const proofRaw = await store.get(pk, { type: "text" });
-                      if (proofRaw) {
-                        const proofRecord = JSON.parse(proofRaw);
-                        if (proofRecord.customerEmail) {
-                          recipientEmail = proofRecord.customerEmail;
-                          proofHash = proofHash || proofRecord.hash;
-                          proofFilename = proofRecord.filename;
-                          proofDisplayName = proofRecord.displayName;
-                          proofCreatedAt = proofCreatedAt || proofRecord.createdAt;
-                          proofRipPurchased = !!proofRecord.ripPurchased;
-                          break;
-                        }
-                      }
-                    } catch {}
+                  const emailStore = await getEmailStore();
+                  const emailRaw = await emailStore.get(`proof:${id}`, { type: "text" });
+                  if (emailRaw) {
+                    const emailRecord = JSON.parse(emailRaw);
+                    recipientEmail = emailRecord.email;
                   }
-                } catch (proofErr) {
-                  console.log(`resolve_cron: proofs store email fallback failed for ${id}:`, proofErr.message);
+                } catch (epErr) {
+                  console.log(`resolve_cron: email-prospects lookup failed for ${id}:`, epErr.message);
                 }
               }
 

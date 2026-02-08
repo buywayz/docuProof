@@ -1,18 +1,14 @@
 "use strict";
 
 /*
-  netlify/functions/verify_page.js  v5.0.0
+  netlify/functions/verify_page.js  v5.1.0
 
-  Changes from v4.0.0:
-  - Share heading + rpi-label colors changed to orange (#f59e0b)
-
-  Redesigned verify/proof status page with:
-  - Email capture for prospect database (orange themed)
-  - Blockchain explainer (what the hash is, what's on the blockchain)
-  - Mempool.space link to visually see the proof
-  - Certificate teaser for paid upsell
-  - Share buttons with targeted landing page picker
-  - Works for both free and paid flows
+  Changes from v5.0.0:
+  - FIX: Email capture section is now hidden dynamically via JS after checking
+    whether proof has a customerEmail (paid proof), instead of relying on
+    ?source=paid URL param which gets lost on subsequent visits
+  - Still supports ?source=paid as an immediate hint (no flash of wrong content)
+  - Share heading + rpi-label colors: orange (#f59e0b)
 */
 
 exports.handler = async (event) => {
@@ -451,28 +447,29 @@ body {
         </div>
 
         <div class="email-section" id="emailSection" style="display:none;">
-${sourcePaid ? `
-          <div style="padding:12px 16px;background:#0d1912;border:1px solid #1e5131;border-radius:10px;">
-            <p style="color:#9af3b4;font-size:14px;font-weight:600;margin:0 0 8px;">&#10003; Your PDF Certificate will be emailed once your proof is anchored.</p>
-            <p style="color:#8b949e;font-size:13px;margin:0;">It will include the Bitcoin block number and all details needed for legal verification.</p>
+          <div id="emailPaidContent" style="display:${sourcePaid ? 'block' : 'none'};">
+            <div style="padding:12px 16px;background:#0d1912;border:1px solid #1e5131;border-radius:10px;">
+              <p style="color:#9af3b4;font-size:14px;font-weight:600;margin:0 0 8px;">&#10003; Your PDF Certificate will be emailed once your proof is anchored.</p>
+              <p style="color:#8b949e;font-size:13px;margin:0;">It will include the Bitcoin block number and all details needed for legal verification.</p>
+            </div>
+            <div style="margin-top:16px;text-align:center;">
+              <a href="/proof-gallery.html" style="color:var(--accent);font-size:14px;font-weight:600;text-decoration:none;">Add your proof to The Proof Gallery &rarr;</a>
+            </div>
           </div>
-          <div style="margin-top:16px;text-align:center;">
-            <a href="/proof-gallery.html" style="color:var(--accent);font-size:14px;font-weight:600;text-decoration:none;">Add your proof to The Proof Gallery &rarr;</a>
+          <div id="emailFreeContent" style="display:${sourcePaid ? 'none' : 'block'};">
+            <h3>&#x26a0; Don&rsquo;t lose your proof</h3>
+            <p>
+              Enter your email and we&rsquo;ll send you your Proof ID plus a notification when
+              it&rsquo;s permanently anchored on the Bitcoin blockchain.
+            </p>
+            <div class="email-row" id="emailRow">
+              <input type="email" id="emailInput" placeholder="you@example.com" />
+              <button id="emailBtn">Send</button>
+            </div>
+            <div class="email-success" id="emailSuccess">
+              &#10003; Sent! Check your inbox for your proof details.
+            </div>
           </div>
-` : `
-          <h3>&#x26a0; Don&rsquo;t lose your proof</h3>
-          <p>
-            Enter your email and we&rsquo;ll send you your Proof ID plus a notification when
-            it&rsquo;s permanently anchored on the Bitcoin blockchain.
-          </p>
-          <div class="email-row" id="emailRow">
-            <input type="email" id="emailInput" placeholder="you@example.com" />
-            <button id="emailBtn">Send</button>
-          </div>
-          <div class="email-success" id="emailSuccess">
-            &#10003; Sent! Check your inbox for your proof details.
-          </div>
-`}
         </div>
 
       </section>
@@ -639,10 +636,24 @@ ${sourcePaid ? `
     shareSection.style.display = "block";
     statusFields.style.display = "block";
     explainerBox.style.display = "block";
+    // emailSection visibility is now controlled by updateEmailSection()
     emailSection.style.display = "block";
     rightDefault.style.display = "none";
     rightLoaded.style.display = "block";
     rightProofId.textContent = id;
+  }
+
+  // Show the right email section variant based on paid status
+  function updateEmailSection(isPaid) {
+    var paidContent = document.getElementById("emailPaidContent");
+    var freeContent = document.getElementById("emailFreeContent");
+    if (isPaid) {
+      paidContent.style.display = "block";
+      freeContent.style.display = "none";
+    } else {
+      paidContent.style.display = "none";
+      freeContent.style.display = "block";
+    }
   }
 
   function showNotFound() {
@@ -702,11 +713,24 @@ ${sourcePaid ? `
     resetFields();
     showProofLoaded(id);
 
+    // Default: use URL hint for immediate display, then override with server data
+    var isPaid = ${sourcePaid ? 'true' : 'false'};
+
+    // Heuristic: free proofs typically start with "free_"; paid proofs are 12-char hex IDs
+    if (!isPaid && id && !id.startsWith("free_")) {
+      isPaid = true;
+    }
+
     try {
       var r = await fetch("/.netlify/functions/anchor_status?id=" + encodeURIComponent(id));
       var d = await r.json();
 
       if (!r.ok || !d.ok) { showNotFound(); return; }
+
+      // Check if proof has a customerEmail (indicates paid proof)
+      if (d.isPaid === true || d.customerEmail) {
+        isPaid = true;
+      }
 
       var state = (d.state || "").toUpperCase();
       var blockHeight = d.blockHeight || d.block || 0;
@@ -722,6 +746,8 @@ ${sourcePaid ? `
       console.error("Check error:", err);
       showNotFound();
     }
+
+    updateEmailSection(isPaid);
   }
 
   // Right panel proof ID click to copy
