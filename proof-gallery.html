@@ -118,23 +118,30 @@
 
     .wall {
       display: grid;
-      gap: 16px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    @media (max-width: 900px) {
+      .wall { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .wall { grid-template-columns: 1fr; }
     }
 
     .proof-item {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 16px 20px;
+      padding: 16px;
       display: flex;
-      align-items: flex-start;
-      gap: 14px;
+      flex-direction: column;
+      gap: 10px;
       transition: border-color 0.2s, transform 0.2s;
       animation: fadeIn 0.3s ease-out;
     }
     .proof-item:hover {
       border-color: var(--accent);
-      transform: translateX(4px);
+      transform: translateY(-2px);
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
@@ -142,15 +149,21 @@
     }
 
     .proof-icon {
-      font-size: 28px;
+      font-size: 22px;
       flex-shrink: 0;
-      width: 44px;
-      height: 44px;
+      width: 36px;
+      height: 36px;
       background: var(--card-soft);
-      border-radius: 10px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
+    }
+
+    .proof-top-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     .proof-content {
@@ -207,11 +220,11 @@
     }
 
     .proof-actions {
-      flex-shrink: 0;
       display: flex;
-      flex-direction: column;
-      align-items: flex-end;
+      align-items: center;
+      justify-content: space-between;
       gap: 8px;
+      margin-top: 2px;
     }
 
     .proof-view-link {
@@ -224,6 +237,36 @@
     .proof-view-link:hover {
       opacity: 0.8;
       text-decoration: underline;
+    }
+
+    .show-more-container {
+      text-align: center;
+      margin-top: 24px;
+    }
+    .show-more-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      padding: 12px 32px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .show-more-btn:hover {
+      border-color: var(--accent);
+      background: rgba(34, 197, 94, 0.08);
+    }
+    .show-more-btn:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+    .gallery-count {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--muted);
     }
 
     .empty-state {
@@ -407,24 +450,57 @@ async function loadWall() {
     todayCount.textContent = todaySubmissions.toString();
     
     // Render submissions
-    wall.innerHTML = submissions.map(s => `
-      <div class="proof-item">
-        <div class="proof-icon">${s.categoryIcon}</div>
-        <div class="proof-content">
-          <div class="proof-header">
-            <span class="proof-category">${s.categoryLabel}</span>
-            <span class="proof-separator">›</span>
-            <span class="proof-type">${s.type}</span>
+    const ITEMS_PER_PAGE = 12;
+    let visibleCount = ITEMS_PER_PAGE;
+
+    function renderWall() {
+      const visible = submissions.slice(0, visibleCount);
+      wall.innerHTML = visible.map(s => `
+        <div class="proof-item">
+          <div class="proof-top-row">
+            <div class="proof-icon">${s.categoryIcon}</div>
+            <div>
+              <div class="proof-header">
+                <span class="proof-category">${s.categoryLabel}</span>
+                <span class="proof-separator">›</span>
+                <span class="proof-type">${s.type}</span>
+              </div>
+              <div class="proof-time">${timeAgo(s.timestamp)}</div>
+            </div>
           </div>
           ${s.description ? `<div class="proof-description">"${s.description}"</div>` : ''}
-          <div class="proof-time">${timeAgo(s.timestamp)}</div>
+          <div class="proof-actions">
+            <div class="proof-badge">🔒 Verified</div>
+            ${s.proofId ? `<a href="/v/${s.proofId}" class="proof-view-link" target="_blank">View Proof →</a>` : ''}
+          </div>
         </div>
-        <div class="proof-actions">
-          <div class="proof-badge">🔒 Verified</div>
-          ${s.proofId ? `<a href="/v/${s.proofId}" class="proof-view-link" target="_blank">View Proof →</a>` : ''}
-        </div>
-      </div>
-    `).join('');
+      `).join('');
+
+      // Show more button
+      if (submissions.length > visibleCount) {
+        wall.insertAdjacentHTML('afterend',
+          document.getElementById('showMoreContainer') ? '' :
+          `<div class="show-more-container" id="showMoreContainer">
+            <button class="show-more-btn" onclick="showMore()">Show more</button>
+            <div class="gallery-count">Showing ${visible.length} of ${submissions.length}</div>
+          </div>`
+        );
+        const container = document.getElementById('showMoreContainer');
+        if (container) {
+          container.querySelector('.gallery-count').textContent = `Showing ${visible.length} of ${submissions.length}`;
+        }
+      } else {
+        const container = document.getElementById('showMoreContainer');
+        if (container) container.remove();
+      }
+    }
+
+    window.showMore = function() {
+      visibleCount += ITEMS_PER_PAGE;
+      renderWall();
+    };
+
+    renderWall();
     
   } catch (err) {
     console.error('Error loading wall:', err);

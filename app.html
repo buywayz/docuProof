@@ -162,6 +162,30 @@
           <button id="copyBtn" class="copy-btn">Copy</button>
         </div>
         <div class="help">This is the fingerprint we’ll save with your proof. Copy for your records (optional).</div>
+
+        <div id="hashConfidence" style="display:none;margin-top:20px;padding:16px 18px;border-radius:12px;border:1px solid #1e3a2a;background:linear-gradient(135deg,#0d1912 0%,#101820 100%);">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span style="font-size:20px;">&#x1f512;</span>
+            <span style="font-size:14px;font-weight:600;color:#22C55E;">Your file never leaves your device</span>
+          </div>
+          <div style="font-size:13px;color:#8b949e;line-height:1.6;">
+            Only this unique fingerprint is saved &mdash; it&rsquo;s mathematically impossible to reverse it back into your file. Even changing a single character would produce a completely different hash.
+          </div>
+          <div style="display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:120px;padding:10px 12px;background:#0b0f14;border:1px solid #1e2630;border-radius:8px;text-align:center;">
+              <div style="font-size:16px;margin-bottom:2px;">&#x26a1;</div>
+              <div style="font-size:11px;color:#8b949e;">Instant proof</div>
+            </div>
+            <div style="flex:1;min-width:120px;padding:10px 12px;background:#0b0f14;border:1px solid #1e2630;border-radius:8px;text-align:center;">
+              <div style="font-size:16px;margin-bottom:2px;">&#x1f3db;</div>
+              <div style="font-size:11px;color:#8b949e;">Court-ready</div>
+            </div>
+            <div style="flex:1;min-width:120px;padding:10px 12px;background:#0b0f14;border:1px solid #1e2630;border-radius:8px;text-align:center;">
+              <div style="font-size:16px;margin-bottom:2px;">&#x267e;</div>
+              <div style="font-size:11px;color:#8b949e;">Permanent</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="card reveal">
@@ -295,6 +319,8 @@
     try{
       const h = await sha256Hex(f);
       out.value = h;
+      var hc = document.getElementById('hashConfidence');
+      if (hc) hc.style.display = 'block';
     }catch(err){
       out.value = '';
       alert('Failed to compute hash');
