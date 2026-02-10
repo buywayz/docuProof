@@ -837,12 +837,16 @@
     }
   </style>
   <script>
-    // Hide scroll hint once user scrolls past it
+    // Hide scroll hint when scrolled down, show again when back at top
     window.addEventListener('scroll', function() {
       var hint = document.getElementById('scrollHint');
-      if (hint && window.scrollY > 400) {
+      if (!hint) return;
+      if (window.scrollY > 400) {
         hint.style.opacity = '0';
         hint.style.pointerEvents = 'none';
+      } else if (window.scrollY < 100) {
+        hint.style.opacity = '1';
+        hint.style.pointerEvents = 'auto';
       }
     }, { passive: true });
   </script>
@@ -1072,11 +1076,11 @@
       </div>
       <h4>Added to The Proof Gallery!</h4>
       <p>Thanks for helping others discover what they can protect.</p>
-      <a href="/proof-gallery.html" class="wall-link">View The Proof Gallery →</a>
+      <a href="/proof-gallery.html" class="wall-link" target="_blank" rel="noopener">View The Proof Gallery →</a>
     </div>
     
     <div class="wall-skipped" id="wallSkipped" style="display:none;">
-      <p class="wall-muted">No problem! <a href="/proof-gallery.html">View The Proof Gallery →</a></p>
+      <p class="wall-muted">No problem! <a href="/proof-gallery.html" target="_blank" rel="noopener">View The Proof Gallery →</a></p>
     </div>
   </section>
 
