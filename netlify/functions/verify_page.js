@@ -527,6 +527,23 @@ body {
             </div>
           </div>
 
+          <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px;">
+            <a href="/badges.html" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:#1a1f24;border:1px solid #21262d;border-radius:10px;text-decoration:none;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#f59e0b'" onmouseout="this.style.borderColor='#21262d'">
+              <span style="font-size:20px;">&#x1f4e7;</span>
+              <div>
+                <div style="font-size:14px;font-weight:600;color:#f59e0b;">Get a badge for your email signature</div>
+                <div style="font-size:12px;color:#8b949e;">Show the world you prove what you create</div>
+              </div>
+            </a>
+            <a href="/proof-gallery.html" style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:#1a1f24;border:1px solid #21262d;border-radius:10px;text-decoration:none;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#22c55e'" onmouseout="this.style.borderColor='#21262d'">
+              <span style="font-size:20px;">&#x1f30d;</span>
+              <div>
+                <div style="font-size:14px;font-weight:600;color:#22c55e;">The Proof Gallery</div>
+                <div style="font-size:12px;color:#8b949e;">See what others are protecting on the blockchain</div>
+              </div>
+            </a>
+          </div>
+
         </div>
 
       </section>
