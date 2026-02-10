@@ -453,7 +453,7 @@ body {
               <p style="color:#8b949e;font-size:13px;margin:0;">It will include the Bitcoin block number and all details needed for legal verification.</p>
             </div>
             <div style="margin-top:16px;text-align:center;">
-              <a href="/proof-gallery.html" style="color:var(--accent);font-size:14px;font-weight:600;text-decoration:none;">Add your proof to The Proof Gallery &rarr;</a>
+              <a href="/proof-gallery.html" target="_blank" rel="noopener" style="color:var(--accent);font-size:14px;font-weight:600;text-decoration:none;">Add your proof to The Proof Gallery &rarr;</a>
             </div>
           </div>
           <div id="emailFreeContent" style="display:${sourcePaid ? 'none' : 'block'};">
@@ -535,7 +535,7 @@ body {
                 <div style="font-size:12px;color:#8b949e;">Show the world you prove what you create</div>
               </div>
             </a>
-            <a href="/proof-gallery.html" style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:#1a1f24;border:1px solid #21262d;border-radius:10px;text-decoration:none;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#22c55e'" onmouseout="this.style.borderColor='#21262d'">
+            <a href="/proof-gallery.html" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:#1a1f24;border:1px solid #21262d;border-radius:10px;text-decoration:none;transition:border-color 0.2s;" onmouseover="this.style.borderColor='#22c55e'" onmouseout="this.style.borderColor='#21262d'">
               <span style="font-size:20px;">&#x1f30d;</span>
               <div>
                 <div style="font-size:14px;font-weight:600;color:#22c55e;">The Proof Gallery</div>
