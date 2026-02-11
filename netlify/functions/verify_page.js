@@ -334,7 +334,30 @@ body {
   text-align: center; font-size: 13px; color: var(--muted);
   padding: 24px 0; border-top: 1px solid var(--border); margin-top: 48px;
 }
+.footer-links { margin-bottom: 8px; }
+.footer-links a { color: var(--muted); text-decoration: none; }
+.footer-links a:hover { color: #fff; }
+.footer-links a.accent { color: #f59e0b; }
+.footer-links a.accent:hover { color: #fbbf24; }
 </style>
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-P1RM3T3CSX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-P1RM3T3CSX');
+</script>
+
+<!-- Microsoft Clarity -->
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "vftp1ivzr9");
+</script>
+
 </head>
 
 <body>
@@ -554,6 +577,7 @@ body {
 
 <footer class="footer">
   <div class="shell">
+    <div class="footer-links"><a href="/commitments.html" class="accent">Our Commitments</a> &middot; <a href="/terms.html">Terms</a> &middot; <a href="/privacy.html">Privacy</a></div>
     &copy; ${yr} docuProof.io &mdash; Bitcoin-anchored proof of existence
   </div>
 </footer>
