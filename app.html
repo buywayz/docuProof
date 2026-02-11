@@ -83,6 +83,9 @@
     .verify-banner h3{margin:0;color:var(--accent);font-size:20px}
     .verify-input { flex: 1; min-width: 320px; max-width: 380px; }
     .verify-btn{width:auto;padding:10px 16px}
+
+    details summary::-webkit-details-marker { display: none; }
+    details[open] summary span { transform: rotate(90deg); display: inline-block; }
     .microcopy{margin-top:6px;color:#666;font-size:12px}
 
     /* A11y-friendly visually-hidden utility for the real file input */
@@ -121,6 +124,24 @@
   <noscript>
     <style>.reveal{opacity:1 !important;transform:none !important;}</style>
   </noscript>
+
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-P1RM3T3CSX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-P1RM3T3CSX');
+</script>
+
+<!-- Microsoft Clarity -->
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "vftp1ivzr9");
+</script>
 </head>
 <body>
 
@@ -238,9 +259,26 @@
     </div>
 
 
+
+    <!-- FAQ Section -->
+    <div class="reveal" style="margin-top:32px;background:#0f1316;border:1px solid #1b1c20;border-radius:14px;padding:0;">
+      <details style="padding:0;">
+        <summary style="padding:18px 20px;cursor:pointer;font-weight:600;font-size:16px;color:#f8f9fb;list-style:none;display:flex;justify-content:space-between;align-items:center;">
+          What is a hash, and how is it connected to the Proof ID?
+          <span style="font-size:1.25rem;transition:transform 0.2s;color:#f59e0b;">&#x25B8;</span>
+        </summary>
+        <div style="padding:0 20px 20px;color:#d0d0d0;line-height:1.65;font-size:14px;">
+          <p style="margin:0 0 12px;">When you select a file, your browser calculates a <strong style="color:#f8f9fb;">SHA-256 hash</strong> — a unique 64-character fingerprint derived from your file's contents. Think of it like a digital DNA sequence: even changing a single comma in your file produces a completely different hash. This is what gets recorded on the Bitcoin blockchain as permanent proof that your exact file existed at a specific point in time.</p>
+          <p style="margin:0 0 12px;">Your <strong style="color:#f8f9fb;">Proof ID</strong> is a shorter reference code that docuProof uses to look up your record in our system. It links to your hash, the timestamp, and — once anchored — the Bitcoin block where your proof lives.</p>
+          <p style="margin:0 0 12px;">The important distinction: the <em>hash</em> proves your file is authentic (unchanged), while the <em>Proof ID</em> helps you find and share your proof quickly.</p>
+          <p style="margin:0;color:#9aa3af;font-size:13px;">&#x1F512; Your file never leaves your device — only the hash is ever transmitted.</p>
+        </div>
+      </details>
+    </div>
+
     <footer class="reveal">
       © <span id="year"></span> docuProof.io — All rights reserved. ·
-      <a href="/terms.html">Terms</a> · <a href="/privacy.html">Privacy</a>
+      <a href="/terms.html">Terms</a> · <a href="/privacy.html">Privacy</a> · <a href="/commitments.html">Our Commitments</a>
       <div class="microcopy">Not a notary — cryptographic proof only. No document contents are ever uploaded.</div>
     </footer>
   </div>
