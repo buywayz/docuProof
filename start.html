@@ -23,7 +23,7 @@ a{color:var(--accent);text-decoration:none}
 .nav-links{display:flex;gap:24px;align-items:center}
 .nav-links a{color:var(--muted);font-size:14px}
 .nav-cta{background:var(--accent);color:#000!important;padding:8px 18px;border-radius:8px;font-weight:700}
-.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:120px 24px 80px;position:relative}
+.hero{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:120px 24px 60px;position:relative}
 .hero::after{content:'';position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;background:radial-gradient(circle,var(--accent-glow),transparent 70%);pointer-events:none}
 .hero-content{position:relative;z-index:1;max-width:900px}
 .hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--bg-elevated);border:1px solid var(--border);padding:8px 16px;border-radius:100px;font-size:13px;color:var(--muted);margin-bottom:32px}
@@ -116,6 +116,44 @@ a{color:var(--accent);text-decoration:none}
 .footer-copy{font-size:13px;color:var(--muted);text-align:center;width:100%;margin-top:24px;padding-top:24px;border-top:1px solid var(--border)}
 @media(max-width:900px){.grid-4,.grid-3{grid-template-columns:repeat(2,1fr)}.problem-grid{grid-template-columns:1fr}.nav-links a:not(.nav-cta){display:none}}
 @media(max-width:600px){.grid-4,.grid-3{grid-template-columns:1fr}.problem-stats{flex-direction:column;gap:24px}}
+
+/* Scenario CTA banner in hero */
+.scenario-preview {
+  margin-top: 40px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.scenario-cta-banner {
+  display: block;
+  padding: 20px 28px;
+  background: linear-gradient(135deg, #b45309, #d97706, #f59e0b);
+  border-radius: 14px;
+  color: #000 !important;
+  text-decoration: none;
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 24px rgba(245, 158, 11, 0.25);
+}
+.scenario-cta-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 40px rgba(245, 158, 11, 0.4);
+}
+.scenario-cta-text strong {
+  display: block;
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.scenario-cta-text {
+  font-weight: 600;
+}
+@media(max-width:600px) {
+  .scenario-cta-banner { padding: 18px 20px; font-size: 15px; }
+  .scenario-cta-text strong { font-size: 16px; }
+}
 
     /* New "What actually holds up as proof" section styles */
     .proof-section {
@@ -632,11 +670,18 @@ a{color:var(--accent);text-decoration:none}
 <section class="hero">
 <div class="hero-content">
 <a href="https://www.producthunt.com/products/docuproof-blockchain-anchored-proof?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-docuproof-blockchain-anchored-proof" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-bottom:32px;"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1067616&theme=dark&t=1769294385877" alt="docuProof on Product Hunt" width="250" height="54" style="width:250px;height:54px;" /></a>
-<h1>In an age of <span class="accent">AI fakes</span>, create proof that's <span class="accent">unfakeable</span>.</h1>
-<p class="hero-sub">docuProof turns any file into a permanent, blockchain-anchored certificate that proves it existed, unchanged, at a specific moment in time.</p>
-<p class="hero-tagline">Paper burns. Servers crash. Screenshots can be faked. The blockchain never forgets.</p>
-<div class="hero-cta"><a href="/app.html" class="btn btn-primary">Generate Proof →</a><a href="#how" class="btn btn-secondary">See How It Works</a></div>
-<p class="hero-why"><a href="/individual-scenarios.html">Not sure you need this? See 9 real scenarios →</a></p>
+<h1>When someone claims your photo is <span class="accent">AI-generated</span> — how do you prove them wrong?</h1>
+<p class="hero-sub">docuProof creates a permanent, blockchain-anchored timestamp for any file in 60 seconds. It can never be faked, altered, or destroyed — not by us, not by anyone.</p>
+<p class="hero-tagline">Your file never leaves your device. Only the fingerprint is recorded. The proof lives forever. $2.89.</p>
+
+<div class="scenario-preview">
+  <a href="/individual-scenarios.html" target="_blank" class="scenario-cta-banner">
+    <span class="scenario-cta-text">
+      <strong>Not sure you need this?</strong> See 9 real scenarios where a $2.89 timestamp could save you thousands →
+    </span>
+  </a>
+</div>
+
 </div>
 <p class="demo-label">Your Certificate</p>
 <div class="proof-good-section" style="max-width:800px;margin:0 auto;">
