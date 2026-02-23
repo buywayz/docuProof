@@ -28,7 +28,7 @@ a{color:var(--accent);text-decoration:none}
 .hero-content{position:relative;z-index:1;max-width:900px}
 .hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--bg-elevated);border:1px solid var(--border);padding:8px 16px;border-radius:100px;font-size:13px;color:var(--muted);margin-bottom:32px}
 .hero-badge .dot{width:8px;height:8px;background:var(--accent);border-radius:50%}
-.hero h1{font-size:clamp(40px,7vw,68px);font-weight:800;line-height:1.1;margin-bottom:24px}
+.hero h1{font-size:clamp(32px,5.5vw,54px);font-weight:800;line-height:1.15;margin-bottom:24px}
 .hero h1 .accent{color:var(--accent)}
 .hero-sub{font-size:clamp(18px,2.5vw,22px);color:var(--muted);max-width:700px;margin:0 auto 16px}
 .hero-tagline{font-size:16px;color:#6b7280;font-style:italic;margin-bottom:40px}
@@ -39,9 +39,9 @@ a{color:var(--accent);text-decoration:none}
 .btn-primary{background:var(--accent);color:#000!important}
 .btn-secondary{background:var(--bg-elevated);color:var(--ink);border:1px solid var(--border)}
 .btn-sm{padding:12px 20px;font-size:14px}
-.section{padding:100px 24px}
+.section{padding:64px 24px}
 .section-inner{max-width:1100px;margin:0 auto}
-.section-header{text-align:center;margin-bottom:60px}
+.section-header{text-align:center;margin-bottom:40px}
 .section-header h2{font-size:clamp(28px,4vw,40px);font-weight:800;margin-bottom:16px}
 .section-header h2 .accent{color:var(--accent)}
 .section-header p{font-size:18px;color:var(--muted)}
@@ -143,9 +143,10 @@ a{color:var(--accent);text-decoration:none}
 }
 .scenario-cta-text strong {
   display: block;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 800;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  letter-spacing: -0.3px;
 }
 .scenario-cta-text {
   font-weight: 600;
@@ -670,9 +671,9 @@ a{color:var(--accent);text-decoration:none}
 <section class="hero">
 <div class="hero-content">
 <a href="https://www.producthunt.com/products/docuproof-blockchain-anchored-proof?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-docuproof-blockchain-anchored-proof" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-bottom:32px;"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1067616&theme=dark&t=1769294385877" alt="docuProof on Product Hunt" width="250" height="54" style="width:250px;height:54px;" /></a>
-<h1>When someone claims your photo is <span class="accent">AI-generated</span> — how do you prove them wrong?</h1>
+<h1>When anyone can claim <span class="accent">anything is fake</span> — how do you prove what's real?</h1>
 <p class="hero-sub">docuProof creates a permanent, blockchain-anchored timestamp for any file in 60 seconds. It can never be faked, altered, or destroyed — not by us, not by anyone.</p>
-<p class="hero-tagline">Your file never leaves your device. Only the fingerprint is recorded. The proof lives forever. $2.89.</p>
+<p class="hero-tagline">Your file never leaves your device. Only a unique numeric code is recorded. The proof lives forever. $2.89.</p>
 
 <div class="scenario-preview">
   <a href="/individual-scenarios.html" target="_blank" class="scenario-cta-banner">
@@ -732,9 +733,9 @@ a{color:var(--accent);text-decoration:none}
 <p>Four simple steps. Under 60 seconds. Permanent proof.</p>
 </div>
 <div class="grid-4">
-<div class="how-card"><div class="how-number">1</div><h3>Select Your File</h3><p>Choose any file. It never leaves your device—we only see its digital fingerprint.</p></div>
+<div class="how-card"><div class="how-number">1</div><h3>Select Your File</h3><p>Choose any file. It never leaves your device — only a unique numeric code is generated.</p></div>
 <div class="how-card"><div class="how-number">2</div><h3>Create Fingerprint</h3><p>Your browser generates a unique SHA-256 hash—like DNA for your document.</p></div>
-<div class="how-card"><div class="how-number">3</div><h3>Anchor to Blockchain</h3><p>The fingerprint is permanently recorded on the blockchain's immutable ledger.</p></div>
+<div class="how-card"><div class="how-number">3</div><h3>Anchor to Blockchain</h3><p>The code is permanently recorded on the blockchain's immutable ledger.</p></div>
 <div class="how-card"><div class="how-number">4</div><h3>Get Your Certificate</h3><p>Receive a verifiable PDF certificate with your proof ID and verification link.</p></div>
 </div>
 </div>
@@ -817,8 +818,8 @@ a{color:var(--accent);text-decoration:none}
 <div class="faq-grid">
 <div class="faq-item"><div class="faq-q"><span>Why would an everyday person need this?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">You'd be surprised how often "prove it" comes up in everyday life. Landlords disputing move-in photos. Contractors blaming you for damage they caused. Insurance companies claiming your policy "changed." Family members fighting over a will. A $2.89 timestamp today can save you thousands in disputes tomorrow. <a href="/individual-scenarios.html">See 9 real scenarios where proof saves the day →</a></div></div></div>
 <div class="faq-item"><div class="faq-q"><span>Is this a legal notary service?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">No. docuProof creates cryptographic proof-of-existence, not legal notarization. It provides mathematical evidence that your file existed at a specific time and hasn't changed since—evidence that can support legal claims but doesn't replace formal notarization where required.</div></div></div>
-<div class="faq-item"><div class="faq-q"><span>Does my file get uploaded anywhere?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">No. Your file never leaves your device. We hash it locally in your browser and only submit the 64-character SHA-256 fingerprint. Your document's contents remain completely private—we never see them.</div></div></div>
-<div class="faq-item"><div class="faq-q"><span>What exactly gets stored on the blockchain?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Only your file's cryptographic fingerprint (a 64-character hash). This hash cannot be reversed to reconstruct your file—it's a one-way mathematical function. Think of it as a unique digital seal that proves the file existed.</div></div></div>
+<div class="faq-item"><div class="faq-q"><span>Does my file get uploaded anywhere?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">No. Your file never leaves your device. We hash it locally in your browser and only submit the 64-character SHA-256 hash — a unique cryptographic code derived from your file. Your document's contents remain completely private — we never see them.</div></div></div>
+<div class="faq-item"><div class="faq-q"><span>What exactly gets stored on the blockchain?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Only your file's cryptographic hash — a unique 64-character code derived from your file. This hash cannot be reversed to reconstruct your file — it's a one-way mathematical function. Think of it as a unique digital seal that proves the file existed.</div></div></div>
 <div class="faq-item"><div class="faq-q"><span>How long does blockchain anchoring take?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Your certificate is issued instantly. Blockchain anchoring typically completes within 1-4 hours as transactions are batched for efficiency. You'll receive an email notification when anchoring is confirmed, and your certificate includes a live status link.</div></div></div>
 <div class="faq-item"><div class="faq-q"><span>What should I save after generating a proof?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Keep two things: (1) Your original file, unchanged, and (2) The PDF certificate you receive. Together, these allow anyone to independently verify your proof at any time—even if docuProof disappears.</div></div></div>
 <div class="faq-item"><div class="faq-q"><span>Can I verify my proof without docuProof?</span><span class="faq-chevron">⌄</span></div><div class="faq-a"><div class="faq-a-inner">Yes. Your certificate contains everything needed for independent verification using the OpenTimestamps protocol. docuProof is not a single point of failure—the proof exists on the blockchain regardless of our service.</div></div></div>
@@ -908,7 +909,7 @@ a{color:var(--accent);text-decoration:none}
       <h3>Proof Created!</h3>
     </div>
     <div class="free-proof-modal-body">
-      <p>Your file's unique fingerprint has been recorded and queued for blockchain anchoring.</p>
+      <p>Your file's unique cryptographic hash has been recorded and queued for blockchain anchoring.</p>
       <div class="free-proof-result">
         <div class="free-proof-field">
           <label>Verification Link</label>
@@ -925,7 +926,7 @@ a{color:var(--accent);text-decoration:none}
           <div class="free-proof-status">⏳ Awaiting blockchain anchor (typically completes within a few hours)</div>
         </div>
       </div>
-      <p class="free-proof-note">🔒 Your file never left your device — only its cryptographic fingerprint was recorded. <a href="/app.html">Create another proof →</a></p>
+      <p class="free-proof-note">🔒 Your file never left your device — only its cryptographic hash (a unique code) was recorded. <a href="/app.html">Create another proof →</a></p>
     </div>
     <button class="btn-free primary" onclick="closeFreeProofModal()">Done</button>
   </div>
