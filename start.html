@@ -832,10 +832,10 @@ function downloadAndPromptHeadline() {
   setTimeout(function() {
     showDocuModal({
       icon: '📰',
-      title: 'Your headlines PDF is downloading',
-      message: 'Take a moment to view it in your Downloads folder.<br><br>When you\'re ready, click below to upload it and create a free blockchain timestamp.',
-      confirmText: 'Upload & Timestamp It →',
-      cancelText: 'Not Now',
+      title: 'Headlines PDF downloaded!',
+      message: 'Check your <strong style="color:#e8eaed;">Downloads folder</strong> to view it.<br><br>When you\'re ready, come back here and click the button below to upload it and create a free blockchain timestamp.',
+      confirmText: 'I\'ve Seen It — Upload & Timestamp →',
+      cancelText: 'I\'ll Come Back Later',
       onConfirm: function() {
         openFreeProof('headlines');
       }
@@ -890,6 +890,6 @@ function downloadAndPromptHeadline() {
 </footer>
 
 
-<script src="/docuproof-common.js"></script>
+<script src="/docuproof-common.js?v=1.1.0"></script>
 </body>
 </html>

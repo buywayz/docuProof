@@ -249,8 +249,8 @@ body {
   margin-top: 20px; padding-top: 20px;
   border-top: 1px dashed rgba(255,255,255,0.1);
 }
-.email-section h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: #f59e0b; }
-.email-section > p { font-size: 13px; color: var(--muted); margin-bottom: 12px; line-height: 1.5; }
+.email-section h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; color: #f59e0b; }
+.email-section p { font-size: 14px; color: var(--muted); margin-bottom: 12px; line-height: 1.65; }
 .email-row { display: flex; gap: 10px; }
 .email-row input {
   flex: 1; border-radius: 10px; padding: 12px 16px;
@@ -546,7 +546,7 @@ body {
                   Generate a Paid Proof &mdash; $2.89 &rarr;
                 </a>
               </div>
-              <div style="font-size:12px;color:#6b7280;margin-top:10px;">Free proofs confirm your timestamp on the blockchain but do not include a certificate.</div>
+              <div style="font-size:12px;color:#c9d2db;margin-top:10px;">Free proofs confirm your timestamp on the blockchain but do not include a certificate.</div>
             </div>
           </div>
 
