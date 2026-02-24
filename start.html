@@ -518,6 +518,18 @@ a{color:var(--accent);text-decoration:none}
       font-size: 13px;
       color: #6b7280;
     }
+    .free-proof-headline-link {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+    .free-proof-headline-link a {
+      color: #22c55e;
+      text-decoration: none;
+    }
+    .free-proof-headline-link a:hover {
+      text-decoration: underline;
+    }
     @media (max-width: 768px) {
       .free-proof-options-row {
         grid-template-columns: repeat(2, 1fr);
@@ -829,32 +841,27 @@ a{color:var(--accent);text-decoration:none}
           <span class="free-opt-label">Take a Selfie</span>
           <span class="free-opt-sub">Permanent proof you existed now</span>
         </button>
-        <button class="free-opt" onclick="downloadHeadline()">
-          <span class="free-opt-icon">📰</span>
-          <span class="free-opt-label">Today's Headlines</span>
-          <span class="free-opt-sub">Download a throwaway PDF to try</span>
-        </button>
         <button class="free-opt" onclick="openFreeProof('screenshot')">
           <span class="free-opt-icon">📱</span>
-          <span class="free-opt-label">Screenshot Anything</span>
-          <span class="free-opt-sub">Your personal time capsule</span>
+          <span class="free-opt-label">Upload a Screenshot</span>
+          <span class="free-opt-sub">A headline, price, conversation</span>
+        </button>
+        <button class="free-opt" onclick="openFreeProof('upload')">
+          <span class="free-opt-icon">📄</span>
+          <span class="free-opt-label">Upload Any File</span>
+          <span class="free-opt-sub">Document, image, anything</span>
         </button>
       </div>
 
       <div class="free-proof-upload-area">
         <a href="#" onclick="openFreeProof('upload'); return false;" class="btn-free-upload">Upload & Timestamp Free →</a>
         <p class="free-proof-upload-note">🔒 Your file never leaves your device — only a unique numeric code is recorded.</p>
+        <p class="free-proof-headline-link">Need a throwaway file to try? <a href="/.netlify/functions/daily_headline" download>Download today's headlines PDF →</a></p>
       </div>
     </div>
 
   </div>
 </section>
-
-<script>
-function downloadHeadline() {
-  window.open('/.netlify/functions/daily_headline', '_blank');
-}
-</script>
 
 <!-- Free Proof Success Modal -->
 <div id="freeProofModal" class="free-proof-modal" style="display:none;">
