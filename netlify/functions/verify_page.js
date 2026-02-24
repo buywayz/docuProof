@@ -456,12 +456,12 @@ body {
 
         <div class="explainer" id="explainerBox" style="display:none;">
           <p>
-            <strong>What just happened:</strong> We created a unique fingerprint (called a SHA-256 hash) of your file.
-            This fingerprint &mdash; not your file &mdash; is being anchored to the Bitcoin blockchain.
+            <strong>What just happened:</strong> We created a unique hash (a SHA-256 code) of your file.
+            This hash &mdash; not your file &mdash; is being anchored to the Bitcoin blockchain.
           </p>
           <p>
             Think of it like a <strong>permanent seal stamped into the blockchain</strong>: once confirmed, anyone can verify your file existed
-            at this exact moment, forever. Your file never left your device &mdash; only the fingerprint did.
+            at this exact moment, forever. Your file never left your device &mdash; only the hash did.
           </p>
           <p>
             Your <strong>Proof ID</strong> is your key to find your proof on the blockchain. Save it &mdash;
@@ -480,17 +480,17 @@ body {
             </div>
           </div>
           <div id="emailFreeContent" style="display:${sourcePaid ? 'none' : 'block'};">
-            <h3>&#x26a0; Don&rsquo;t lose your proof</h3>
+            <h3>&#x1f6a8; Don&rsquo;t close this tab without saving your Proof ID</h3>
             <p>
-              Enter your email and we&rsquo;ll send you your Proof ID plus a notification when
-              it&rsquo;s permanently anchored on the Bitcoin blockchain.
+              If you close this tab, you&rsquo;ll have no way to find your proof unless you&rsquo;ve copied your Proof ID above.
+              Enter your email and we&rsquo;ll send it to you, along with a notification when your proof is permanently anchored on the blockchain.
             </p>
             <div class="email-row" id="emailRow">
               <input type="email" id="emailInput" placeholder="you@example.com" />
               <button id="emailBtn">Send</button>
             </div>
             <div class="email-success" id="emailSuccess">
-              &#10003; Sent! Check your inbox for your proof details.
+              &#10003; Sent! Check your inbox for your proof details. You can safely close this tab now.
             </div>
           </div>
         </div>
@@ -503,15 +503,15 @@ body {
         <div id="rightDefault">
           <h2>How verification works</h2>
           <p>
-            docuProof creates a <strong>cryptographic fingerprint</strong> of your file.
-            This fingerprint is unique &mdash; even changing a single pixel or character creates a completely different one.
+            docuProof creates a <strong>unique hash</strong> of your file using SHA-256.
+            This hash is unique &mdash; even changing a single pixel or character creates a completely different one.
           </p>
           <p>
-            This fingerprint is anchored into the <strong>Bitcoin blockchain</strong>,
+            This hash is anchored into the <strong>Bitcoin blockchain</strong>,
             the most secure and permanent public ledger in existence. Once confirmed, it can never be altered or removed.
           </p>
           <p>
-            <strong>What&rsquo;s stored on the blockchain:</strong> Only the fingerprint and timestamp.
+            <strong>What&rsquo;s stored on the blockchain:</strong> Only the hash and timestamp.
             Your actual file stays private on your device &mdash; we never see it.
           </p>
           <p>
@@ -539,14 +539,14 @@ body {
           <div class="cert-teaser" id="certTeaser">
             <div style="padding:24px 20px;text-align:center;background:#1a1f24;">
               <div style="font-size:48px;margin-bottom:12px;">&#x1f4dc;</div>
-              <div style="font-size:16px;font-weight:700;color:#22c55e;">Certificate of Proof of Existence</div>
-              <div style="font-size:13px;color:#8b949e;margin-top:6px;">Includes Proof ID, SHA-256 hash, blockchain block, QR code, and legal attestation</div>
-            </div>
-            <a href="/app.html" style="display:block;text-align:center;padding:12px 16px;background:#12161c;border-top:1px solid #21262d;color:#22c55e;font-weight:700;font-size:14px;text-decoration:none;transition:background 0.2s;" onmouseover="this.style.background='rgba(34,197,94,0.08)'" onmouseout="this.style.background='#12161c'">
-              Generate a paid proof &rarr;
-            </a>
-            <div class="cert-teaser-sublabel">
-              Court-ready documentation with QR verification, blockchain details, and legal attestation.
+              <div style="font-size:16px;font-weight:700;color:#22c55e;margin-bottom:4px;">Certificate of Proof of Existence</div>
+              <div style="font-size:13px;color:#8b949e;margin-top:6px;line-height:1.5;">Court-ready PDF with Proof ID, SHA-256 hash, blockchain block, QR verification code, and legal attestation.</div>
+              <div style="margin-top:16px;">
+                <a href="/app.html" style="display:inline-block;padding:14px 32px;background:#22c55e;color:#0a0d10;border-radius:10px;text-decoration:none;font-size:15px;font-weight:700;transition:background 0.2s;" onmouseover="this.style.background='#1ea550'" onmouseout="this.style.background='#22c55e'">
+                  Generate a Paid Proof &mdash; $2.89 &rarr;
+                </a>
+              </div>
+              <div style="font-size:12px;color:#6b7280;margin-top:10px;">Free proofs confirm your timestamp on the blockchain but do not include a certificate.</div>
             </div>
           </div>
 

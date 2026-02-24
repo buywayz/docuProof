@@ -830,9 +830,16 @@ function downloadAndPromptHeadline() {
   link.click();
   document.body.removeChild(link);
   setTimeout(function() {
-    if (confirm('Your headlines PDF is downloading now.\n\nReady to upload and timestamp it?')) {
-      openFreeProof('headlines');
-    }
+    showDocuModal({
+      icon: '📰',
+      title: 'Your headlines PDF is downloading',
+      message: 'Take a moment to view it in your Downloads folder.<br><br>When you\'re ready, click below to upload it and create a free blockchain timestamp.',
+      confirmText: 'Upload & Timestamp It →',
+      cancelText: 'Not Now',
+      onConfirm: function() {
+        openFreeProof('headlines');
+      }
+    });
   }, 1500);
 }
 </script>
