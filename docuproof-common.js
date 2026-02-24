@@ -10,6 +10,17 @@ async function sha256Hex(file) {
 
 // ========== Camera Functions ==========
 function openCamera(type) {
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  
+  // Show desktop warning FIRST, before creating file input
+  if (!isMobile) {
+    if (!confirm('📱 This works best on mobile where it opens your camera directly.\n\nOn desktop, you can still select a photo from your files.\n\nContinue?')) {
+      return;
+    }
+  }
+  
+  // Create file input IMMEDIATELY after user interaction (confirm click)
+  // so the browser security context is still valid
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
@@ -18,16 +29,13 @@ function openCamera(type) {
   input.onchange = function(e) {
     const file = e.target.files[0];
     if (file) {
+      // Confirm before timestamping
+      if (!confirm('📌 "' + file.name + '" will be timestamped on the blockchain.\n\nThis is free — no account needed.\n\nContinue?')) {
+        return;
+      }
       openFreeProofWithFile(file, type);
     }
   };
-  
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  if (!isMobile) {
-    if (!confirm('📱 This works best on mobile where it opens your camera directly.\n\nOn desktop, you can still select a photo from your files.\n\nContinue?')) {
-      return;
-    }
-  }
   
   input.click();
 }
@@ -41,6 +49,10 @@ function openFreeProof(source) {
   input.onchange = function(e) {
     const file = e.target.files[0];
     if (file) {
+      // Confirm before timestamping
+      if (!confirm('📌 "' + file.name + '" will be timestamped on the blockchain.\n\nThis is free — no account needed.\n\nContinue?')) {
+        return;
+      }
       openFreeProofWithFile(file, source);
     }
   };
@@ -49,6 +61,9 @@ function openFreeProof(source) {
 }
 
 async function openFreeProofWithFile(file, source) {
+  // Pre-open the new tab NOW (during user gesture) so it won't be blocked
+  var newTab = window.open('about:blank', '_blank');
+
   // Show loading overlay
   var overlay = document.createElement('div');
   overlay.id = 'freeProofLoading';
@@ -80,12 +95,28 @@ async function openFreeProofWithFile(file, source) {
     // Remove loading overlay
     overlay.remove();
 
-    // Open verify page in new tab
-    window.open(data.verifyUrl, '_blank');
+    // Navigate the pre-opened tab to the verify URL
+    if (newTab && !newTab.closed) {
+      newTab.location.href = data.verifyUrl;
+    } else {
+      // Fallback: popup was blocked — show a clickable link
+      var linkOverlay = document.createElement('div');
+      linkOverlay.id = 'freeProofLink';
+      linkOverlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10000;color:#fff;font-family:inherit;';
+      linkOverlay.innerHTML = '<div style="font-size:48px;margin-bottom:20px;">✅</div>'
+        + '<div style="font-size:20px;font-weight:700;margin-bottom:12px;">Your proof has been created!</div>'
+        + '<a href="' + data.verifyUrl + '" target="_blank" style="display:inline-block;padding:14px 32px;background:#16a34a;color:#fff;border-radius:8px;text-decoration:none;font-size:16px;font-weight:600;">View Your Proof →</a>'
+        + '<div style="font-size:13px;color:#8b949e;margin-top:16px;cursor:pointer;" onclick="this.parentElement.remove()">Close</div>';
+      document.body.appendChild(linkOverlay);
+    }
     
   } catch (err) {
     // Remove loading overlay on error
     overlay.remove();
+    // Close the blank tab on error
+    if (newTab && !newTab.closed) {
+      newTab.close();
+    }
     alert('Error: ' + err.message);
   }
 }
