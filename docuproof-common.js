@@ -49,6 +49,13 @@ function openFreeProof(source) {
 }
 
 async function openFreeProofWithFile(file, source) {
+  // Show loading overlay
+  var overlay = document.createElement('div');
+  overlay.id = 'freeProofLoading';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10000;color:#fff;font-family:inherit;';
+  overlay.innerHTML = '<div style="font-size:48px;margin-bottom:20px;">⏳</div><div style="font-size:20px;font-weight:700;margin-bottom:8px;">Timestamping your file...</div><div style="font-size:14px;color:#8b949e;">Creating hash and anchoring to the blockchain</div>';
+  document.body.appendChild(overlay);
+
   try {
     // Compute hash locally
     const hash = await sha256Hex(file);
@@ -70,10 +77,15 @@ async function openFreeProofWithFile(file, source) {
       throw new Error(data.error || 'Failed to create proof');
     }
     
-    // Redirect directly to verify page
-    window.location.href = data.verifyUrl;
+    // Remove loading overlay
+    overlay.remove();
+
+    // Open verify page in new tab
+    window.open(data.verifyUrl, '_blank');
     
   } catch (err) {
+    // Remove loading overlay on error
+    overlay.remove();
     alert('Error: ' + err.message);
   }
 }
