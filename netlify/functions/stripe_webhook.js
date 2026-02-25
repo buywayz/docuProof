@@ -363,7 +363,7 @@ exports.handler = async (event) => {
             </div>
 
             <p style="color: #c9d2db; line-height: 1.6;">
-              Your file's unique fingerprint has been submitted for anchoring on the Bitcoin blockchain.
+              Your file's unique hash has been submitted for anchoring on the Bitcoin blockchain.
               This typically takes 1–3 hours.
             </p>
             <p style="color: #c9d2db; line-height: 1.6;">
@@ -386,7 +386,7 @@ exports.handler = async (event) => {
         textBody:
           `Thanks for using docuProof.io.\n\n` +
           `Your Proof ID: ${canonicalId}\n\n` +
-          `Your file's fingerprint has been submitted for anchoring on the Bitcoin blockchain.\n` +
+          `Your file's unique hash has been submitted for anchoring on the Bitcoin blockchain.\n` +
           `This typically takes 1-3 hours.\n\n` +
           `Your PDF Certificate of Proof will be emailed to you once anchoring is complete.\n\n` +
           `Check your proof status: ${verifyUrl}\n\n` +

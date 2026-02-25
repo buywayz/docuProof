@@ -321,7 +321,7 @@ export const handler = async (_event) => {
                       </div>
                       
                       <p style="color: #c9d2db; line-height: 1.6;">
-                        Your file's fingerprint is now permanently recorded on the Bitcoin blockchain. 
+                        Your file's unique hash is now permanently recorded on the Bitcoin blockchain. 
                         It can never be altered or removed. Anyone can independently verify it existed at the moment you timestamped it.
                       </p>
 
@@ -343,7 +343,7 @@ export const handler = async (_event) => {
                       </div>
                     </div>
                   `,
-                  TextBody: `Your proof is anchored!\n\nProof ID: ${id}\nBitcoin Block: #${anchor.blockHeight}\n\nYour file's fingerprint is now permanently recorded on the Bitcoin blockchain.\n\n${pdfB64 ? 'Your Certificate of Proof is attached as a PDF.\n\n' : ''}View your proof: ${verifyUrl}\nView on Mempool: ${mempoolUrl}\n\ndocuProof.io — Proof you can point to.`,
+                  TextBody: `Your proof is anchored!\n\nProof ID: ${id}\nBitcoin Block: #${anchor.blockHeight}\n\nYour file's unique hash is now permanently recorded on the Bitcoin blockchain.\n\n${pdfB64 ? 'Your Certificate of Proof is attached as a PDF.\n\n' : ''}View your proof: ${verifyUrl}\nView on Mempool: ${mempoolUrl}\n\ndocuProof.io — Proof you can point to.`,
                   MessageStream: "outbound",
                 };
 
