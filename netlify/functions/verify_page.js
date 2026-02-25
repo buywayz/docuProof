@@ -160,22 +160,22 @@ body {
 }
 .share-heading span { color: #f59e0b; }
 .share-buttons {
-  display: flex; gap: 8px; flex-wrap: wrap; position: relative;
+  display: flex; gap: 6px; flex-wrap: nowrap; position: relative;
 }
 .share-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 12px; border-radius: 10px;
-  font-size: 12px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 8px 8px; border-radius: 8px;
+  font-size: 11px; font-weight: 600;
   cursor: pointer; transition: all 0.2s;
   text-decoration: none; border: 1px solid var(--border);
   background: #1a1f24; color: var(--text); font-family: inherit;
-  flex: 1; justify-content: center; min-width: 0;
+  flex: 1; justify-content: center; min-width: 0; white-space: nowrap;
 }
 .share-btn:hover {
   border-color: var(--accent); color: var(--accent);
   background: rgba(34, 197, 94, 0.08);
 }
-.share-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+.share-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
 
 /* Share popover */
 .share-popover {
