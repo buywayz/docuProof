@@ -296,20 +296,13 @@ body {
 .blockchain-visual .bv-link:hover { background: var(--accent-glow); }
 .bv-pending { color: var(--warn-text); font-size: 13px; font-style: italic; }
 
-/* Right proof ID */
-.right-proof-id {
-  background: #1a1f24; border: 1px solid var(--border); border-radius: 12px;
-  padding: 14px 16px; margin: 16px 0;
+/* Share section in right panel */
+.share-section-right {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 12px;
 }
-.right-proof-id .rpi-label {
-  font-size: 11px; letter-spacing: .1em; color: #f59e0b;
-  text-transform: uppercase; margin-bottom: 6px;
-}
-.right-proof-id .rpi-value {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 14px; color: var(--accent); word-break: break-all; cursor: pointer;
-}
-.right-proof-id .rpi-hint { font-size: 11px; color: var(--dim); margin-top: 4px; }
 
 /* Certificate teaser */
 .cert-teaser {
@@ -372,7 +365,6 @@ body {
           <div class="logo-sub">Proof you can point to.</div>
         </div>
       </a>
-      <a href="/app.html" class="btn-primary">Generate Proof</a>
     </div>
   </div>
 </header>
@@ -390,54 +382,13 @@ body {
             <input id="proof-id" value="${esc(initialId)}" placeholder="e.g. cs_live_... or free_abc123..." />
             <button id="btn-check" class="btn-primary" style="padding:12px 20px;font-size:14px;">Check</button>
           </div>
+          <div id="proofIdSaveHint" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;">
+            <div style="font-size:11px;letter-spacing:.1em;color:#f59e0b;text-transform:uppercase;font-weight:700;">Save this &mdash; <span style="cursor:pointer;text-decoration:underline;" id="copyProofIdLink">click to copy</span></div>
+            <div style="font-size:11px;color:#6b7280;margin-top:2px;">This is your key to find your proof on the blockchain</div>
+          </div>
         </div>
 
         <div id="pill-state" class="pill pill-waiting">Enter a Proof ID above</div>
-
-        <div id="shareSection" style="display:none;">
-          <div class="share-heading">Know someone who needs proof? <span>Share docuProof.</span></div>
-          <div class="share-buttons" id="shareButtons">
-            <button class="share-btn" data-action="copy" onclick="window._shareOpen(event,'copy')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-              Copy Link
-            </button>
-            <button class="share-btn" data-action="twitter" onclick="window._shareOpen(event,'twitter')">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-              Post
-            </button>
-            <button class="share-btn" data-action="linkedin" onclick="window._shareOpen(event,'linkedin')">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-              Share
-            </button>
-            <button class="share-btn" data-action="email" onclick="window._shareOpen(event,'email')">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-              Email
-            </button>
-            <div class="share-popover" id="sharePopover">
-              <div class="popover-title">Share for&hellip;</div>
-              <button class="popover-option" onclick="window._shareGo('business')">
-                <span class="pop-icon">&#x1f3e2;</span>
-                <div><div class="pop-label">A business</div><div class="pop-desc">Contracts, IP, audit trails</div></div>
-              </button>
-              <button class="popover-option" onclick="window._shareGo('personal')">
-                <span class="pop-icon">&#x1f464;</span>
-                <div><div class="pop-label">An individual</div><div class="pop-desc">Wills, photos, personal records</div></div>
-              </button>
-              <button class="popover-option" onclick="window._shareGo('verify-truth')">
-                <span class="pop-icon">&#x1f50d;</span>
-                <div><div class="pop-label">Verifying truth</div><div class="pop-desc">Journalism, evidence, accountability</div></div>
-              </button>
-              <button class="popover-option" onclick="window._shareGo('tech')">
-                <span class="pop-icon">&#x1f680;</span>
-                <div><div class="pop-label">Tech community</div><div class="pop-desc">Product Hunt, developer circles</div></div>
-              </button>
-              <button class="popover-option" onclick="window._shareGo('general')">
-                <span class="pop-icon">&#x1f517;</span>
-                <div><div class="pop-label">General</div><div class="pop-desc">The main docuProof page</div></div>
-              </button>
-            </div>
-          </div>
-        </div>
 
         <div id="statusFields" style="display:none;">
           <div class="field">
@@ -522,12 +473,6 @@ body {
 
         <div id="rightLoaded" style="display:none;">
 
-          <div class="right-proof-id">
-            <div class="rpi-label">Your Proof ID &mdash; save this</div>
-            <div class="rpi-value" id="rightProofId"></div>
-            <div class="rpi-hint">Click to copy &middot; This is your key to find your proof on the blockchain</div>
-          </div>
-
           <div class="blockchain-visual" id="blockchainVisual">
             <div class="bv-label">See your proof on the blockchain</div>
             <div id="bvContent">
@@ -567,6 +512,51 @@ body {
             </a>
           </div>
 
+          <div id="shareSection" style="display:none;margin-top:16px;padding:16px;border:1px solid rgba(245,158,11,0.3);border-radius:12px;">
+            <div class="share-heading">Know someone who needs proof? <span>Share docuProof.</span></div>
+            <div class="share-buttons" id="shareButtons">
+              <button class="share-btn" data-action="copy" onclick="window._shareOpen(event,'copy')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                Copy Link
+              </button>
+              <button class="share-btn" data-action="twitter" onclick="window._shareOpen(event,'twitter')">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                Post
+              </button>
+              <button class="share-btn" data-action="linkedin" onclick="window._shareOpen(event,'linkedin')">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                Share
+              </button>
+              <button class="share-btn" data-action="email" onclick="window._shareOpen(event,'email')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                Email
+              </button>
+              <div class="share-popover" id="sharePopover">
+                <div class="popover-title">Share for&hellip;</div>
+                <button class="popover-option" onclick="window._shareGo('business')">
+                  <span class="pop-icon">&#x1f3e2;</span>
+                  <div><div class="pop-label">A business</div><div class="pop-desc">Contracts, IP, audit trails</div></div>
+                </button>
+                <button class="popover-option" onclick="window._shareGo('personal')">
+                  <span class="pop-icon">&#x1f464;</span>
+                  <div><div class="pop-label">An individual</div><div class="pop-desc">Wills, photos, personal records</div></div>
+                </button>
+                <button class="popover-option" onclick="window._shareGo('verify-truth')">
+                  <span class="pop-icon">&#x1f50d;</span>
+                  <div><div class="pop-label">Verifying truth</div><div class="pop-desc">Journalism, evidence, accountability</div></div>
+                </button>
+                <button class="popover-option" onclick="window._shareGo('tech')">
+                  <span class="pop-icon">&#x1f680;</span>
+                  <div><div class="pop-label">Tech community</div><div class="pop-desc">Product Hunt, developer circles</div></div>
+                </button>
+                <button class="popover-option" onclick="window._shareGo('general')">
+                  <span class="pop-icon">&#x1f517;</span>
+                  <div><div class="pop-label">General</div><div class="pop-desc">The main docuProof page</div></div>
+                </button>
+              </div>
+            </div>
+          </div>
+
         </div>
 
       </section>
@@ -598,7 +588,6 @@ body {
   var emailSection = document.getElementById("emailSection");
   var rightDefault = document.getElementById("rightDefault");
   var rightLoaded = document.getElementById("rightLoaded");
-  var rightProofId = document.getElementById("rightProofId");
   var bvContent = document.getElementById("bvContent");
   var emailBtn = document.getElementById("emailBtn");
   var currentProofId = "";
@@ -673,11 +662,12 @@ body {
     shareSection.style.display = "block";
     statusFields.style.display = "block";
     explainerBox.style.display = "block";
-    // emailSection visibility is now controlled by updateEmailSection()
     emailSection.style.display = "block";
     rightDefault.style.display = "none";
     rightLoaded.style.display = "block";
-    rightProofId.textContent = id;
+    // Show save hint under the proof ID input
+    var saveHint = document.getElementById("proofIdSaveHint");
+    if (saveHint) saveHint.style.display = "block";
   }
 
   // Show the right email section variant based on paid status
@@ -805,13 +795,16 @@ body {
     updateEmailSection(isPaid);
   }
 
-  // Right panel proof ID click to copy
-  rightProofId.addEventListener("click", function() {
-    if (!currentProofId) return;
-    navigator.clipboard.writeText(currentProofId).then(function() {
-      showToast("\\u2713 Proof ID copied!");
+  // Copy proof ID from input field
+  var copyLink = document.getElementById("copyProofIdLink");
+  if (copyLink) {
+    copyLink.addEventListener("click", function() {
+      if (!currentProofId) return;
+      navigator.clipboard.writeText(currentProofId).then(function() {
+        showToast("\\u2713 Proof ID copied!");
+      });
     });
-  });
+  }
 
   // Email capture (only present for non-paid flows)
   if (emailBtn) {
