@@ -298,7 +298,7 @@ export const handler = async (_event) => {
 
                 // --- Build email with PDF attachment ---
                 const emailPayload = {
-                  From: "docuProof <noreply@docuproof.io>",
+                  From: process.env.POSTMARK_FROM || "docuProof <no-reply@docuproof.io>",
                   To: recipientEmail,
                   Subject: `✓ Your proof is anchored — Bitcoin Block #${anchor.blockHeight}`,
                   HtmlBody: `
