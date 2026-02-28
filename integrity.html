@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>docuProof — Integrity Pioneers. Be the business people trust on sight.</title>
+  <meta name="description" content="Join the first businesses using blockchain-verified badges to prove integrity. Timestamp your key documents, add a docuProof badge to every employee signature, and become the trust standard in your industry.">
+  <link rel="icon" href="/docuproof-logo.png">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #0a0d12;
+      --bg-card: #12171f;
+      --border: #1e2a3a;
+      --text: #e8eaed;
+      --text-muted: #8b95a5;
+      --accent: #22c55e;
+      --accent-glow: rgba(34, 197, 94, 0.15);
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Space Grotesk', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    
+    /* Subtle grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        linear-gradient(rgba(34, 197, 94, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 197, 94, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    /* Header */
+    header {
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .header-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text);
+    }
+    
+    .logo img {
+      width: 36px;
+      height: 36px;
+    }
+    
+    .logo-text {
+      font-weight: 700;
+      font-size: 20px;
+    }
+    
+    .logo-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+    
+    .nav-cta {
+      background: var(--accent);
+      color: #000;
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .nav-cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+    
+    /* Hero */
+    .hero {
+      padding: 80px 0 30px;
+      text-align: center;
+    }
+    
+    .hero-badge {
+      display: inline-block;
+      background: var(--accent-glow);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: var(--accent);
+      padding: 6px 16px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 24px;
+    }
+    
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 700;
+      line-height: 1.15;
+      margin-bottom: 20px;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .hero h1 .highlight {
+      color: var(--accent);
+    }
+    
+    .hero-sub {
+      font-size: 20px;
+      color: var(--text-muted);
+      max-width: 650px;
+      margin: 0 auto 16px;
+    }
+
+    .hero-tagline {
+      font-size: 15px;
+      color: var(--warning);
+      font-style: italic;
+      max-width: 550px;
+      margin: 8px auto 0;
+    }
+    
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin: 32px 0;
+      flex-wrap: wrap;
+    }
+    
+    .stat {
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    
+    /* How It Works */
+    .how-section {
+      padding: 60px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .how-section h2 {
+      text-align: center;
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+
+    .how-section > .container > p {
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 48px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .how-steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .how-step {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 32px 24px;
+      text-align: center;
+      position: relative;
+    }
+
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: var(--accent-glow);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 50%;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 16px;
+    }
+
+    .how-step h3 {
+      font-size: 17px;
+      margin-bottom: 10px;
+      color: #fff;
+    }
+
+    .how-step p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Badge Section */
+    .badge-section {
+      padding: 60px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .badge-section h2 {
+      text-align: center;
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+
+    .badge-section > .container > p {
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 40px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .badge-demo {
+      background: var(--bg-card);
+      border: 2px solid var(--accent);
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 700px;
+      margin: 0 auto 32px;
+    }
+
+    .badge-demo-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .sig-preview {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 28px;
+      color: #333;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    }
+
+    .sig-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 2px;
+    }
+
+    .sig-title {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 2px;
+    }
+
+    .sig-company {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 12px;
+    }
+
+    .sig-divider {
+      width: 40px;
+      height: 2px;
+      background: #22c55e;
+      margin-bottom: 12px;
+    }
+
+    .sig-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+
+    .sig-badge img {
+      height: 20px;
+      width: auto;
+    }
+
+    .sig-badge-text {
+      font-size: 13px;
+      color: #22c55e;
+      font-weight: 600;
+      font-style: italic;
+    }
+
+    .badge-benefits {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .badge-benefit {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    .badge-benefit-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .badge-benefit h4 {
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .badge-benefit p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Social Proof — Commitments callout */
+    .proof-section {
+      padding: 40px 0 60px;
+    }
+
+    .proof-callout {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 32px;
+      background: linear-gradient(180deg, #0f1a12 0%, #0c140f 100%);
+      border: 2px solid var(--accent);
+      border-radius: 16px;
+      padding: 36px;
+      align-items: center;
+    }
+
+    .proof-callout-content h3 {
+      font-size: 22px;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+
+    .proof-callout-content p {
+      font-size: 15px;
+      color: #b8c5b8;
+      line-height: 1.65;
+      margin-bottom: 16px;
+    }
+
+    .proof-callout-docs {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .proof-doc {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--accent);
+    }
+
+    .proof-doc-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .proof-callout-link {
+      display: inline-block;
+      margin-top: 16px;
+      color: var(--warning);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .proof-callout-link:hover {
+      text-decoration: underline;
+    }
+
+    .proof-callout-visual {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .proof-callout-visual img {
+      width: 100%;
+      max-width: 240px;
+      border-radius: 6px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    /* Use Cases */
+    .usecases {
+      padding: 60px 0;
+      border-top: 1px solid var(--border);
+    }
+    
+    .usecases h2 {
+      text-align: center;
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+
+    .usecases > .container > p {
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 40px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .usecase-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    
+    .usecase-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      transition: border-color 0.2s;
+    }
+    
+    .usecase-item:hover {
+      border-color: var(--accent);
+    }
+    
+    .usecase-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    
+    .usecase-text h4 {
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+    
+    .usecase-text p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Free Proof Section (Compact) */
+    .free-proof-section {
+      padding: 80px 24px;
+      background: linear-gradient(180deg, var(--bg) 0%, var(--bg-card) 100%);
+      border-top: 1px solid var(--border);
+    }
+    .free-proof-section .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .free-proof-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .free-proof-badge {
+      display: inline-block;
+      background: #22c55e;
+      color: #000;
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+    .free-proof-header h2 {
+      font-size: clamp(28px, 5vw, 40px);
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+    .free-proof-header p {
+      font-size: 18px;
+      color: var(--text-muted, #8b949e);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .free-proof-compact {
+      max-width: 740px;
+      margin: 0 auto;
+    }
+    .free-proof-options-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .free-opt {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 20px 12px;
+      background: linear-gradient(180deg, #151b22 0%, #0f1318 100%);
+      border: 1px solid var(--border, #21262d);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #fff;
+      text-align: center;
+      font-family: inherit;
+    }
+    .free-opt:hover {
+      border-color: #22c55e;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.15);
+    }
+    .free-opt-icon { font-size: 28px; }
+    .free-opt-label { font-size: 14px; font-weight: 700; line-height: 1.3; }
+    .free-opt-sub { font-size: 11px; color: var(--muted, #8b949e); line-height: 1.4; }
+    .free-proof-compact-note {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+    @media (max-width: 768px) {
+      .free-proof-options-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+    }
+    @media (max-width: 480px) {
+      .free-opt { padding: 16px 10px; }
+    }
+    
+    /* CTA Section */
+    .cta-section {
+      padding: 80px 0;
+      text-align: center;
+      border-top: 1px solid var(--border);
+    }
+    
+    .cta-box {
+      background: var(--bg-card);
+      border: 2px solid var(--accent);
+      border-radius: 20px;
+      padding: 48px;
+      max-width: 600px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .cta-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    
+    .cta-box h2 {
+      font-size: 26px;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    
+    .cta-box p {
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      position: relative;
+    }
+
+    .cta-button {
+      display: inline-block;
+      background: var(--accent);
+      color: #000;
+      padding: 14px 32px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+    
+    .cta-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+
+    .cta-alt {
+      display: block;
+      margin-top: 16px;
+      font-size: 14px;
+      color: var(--text-muted);
+      position: relative;
+    }
+
+    .cta-alt a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .cta-alt a:hover {
+      text-decoration: underline;
+    }
+    
+    .cta-note {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 16px;
+      position: relative;
+    }
+    
+    /* Footer */
+    footer {
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    
+    .footer-logo img {
+      width: 28px;
+      height: 28px;
+    }
+    
+    .footer-logo span {
+      font-weight: 600;
+    }
+    
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+    
+    .footer-links a:hover {
+      color: var(--accent);
+    }
+    
+    .footer-copy {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    
+    /* Mobile */
+    @media (max-width: 768px) {
+      .hero {
+        padding: 50px 0 30px;
+      }
+      
+      .hero-stats {
+        gap: 24px;
+      }
+
+      .how-steps {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .badge-benefits {
+        grid-template-columns: 1fr;
+      }
+
+      .badge-demo {
+        padding: 28px 20px;
+      }
+
+      .proof-callout {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+
+      .proof-callout-docs {
+        align-items: center;
+      }
+      
+      .cta-box {
+        padding: 32px 24px;
+      }
+    }
+
+</style>
+
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-P1RM3T3CSX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-P1RM3T3CSX');
+</script>
+
+<!-- Microsoft Clarity -->
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "vftp1ivzr9");
+</script>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="header-inner">
+      <a href="/" class="logo">
+        <img src="/docuproof-logo.png" alt="docuProof">
+        <div>
+          <div class="logo-text">docuProof</div>
+          <div class="logo-sub">Proof you can point to</div>
+        </div>
+      </a>
+      <a href="/start.html" class="nav-cta">Get Started →</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge">🛡️ Integrity Pioneers</div>
+      <h1>Every business will have this badge. <span class="highlight">Yours can be first.</span></h1>
+      <p class="hero-sub">Timestamp your key documents on the blockchain. Add the badge to every employee signature. Become the business people trust on sight.</p>
+      <p class="hero-tagline">The first businesses with SSL certificates stood out. The first with BBB accreditation stood out. This is next.</p>
+      
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-value">50</div>
+          <div class="stat-label">Employees × 20 emails/day</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">1,000</div>
+          <div class="stat-label">Trust impressions daily</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">$0</div>
+          <div class="stat-label">Cost per impression</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="how-section">
+    <div class="container">
+      <h2>How it works</h2>
+      <p>Three steps to becoming one of the first businesses with verified integrity.</p>
+
+      <div class="how-steps">
+        <div class="how-step">
+          <div class="step-number">1</div>
+          <h3>Timestamp your documents</h3>
+          <p>Upload your terms of service, privacy policy, contracts, certifications — any document you stand behind. Each one gets a permanent, unforgeable blockchain timestamp.</p>
+        </div>
+        <div class="how-step">
+          <div class="step-number">2</div>
+          <h3>Share them publicly</h3>
+          <p>Add a "Verified Documents" section to your website — just like we did on our <a href="/commitments.html" style="color:var(--accent);text-decoration:none;font-weight:600;">Commitments page</a>. Show clients you have nothing to hide.</p>
+        </div>
+        <div class="how-step">
+          <div class="step-number">3</div>
+          <h3>Add the badge everywhere</h3>
+          <p>Every employee adds a docuProof badge to their email signature. Every email becomes a trust signal. Every recipient sees a business that proves its integrity.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Badge Preview -->
+  <section class="badge-section">
+    <div class="container">
+      <h2>The badge that says everything</h2>
+      <p>One line in every employee's email signature. Thousands of impressions. Zero ad spend.</p>
+
+      <div class="badge-demo">
+        <div class="badge-demo-label">Preview: Employee Email Signature</div>
+        <div class="sig-preview">
+          <div class="sig-name">Sarah Chen</div>
+          <div class="sig-title">Director of Operations</div>
+          <div class="sig-company">Meridian Consulting Group</div>
+          <div class="sig-divider"></div>
+          <a href="https://docuproof.io" class="sig-badge">
+            <img src="/docuproof-logo.png" alt="docuProof">
+            <span class="sig-badge-text">Memory fades. Proof doesn't.</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="badge-benefits">
+        <div class="badge-benefit">
+          <div class="badge-benefit-icon">👀</div>
+          <div>
+            <h4>Passive discovery</h4>
+            <p>Recipients see the badge, click it, learn what docuProof is — and wonder why their company doesn't have it.</p>
+          </div>
+        </div>
+        <div class="badge-benefit">
+          <div class="badge-benefit-icon">🤝</div>
+          <div>
+            <h4>Instant credibility</h4>
+            <p>Like a BBB seal or SSL padlock — it signals this is a business that stands behind its word.</p>
+          </div>
+        </div>
+        <div class="badge-benefit">
+          <div class="badge-benefit-icon">📈</div>
+          <div>
+            <h4>Compounds over time</h4>
+            <p>Every email sent is a micro-impression. 50 employees × 20 emails = 1,000 daily touchpoints with zero effort.</p>
+          </div>
+        </div>
+        <div class="badge-benefit">
+          <div class="badge-benefit-icon">🏆</div>
+          <div>
+            <h4>First-mover advantage</h4>
+            <p>Right now, nobody in your industry has this. The businesses that adopt it first set the standard.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- We Did It First (Commitments callout) -->
+  <section class="proof-section">
+    <div class="container">
+      <div class="proof-callout">
+        <div class="proof-callout-content">
+          <h3>We did it first — here's what it looks like</h3>
+          <p>Before we asked anyone else to do this, we timestamped our own most important business documents on the blockchain. Each one is publicly verifiable by anyone, anytime.</p>
+          <div class="proof-callout-docs">
+            <div class="proof-doc">
+              <div class="proof-doc-dot"></div>
+              System Description — anchored Feb 15, 2026
+            </div>
+            <div class="proof-doc">
+              <div class="proof-doc-dot"></div>
+              Privacy & Data Handling Policy — anchored Feb 15, 2026
+            </div>
+            <div class="proof-doc">
+              <div class="proof-doc-dot"></div>
+              Product Launch Declaration — anchored Feb 15, 2026
+            </div>
+          </div>
+          <a href="/commitments.html" class="proof-callout-link">See our verified commitments →</a>
+        </div>
+        <div class="proof-callout-visual">
+          <img src="/docuProof-Certificate-Screenshot.png" alt="docuProof Certificate of Proof">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- What to Timestamp -->
+  <section class="usecases">
+    <div class="container">
+      <h2>What your business should timestamp first</h2>
+      <p>Start with the documents your clients, partners, and employees already rely on.</p>
+      
+      <div class="usecase-grid">
+        <div class="usecase-item">
+          <div class="usecase-icon">📜</div>
+          <div class="usecase-text">
+            <h4>Terms of Service</h4>
+            <p>Prove the version that was live on any given date</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">🔒</div>
+          <div class="usecase-text">
+            <h4>Privacy Policy</h4>
+            <p>Verifiable compliance documentation</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">📝</div>
+          <div class="usecase-text">
+            <h4>Contracts & Agreements</h4>
+            <p>Lock in what was signed and when</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">📋</div>
+          <div class="usecase-text">
+            <h4>Employee Policies</h4>
+            <p>Prove when policies were in effect</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">🏅</div>
+          <div class="usecase-text">
+            <h4>Certifications & Licenses</h4>
+            <p>Immutable proof of qualifications</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">💰</div>
+          <div class="usecase-text">
+            <h4>Quotes & Proposals</h4>
+            <p>End "that's not what you quoted" forever</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">📊</div>
+          <div class="usecase-text">
+            <h4>Reports & Audits</h4>
+            <p>Compliance-ready permanent records</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">🎨</div>
+          <div class="usecase-text">
+            <h4>Creative & IP Assets</h4>
+            <p>Establish authorship before sharing</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- Try It Free Section -->
+  <section class="free-proof-section" id="try-free">
+    <div class="container">
+      <div class="free-proof-header">
+        <span class="free-proof-badge">✨ No account needed</span>
+        <h2>See It In Action</h2>
+        <p>Pick any option below to instantly timestamp a file on the blockchain — free, no sign-up required.</p>
+      </div>
+      
+      <div class="free-proof-compact">
+        <div class="free-proof-options-row">
+          <button class="free-opt" onclick="openCamera('moment')">
+            <span class="free-opt-icon">📍</span>
+            <span class="free-opt-label">Take a Photo</span>
+            <span class="free-opt-sub">Snap and timestamp it instantly</span>
+          </button>
+          <button class="free-opt" onclick="openCamera('selfie')">
+            <span class="free-opt-icon">🤳</span>
+            <span class="free-opt-label">Take a Selfie</span>
+            <span class="free-opt-sub">Proof you existed right now</span>
+          </button>
+          <button class="free-opt" onclick="downloadAndPromptHeadline()">
+            <span class="free-opt-icon">📰</span>
+            <span class="free-opt-label">Download Today's Headlines</span>
+            <span class="free-opt-sub">A throwaway file to try risk-free</span>
+          </button>
+          <button class="free-opt" onclick="openFreeProof('upload')">
+            <span class="free-opt-icon">📄</span>
+            <span class="free-opt-label">Upload Any File</span>
+            <span class="free-opt-sub">Document, image, anything</span>
+          </button>
+        </div>
+
+        <p class="free-proof-compact-note">🔒 Your file never leaves your device — only a unique numeric code is recorded.</p>
+      </div>
+
+    </div>
+  </section>
+
+<script>
+function downloadAndPromptHeadline() {
+  var link = document.createElement('a');
+  link.href = '/.netlify/functions/daily_headline';
+  link.download = '';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(function() {
+    showDocuModal({
+      icon: '📰',
+      title: 'Headlines PDF downloaded!',
+      message: 'Check your <strong style="color:#e8eaed;">Downloads folder</strong> to view it.<br><br>When you\'re ready, come back here and click the button below to upload it and create a free blockchain timestamp.',
+      confirmText: 'I\'ve Seen It — Upload & Timestamp →',
+      cancelText: 'I\'ll Come Back Later',
+      onConfirm: function() {
+        openFreeProof('headlines');
+      }
+    });
+  }, 1500);
+}
+</script>
+
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-box">
+        <h2>Start with your Starter plan</h2>
+        <p>30 proofs per month — enough to timestamp every key document your business relies on. Add badges to every employee signature.</p>
+
+        <a href="/start.html#pricing" class="cta-button">See Plans & Pricing →</a>
+
+        <span class="cta-alt">or <a href="/badges.html">browse the badge collection</a> to see what goes in your signature</span>
+        
+        <p class="cta-note">🔒 Your files never leave your device. Only the cryptographic hash is timestamped.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-logo">
+      <img src="/docuproof-logo.png" alt="docuProof">
+      <span>docuProof</span>
+    </div>
+    <div class="footer-links">
+      <a href="/start.html">Get Started</a>
+      <a href="/verify">Verify a Proof</a>
+      <a href="/badges.html">Email Badges</a>
+      <a href="/commitments.html">Our Commitments</a>
+      <a href="/start.html#faq">FAQ</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/privacy.html">Privacy</a>
+    </div>
+    <p class="footer-copy">© 2026 docuProof.io — Proof of Existence on the blockchain.</p>
+  </div>
+</footer>
+
+
+<script src="/docuproof-common.js?v=1.1.0"></script>
+</body>
+</html>
