@@ -1,5 +1,6 @@
 // netlify/functions/proof_pdf.js
-// v18.0.0 — Official legal-style certificate with RIP support
+// v19.0.0 — Official legal-style certificate with RIP support
+// - v19: "fingerprint" → "hash" terminology throughout
 // - Cream/parchment background (printer-friendly)
 // - Serif fonts for legal gravitas
 // - Proper filename + display name handling
@@ -41,7 +42,7 @@ exports.handler = async (event) => {
     const pdfDoc = await PDFDocument.create();
     pdfDoc.setTitle("Certificate of Proof of Existence");
     pdfDoc.setAuthor("docuProof.io");
-    pdfDoc.setCreator("docuProof v18.0.0");
+    pdfDoc.setCreator("docuProof v19.0.0");
 
     // US Letter: 612 x 792 points
     const page = pdfDoc.addPage([612, 792]);
@@ -158,7 +159,7 @@ exports.handler = async (event) => {
     const stmtH = 48;
     page.drawRectangle({ x: M, y: Y - stmtH, width: CW, height: stmtH, color: CREAM_DARK, borderColor: RULE, borderWidth: 0.5 });
 
-    const certStmt = "This certificate attests that the below-identified digital document existed in its exact form on the date and time recorded, as verified by its cryptographic fingerprint permanently anchored to the Bitcoin blockchain.";
+    const certStmt = "This certificate attests that the below-identified digital document existed in its exact form on the date and time recorded, as verified by its cryptographic hash permanently anchored to the Bitcoin blockchain.";
     drawWrappedText(page, certStmt, M + 12, Y - 12, CW - 24, 9.5, serifItalic, MEDIUM, 13);
     Y -= stmtH + 16;
 
@@ -215,10 +216,10 @@ exports.handler = async (event) => {
     Y = Math.min(dY, qrY - 18);
 
     // =========================================================================
-    // FILE FINGERPRINT
+    // FILE HASH
     // =========================================================================
     Y -= 4;
-    page.drawText("FILE FINGERPRINT (SHA-256)", { x: M, y: Y, size: 8, font: sansBold, color: GOLD });
+    page.drawText("FILE HASH (SHA-256)", { x: M, y: Y, size: 8, font: sansBold, color: GOLD });
     Y -= 20;
     page.drawRectangle({ x: M, y: Y - 6, width: CW, height: 22, color: FIELD_BG, borderColor: RULE, borderWidth: 0.5 });
     page.drawText(hash, { x: M + 8, y: Y, size: 7.5, font: sans, color: DARK });
@@ -238,7 +239,7 @@ exports.handler = async (event) => {
     page.drawText("UNDERSTANDING YOUR PROOF", { x: M, y: Y, size: 9, font: sansBold, color: GOLD });
     Y -= 14;
 
-    const exp1 = "Your Proof ID is your unique lookup reference. The File Fingerprint (SHA-256 hash) is a cryptographic signature derived from your file\u2014if even a single byte changes, the fingerprint changes entirely. This fingerprint has been permanently recorded on the Bitcoin blockchain, providing independently verifiable proof that your file existed at the timestamp above.";
+    const exp1 = "Your Proof ID is your unique lookup reference. The File Hash (SHA-256) is a one-way mathematical code derived from your file\u2014if even a single byte changes, the hash changes entirely. This hash has been permanently recorded on the Bitcoin blockchain, providing independently verifiable proof that your file existed at the timestamp above.";
     Y = drawWrappedText(page, exp1, M, Y, CW, 9, serif, MEDIUM, 12);
     Y -= 12;
 
@@ -268,11 +269,11 @@ exports.handler = async (event) => {
       const steps = isRip ? [
         "1.  Retain your original file and two backup copies in separate secure locations.",
         "2.  Navigate to docuproof.io/v/" + id + " or scan the QR code on this certificate.",
-        "3.  Upload any of your three verified copies to confirm the fingerprint matches.",
+        "3.  Upload any of your three verified copies to confirm the hash matches.",
       ] : [
         "1.  Retain your original file in a secure location. Do not modify it.",
         "2.  Navigate to docuproof.io/v/" + id + " or scan the QR code on this certificate.",
-        "3.  Upload your file to confirm the cryptographic fingerprint matches the blockchain record.",
+        "3.  Upload your file to confirm the cryptographic hash matches the blockchain record.",
       ];
       for (const s of steps) {
         if (Y > FOOTER_ZONE + 10) {
@@ -307,7 +308,7 @@ exports.handler = async (event) => {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${safeName}-docuProof-Certificate.pdf"`,
         "Cache-Control": "no-store",
-        "x-version": "v18.0.0",
+        "x-version": "v19.0.0",
       },
       body: Buffer.from(pdfBytes).toString("base64"),
       isBase64Encoded: true,
