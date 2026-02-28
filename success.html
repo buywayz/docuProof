@@ -815,7 +815,7 @@
       
       <p style="font-size:14px;color:var(--muted);margin:0 0 12px;">
         <strong style="color:var(--ink);">Right now:</strong><br>
-        Your file's fingerprint has been submitted for anchoring on the Bitcoin blockchain. Check your email for your Proof ID receipt.
+        Your file's unique hash has been submitted for anchoring on the blockchain. Check your email for your Proof ID receipt.
       </p>
       
       <p style="font-size:14px;color:var(--muted);margin:0 0 12px;">
@@ -825,7 +825,7 @@
       
       <p style="font-size:14px;color:var(--muted);margin:0;">
         <strong style="color:var(--ink);">Your privacy:</strong><br>
-        Your file never left your device. We only saw its cryptographic hash — a unique fingerprint that can't be reversed into your original file.
+        Your file never left your device. We only saw its cryptographic hash — a unique numeric code that can't be reversed into your original file.
       </p>
     </aside>
   </section>
@@ -836,7 +836,7 @@
       You just did something most people never think to do until it's too late. Contracts get disputed. Creative work gets stolen. Agreements get denied. When that happens, the person with proof wins — and now that's you.
     </p>
     <p style="font-size:15px;color:#c8d0da;margin:0 0 14px;line-height:1.7;">
-      Your file's unique fingerprint is being permanently written to the Bitcoin blockchain — the same network that secures billions of dollars in value every day. No one can alter it, backdate it, or make it disappear. Not us, not anyone.
+      Your file's unique hash is being permanently written to the Bitcoin blockchain — the same network that secures billions of dollars in value every day. No one can alter it, backdate it, or make it disappear. Not us, not anyone.
     </p>
     <p style="font-size:15px;color:#c8d0da;margin:0;line-height:1.7;">
       Whether you're protecting intellectual property, locking in a version of a contract, or simply creating a record that something existed at this moment in time — you now have court-ready, independently verifiable evidence that stands on its own.
@@ -1277,6 +1277,23 @@
   await loadAnchorStatus(canonicalId);
 
   // ============================================
+  // Check plan info for RIP (Pro plan = free RIP)
+  // ============================================
+  let isProPlan = false;
+  let ripAlreadyActive = false;
+
+  try {
+    const ripCheckUrl = "/.netlify/functions/create_rip_session?id=" + encodeURIComponent(canonicalId) + "&check=true";
+    const ripCheckResp = await fetchJson(ripCheckUrl);
+    if (ripCheckResp.ok && ripCheckResp.json) {
+      isProPlan = !!ripCheckResp.json.isProPlan;
+      ripAlreadyActive = !!ripCheckResp.json.ripPurchased;
+    }
+  } catch (e) {
+    console.warn("Plan check failed (non-fatal):", e);
+  }
+
+  // ============================================
   // RIP (Redundant Identity Preservation) Logic
   // ============================================
   
@@ -1302,6 +1319,33 @@
   
   let selectedFiles = [];
   let verifiedFiles = [];
+
+  // --- Pro plan: update RIP UI to show "Included FREE" ---
+  if (isProPlan) {
+    // Update price badge
+    const ripPriceBadge = document.querySelector('.rip-price');
+    if (ripPriceBadge) {
+      ripPriceBadge.innerHTML = '✓ <strong>FREE with Pro Plan</strong>';
+      ripPriceBadge.style.background = '#166534';
+      ripPriceBadge.style.color = '#9af3b4';
+    }
+    // Update button text
+    if (ripYes) {
+      ripYes.textContent = 'Activate RIP (Included Free) →';
+    }
+    // Hide the "Included FREE with Pro Plan" footnote (it's now in the badge)
+    var ripFootnote = ripOffer ? ripOffer.querySelector('p:last-child') : null;
+    if (ripFootnote && ripFootnote.textContent.indexOf('Included FREE') !== -1) {
+      ripFootnote.style.display = 'none';
+    }
+  }
+
+  // --- If RIP already active AND rip_paid not set (first load for Pro user), auto-advance ---
+  if (ripAlreadyActive && !ripPaid) {
+    // Pro plan user on first visit: auto-advance to Step 2
+    // (They don't need to pay — just need to create copies and verify)
+    showRipFlow('ripStep2');
+  }
   
   function showRipFlow(flowId) {
     [ripOffer, ripStep2, ripStep3, ripStep4, ripSkipped].forEach(el => {
@@ -1405,11 +1449,22 @@
   
   // Upsell buttons
   ripYes.addEventListener('click', function() {
-    // Redirect to Stripe for RIP payment
     if (currentCanonicalId) {
-      window.location.href = '/.netlify/functions/create_rip_session?id=' + encodeURIComponent(currentCanonicalId);
+      if (isProPlan || ripAlreadyActive) {
+        // Pro plan: RIP is free — skip Stripe, go straight to Step 2
+        showRipFlow('ripStep2');
+        // Scroll to RIP section
+        if (ripSection) {
+          var rect = ripSection.getBoundingClientRect();
+          var scrollTarget = window.pageYOffset + rect.top - 20;
+          window.scrollTo({ top: scrollTarget, behavior: 'smooth' });
+        }
+      } else {
+        // Normal: redirect to Stripe for $2.00 RIP payment
+        window.location.href = '/.netlify/functions/create_rip_session?id=' + encodeURIComponent(currentCanonicalId);
+      }
     } else {
-      alert('Unable to process RIP payment - proof ID not found. Please refresh and try again.');
+      alert('Unable to process RIP — proof ID not found. Please refresh and try again.');
     }
   });
   

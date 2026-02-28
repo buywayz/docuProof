@@ -219,13 +219,18 @@ exports.handler = async (event) => {
     const to = obj.customer_email;
     if (!to) throw new Error("Missing customer_email in Stripe session");
 
-    // Metadata from create_checkout_session
+    // Metadata from create_checkout_session / create_plan_session
     const displayName = md.displayName || "Document Proof";
     const filename =
       md.filename && md.filename.trim()
         ? md.filename.trim()
         : "DocuProof-Certificate.pdf";
     const hash = md.hash || null;
+
+    // Plan info (set by create_plan_session.js for subscriptions)
+    const plan = md.plan || null;           // e.g. "pro_monthly", "pro_annual", "starter_monthly", "starter_annual"
+    const planType = md.type || null;       // e.g. "subscription-plan"
+    const isPro = plan && plan.startsWith("pro_");
 
     // Preserve original createdAt if record already exists; otherwise now.
     const nowIso =
@@ -253,6 +258,13 @@ exports.handler = async (event) => {
         customerEmail: to,
         createdAt: nowIso,
 
+        // Plan metadata
+        plan: plan,             // "pro_monthly", "starter_annual", etc. or null
+        planType: planType,     // "subscription-plan" or null
+
+        // RIP: auto-activate for Pro plan users (included free)
+        ...(isPro ? { ripPurchased: true, ripSource: "pro_plan_included" } : {}),
+
         // Operational metadata
         source: "stripe_webhook",
         emailSentAt: emailMarkTime,
@@ -269,6 +281,10 @@ exports.handler = async (event) => {
       });
 
       await appendToFeeds(record);
+
+      if (isPro) {
+        console.log(`[stripe_webhook] Pro plan detected (${plan}) — RIP auto-activated for ${canonicalId}`);
+      }
     } catch (dbErr) {
       console.error("saveProof/appendToFeeds error (non-fatal):", dbErr);
       // Do not fail webhook on persistence hiccups

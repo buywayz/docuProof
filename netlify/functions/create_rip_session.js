@@ -1,9 +1,9 @@
 // netlify/functions/create_rip_session.js
-// v2.0.0 - Creates a Stripe Checkout session for the RIP (Redundant Identity Preservation) upsell
+// v3.0.0 - Creates a Stripe Checkout session for the RIP (Redundant Identity Preservation) upsell
 // Called from success.html "Yes, Protect My Proof →" button
 // Expects: ?id=PROOF_ID (query string)
-// Fixed: success_url now returns to success.html (not verify page)
-// Fixed: Pre-fills customer email from email-prospects store
+// v3.0.0: If proof already has ripPurchased=true (Pro plan), skip Stripe and redirect directly
+// v3.0.0: If ?check=true, return JSON with plan/RIP status instead of redirecting (for UI updates)
 
 const Stripe = require("stripe");
 
@@ -30,6 +30,26 @@ async function lookupEmail(proofId) {
     }
   } catch (e) {
     console.log("create_rip_session: email lookup failed:", e.message);
+  }
+  return null;
+}
+
+async function lookupProof(proofId) {
+  try {
+    const mod = await import("@netlify/blobs");
+    const gs = mod.getStore || (mod.default && mod.default.getStore);
+    let store;
+    try {
+      store = gs("proofs");
+    } catch {
+      const siteID = process.env.NETLIFY_SITE_ID || process.env.SITE_ID;
+      const token = process.env.NETLIFY_BLOBS_TOKEN || process.env.NETLIFY_API_TOKEN;
+      store = gs({ name: "proofs", siteID, token });
+    }
+    const raw = await store.get(`proof:${proofId}`, { type: "text" });
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.log("create_rip_session: proof lookup failed:", e.message);
   }
   return null;
 }
@@ -72,12 +92,44 @@ exports.handler = async (event) => {
 
     const origin = (process.env.URL || "https://docuproof.io").replace(/\/$/, "");
 
-    // Success URL goes back to success.html with rip_paid flag
+    // --- Check if proof already has RIP (Pro plan auto-activated) ---
+    const proof = await lookupProof(proofId);
+    const isProPlan = proof && proof.plan && proof.plan.startsWith("pro_");
+    const ripAlreadyActive = proof && proof.ripPurchased === true;
+
+    // --- ?check=true mode: return JSON for frontend UI updates ---
+    if (qp.check === "true") {
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          ok: true,
+          proofId,
+          plan: proof?.plan || null,
+          isProPlan: !!isProPlan,
+          ripPurchased: !!ripAlreadyActive,
+          ripSource: proof?.ripSource || null,
+        }),
+      };
+    }
+
+    // --- If RIP already active (Pro plan), skip Stripe and redirect directly ---
+    if (ripAlreadyActive) {
+      console.log(`[create_rip_session] RIP already active for ${proofId} (plan: ${proof?.plan}, source: ${proof?.ripSource}) — skipping Stripe`);
+      const successUrl = `${origin}/success.html?id=${encodeURIComponent(proofId)}&rip_paid=true`;
+      return {
+        statusCode: 303,
+        headers: {
+          Location: successUrl,
+          "Cache-Control": "no-store",
+        },
+      };
+    }
+
+    // --- Normal flow: create Stripe checkout for $2.00 RIP ---
     const successUrl = `${origin}/success.html?id=${encodeURIComponent(proofId)}&rip_paid=true`;
     const cancelUrl = `${origin}/success.html?id=${encodeURIComponent(proofId)}`;
 
-    // RIP price — $2.00 for redundant storage preservation
-    // Stripe Price: price_1Sr0CzIn2dWVc65RNAAuefwL (product: prod_TodTY3ku5nQUOx)
     const ripPriceId = process.env.STRIPE_RIP_PRICE_ID || "price_1Sr0CzIn2dWVc65RNAAuefwL";
 
     const sessionConfig = {
