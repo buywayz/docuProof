@@ -340,8 +340,18 @@
   function syncBilling() {
     const isOne = planSel.value === 'one-time';
     billWrap.style.display = isOne ? 'none' : 'block';
+    // Update displayed prices based on billing cycle
+    const isAnnual = billSel.value === 'annual';
+    planSel.querySelector('[value="starter"]').textContent = isAnnual
+      ? 'Starter (30 proofs/mo) — $99/yr'
+      : 'Starter (30 proofs/mo) — $9.75/mo';
+    planSel.querySelector('[value="pro"]').textContent = isAnnual
+      ? 'Pro (150 proofs/mo) — $303/yr'
+      : 'Pro (150 proofs/mo) — $29.75/mo';
   }
-  planSel.addEventListener('change', syncBilling); syncBilling();
+  planSel.addEventListener('change', syncBilling); 
+  billSel.addEventListener('change', syncBilling);
+  syncBilling();
 
   async function sha256Hex(file) {
     const buf = await file.arrayBuffer();
