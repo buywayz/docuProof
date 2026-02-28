@@ -392,6 +392,12 @@ exports.handler = async (event) => {
               <a href="${verifyUrl}" style="display: inline-block; background: #22c55e; color: #0a0d10; padding: 14px 32px; border-radius: 999px; text-decoration: none; font-weight: 700; font-size: 16px;">Check Your Proof Status</a>
             </div>
 
+            <div style="background: #1a1d24; border: 1px solid #30363d; border-radius: 8px; padding: 12px 16px; margin: 0 0 20px; text-align: center;">
+              <p style="color: #8b949e; font-size: 13px; margin: 0;">
+                📬 If this landed in spam, please mark it <strong style="color: #c9d2db;">"Not Spam"</strong> so your PDF Certificate of Proof reaches your inbox when it's ready.
+              </p>
+            </div>
+
             <div style="border-top: 1px solid #21262d; padding-top: 16px; margin-top: 24px; text-align: center;">
               <p style="color: #6b7280; font-size: 13px; margin: 0;">
                 docuProof.io — Bitcoin-anchored proof of existence
@@ -406,6 +412,7 @@ exports.handler = async (event) => {
           `This typically takes 1-3 hours.\n\n` +
           `Your PDF Certificate of Proof will be emailed to you once anchoring is complete.\n\n` +
           `Check your proof status: ${verifyUrl}\n\n` +
+          `If this landed in spam, please mark it "Not Spam" so your certificate email reaches your inbox.\n\n` +
           `docuProof.io — Proof you can point to.\n`,
       });
     } catch (emailErr) {
