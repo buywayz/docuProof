@@ -150,7 +150,7 @@ export const handler = async (_event) => {
           const resp = await fetch(`${OTS_SIDECAR_URL}/upgrade-receipt`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id, receipt_b64: receiptB64 }),
+            body: JSON.stringify({ id, receiptBase64: receiptB64 }),
           });
 
           if (resp.ok) {
