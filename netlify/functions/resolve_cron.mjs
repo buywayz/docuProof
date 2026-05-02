@@ -147,7 +147,7 @@ export const handler = async (_event) => {
         // ─── Step 4: Call sidecar /upgrade ────────────────────────────
         let upgradeResult = null;
         try {
-          const resp = await fetch(`${OTS_SIDECAR_URL}/upgrade`, {
+          const resp = await fetch(`${OTS_SIDECAR_URL}/upgrade-receipt`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id, receipt_b64: receiptB64 }),
