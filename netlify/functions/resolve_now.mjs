@@ -103,11 +103,11 @@ export const handler = async (event) => {
 
     const receiptB64 = Buffer.from(ab).toString("base64");
 
-    // 2) Call sidecar /upgrade
-    const upgradeResp = await fetch(`${sidecarBase}/upgrade`, {
+    // 2) Call sidecar /upgrade-receipt
+    const upgradeResp = await fetch(`${sidecarBase}/upgrade-receipt`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, receipt_b64: receiptB64 }),
+      body: JSON.stringify({ id, receiptBase64: receiptB64 }),
     });
 
     if (!upgradeResp.ok) {
@@ -123,10 +123,10 @@ export const handler = async (event) => {
 
     const upgrade = await upgradeResp.json().catch(() => ({}));
 
-    if (!upgrade || upgrade.ok !== true || !upgrade.receipt_b64) {
+    if (!upgrade || upgrade.ok !== true || !(upgrade.receipt_b64 || upgrade.receiptBase64)) {
       return json(502, {
         ok: false,
-        error: "Invalid response from OTS sidecar /upgrade",
+        error: "Invalid response from OTS sidecar /upgrade-receipt",
         raw: upgrade,
         id,
       });
@@ -134,10 +134,11 @@ export const handler = async (event) => {
 
     const state = upgrade.state || "OTS_RECEIPT";
     const txid = upgrade.txid || null;
+    const blockHeight = upgrade.blockHeight || upgrade.block_height || upgrade.block || null;
 
     // 3) Persist upgraded receipt back into the same store
     try {
-      const upgradedBytes = Buffer.from(upgrade.receipt_b64, "base64");
+      const upgradedBytes = Buffer.from(upgrade.receipt_b64 || upgrade.receiptBase64, "base64");
       await store.set(receiptKey, upgradedBytes, {
         contentType: "application/octet-stream",
       });
@@ -152,7 +153,8 @@ export const handler = async (event) => {
       id,
       state,
       txid,
-      confirmations: 0,
+      blockHeight,
+      confirmations: upgrade.confirmations || 0,
       updatedAt: new Date().toISOString(),
       source: "resolve_now",
     };
@@ -174,9 +176,9 @@ export const handler = async (event) => {
     }
 
     // 5) POST-ANCHOR EMAIL (idempotent)
-    // Only email when ANCHORED with txid, and only once per proof id.
+    // Only email when ANCHORED with txid or blockHeight, and only once per proof id.
     let emailedAnchor = false;
-    if (state === "ANCHORED" && txid) {
+    if (state === "ANCHORED" && (txid || blockHeight)) {
       try {
         const { getProof, saveProof } = require("./_db");
         const { sendEmail } = require("./_email");
@@ -236,6 +238,8 @@ export const handler = async (event) => {
       anchorKey,
       state,
       txid,
+      blockHeight,
+      confirmations: upgrade.confirmations || 0,
       emailedAnchor,
     });
   } catch (e) {
