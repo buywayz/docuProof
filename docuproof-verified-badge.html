@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>docuProof Verified — Badge Assets</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+body { background: #f5f5f5; font-family: 'Outfit', sans-serif; padding: 40px; }
+h1 { font-size: 24px; margin-bottom: 8px; }
+p.sub { color: #666; margin-bottom: 40px; }
+.badge-section { margin-bottom: 48px; }
+.badge-section h2 { font-size: 16px; color: #666; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; }
+.badge-row { display: flex; gap: 32px; align-items: center; flex-wrap: wrap; }
+.badge-container { padding: 20px; border-radius: 8px; display: inline-flex; }
+.badge-container.on-light { background: #ffffff; border: 1px solid #e5e5e5; }
+.badge-container.on-dark { background: #0a0d10; border: 1px solid #21262d; }
+.size-note { font-size: 12px; color: #999; margin-top: 8px; }
+
+/* ── The actual badge ── */
+.dp-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-family: 'Outfit', sans-serif;
+}
+.dp-logo-wrap {
+  position: relative;
+  width: 28px; height: 28px;
+  flex-shrink: 0;
+}
+.dp-logo-wrap img {
+  width: 28px; height: 28px;
+  border-radius: 5px;
+  object-fit: cover;
+}
+.dp-logo-wrap .dp-star {
+  position: absolute;
+  bottom: -3px; right: -3px;
+  width: 14px; height: 14px;
+  background: #f59e0b;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px;
+  color: #fff;
+  line-height: 1;
+  box-shadow: 0 0 0 2px #fff;
+}
+.on-dark .dp-logo-wrap .dp-star {
+  box-shadow: 0 0 0 2px #0a0d10;
+}
+.dp-verified-badge .dp-text {
+  display: flex; flex-direction: column; line-height: 1.15;
+}
+.dp-verified-badge .dp-name {
+  font-size: 13px; font-weight: 700; letter-spacing: -0.01em;
+}
+.dp-verified-badge .dp-label {
+  font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+}
+
+/* Light variant */
+.dp-verified-badge.light .dp-name { color: #0a0d10; }
+.dp-verified-badge.light .dp-label { color: #22c55e; }
+
+/* Dark variant */
+.dp-verified-badge.dark .dp-name { color: #e8eaed; }
+.dp-verified-badge.dark .dp-label { color: #22c55e; }
+
+/* ── Larger badge for website ── */
+.dp-verified-badge.lg .dp-logo-wrap { width: 36px; height: 36px; }
+.dp-verified-badge.lg .dp-logo-wrap img { width: 36px; height: 36px; border-radius: 7px; }
+.dp-verified-badge.lg .dp-logo-wrap .dp-star { width: 16px; height: 16px; font-size: 9px; bottom: -3px; right: -3px; }
+.dp-verified-badge.lg .dp-name { font-size: 16px; }
+.dp-verified-badge.lg .dp-label { font-size: 11px; }
+
+/* ── Widget / banner variant ── */
+.dp-verified-widget {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-family: 'Outfit', sans-serif;
+}
+.dp-verified-widget.on-light {
+  background: #f0fdf4;
+  border: 1.5px solid #22c55e;
+}
+.dp-verified-widget.on-dark {
+  background: rgba(34,197,94,0.08);
+  border: 1.5px solid rgba(34,197,94,0.3);
+}
+.dp-verified-widget .dp-logo-wrap {
+  width: 32px; height: 32px;
+}
+.dp-verified-widget .dp-logo-wrap img { width: 32px; height: 32px; border-radius: 7px; object-fit: cover; }
+.dp-verified-widget .dp-logo-wrap .dp-star { width: 15px; height: 15px; font-size: 9px; }
+.dp-verified-widget .dp-text { display: flex; flex-direction: column; line-height: 1.2; }
+.dp-verified-widget .dp-name { font-size: 14px; font-weight: 700; }
+.dp-verified-widget .dp-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #22c55e; }
+.dp-verified-widget.on-light .dp-name { color: #0a0d10; }
+.dp-verified-widget.on-dark .dp-name { color: #e8eaed; }
+
+.html-block { background: #1a1a1a; color: #a0ffa0; font-family: monospace; font-size: 12px; padding: 16px; border-radius: 8px; margin-top: 12px; white-space: pre-wrap; word-break: break-all; max-width: 700px; line-height: 1.5; }
+.copy-btn { margin-top: 8px; padding: 6px 14px; font-size: 12px; font-weight: 600; background: #22c55e; color: #000; border: none; border-radius: 6px; cursor: pointer; font-family: 'Outfit', sans-serif; }
+</style>
+</head>
+<body>
+
+<h1>docuProof Verified — Badge Assets</h1>
+<p class="sub">All badge variants for email signatures, websites, and social media. Right-click → Save Image, or copy the HTML below each badge.</p>
+
+<!-- ════════════════════════════════════════ -->
+<div class="badge-section">
+<h2>Email Signature Badge (150×40px equivalent)</h2>
+<div class="badge-row">
+
+<div>
+<div class="badge-container on-light">
+<a href="https://docuproof.io/verified" class="dp-verified-badge light">
+  <span class="dp-logo-wrap"><img src="https://docuproof.io/docuproof-logo.png" alt="docuProof"><span class="dp-star">★</span></span>
+  <span class="dp-text"><span class="dp-name">docuProof</span><span class="dp-label">Verified ✓</span></span>
+</a>
+</div>
+<p class="size-note">Light background variant</p>
+</div>
+
+<div>
+<div class="badge-container on-dark">
+<a href="https://docuproof.io/verified" class="dp-verified-badge dark">
+  <span class="dp-logo-wrap"><img src="https://docuproof.io/docuproof-logo.png" alt="docuProof"><span class="dp-star">★</span></span>
+  <span class="dp-text"><span class="dp-name">docuProof</span><span class="dp-label">Verified ✓</span></span>
+</a>
+</div>
+<p class="size-note">Dark background variant</p>
+</div>
+
+</div>
+
+<p style="margin-top:16px;font-size:14px;font-weight:600;">Email Signature HTML (paste into Gmail / Outlook / Apple Mail):</p>
+<div class="html-block" id="email-html">&lt;a href="https://docuproof.io/verified" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-family:Arial,sans-serif;"&gt;&lt;span style="position:relative;display:inline-block;width:28px;height:28px;"&gt;&lt;img src="https://docuproof.io/docuproof-logo.png" width="28" height="28" style="border-radius:5px;" alt="docuProof"&gt;&lt;span style="position:absolute;bottom:-2px;right:-2px;width:13px;height:13px;background:#f59e0b;border-radius:50%;color:#fff;font-size:8px;line-height:13px;text-align:center;box-shadow:0 0 0 2px #fff;"&gt;★&lt;/span&gt;&lt;/span&gt;&lt;span style="display:inline-flex;flex-direction:column;line-height:1.15;"&gt;&lt;span style="font-size:12px;font-weight:700;color:#333;"&gt;docuProof&lt;/span&gt;&lt;span style="font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#22c55e;"&gt;Verified ✓&lt;/span&gt;&lt;/span&gt;&lt;/a&gt;</div>
+<button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('email-html').textContent)">Copy HTML</button>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<div class="badge-section">
+<h2>Website Badge (larger)</h2>
+<div class="badge-row">
+
+<div>
+<div class="badge-container on-light">
+<a href="https://docuproof.io/verified" class="dp-verified-badge light lg">
+  <span class="dp-logo-wrap"><img src="https://docuproof.io/docuproof-logo.png" alt="docuProof"><span class="dp-star">★</span></span>
+  <span class="dp-text"><span class="dp-name">docuProof</span><span class="dp-label">Verified ✓</span></span>
+</a>
+</div>
+<p class="size-note">Light — for website footers, sidebars</p>
+</div>
+
+<div>
+<div class="badge-container on-dark">
+<a href="https://docuproof.io/verified" class="dp-verified-badge dark lg">
+  <span class="dp-logo-wrap"><img src="https://docuproof.io/docuproof-logo.png" alt="docuProof"><span class="dp-star">★</span></span>
+  <span class="dp-text"><span class="dp-name">docuProof</span><span class="dp-label">Verified ✓</span></span>
+</a>
+</div>
+<p class="size-note">Dark — for dark-themed sites</p>
+</div>
+
+</div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<div class="badge-section">
+<h2>Website Widget (with border, for prominent placement)</h2>
+<div class="badge-row">
+
+<div>
+<div class="badge-container on-light" style="padding:0;">
+<a href="https://docuproof.io/verified" class="dp-verified-widget on-light">
+  <span class="dp-logo-wrap"><img src="https://docuproof.io/docuproof-logo.png" alt="docuProof"><span class="dp-star">★</span></span>
+  <span class="dp-text"><span class="dp-name">docuProof</span><span class="dp-label">Verified ✓</span></span>
+</a>
+</div>
+<p class="size-note">Light widget</p>
+</div>
+
+<div>
+<div class="badge-container on-dark" style="padding:0;">
+<a href="https://docuproof.io/verified" class="dp-verified-widget on-dark">
+  <span class="dp-logo-wrap"><img src="https://docuproof.io/docuproof-logo.png" alt="docuProof"><span class="dp-star">★</span></span>
+  <span class="dp-text"><span class="dp-name">docuProof</span><span class="dp-label">Verified ✓</span></span>
+</a>
+</div>
+<p class="size-note">Dark widget</p>
+</div>
+
+</div>
+</div>
+
+</body>
+</html>

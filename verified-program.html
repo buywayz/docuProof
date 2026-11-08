@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>docuProof Verified — Trust Badge Program</title>
+<meta name="description" content="Earn the docuProof Verified badge and show your clients that your documents are independently verified. A trust signal like BBB or Norton Secured.">
+<link rel="icon" href="/docuproof-logo.png">
+<link rel="apple-touch-icon" href="/docuproof-logo.png">
+<meta name="theme-color" content="#0B0F14">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0d10;--bg-card:#12161c;--bg-elevated:#1a1f27;--ink:#e8eaed;--muted:#8b949e;--accent:#22c55e;--accent-glow:rgba(34,197,94,0.15);--border:#21262d}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 'Outfit',sans-serif}
+a{color:var(--accent);text-decoration:none}
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,13,16,0.95);border-bottom:1px solid var(--border)}
+.nav-inner{max-width:1200px;margin:0 auto;padding:14px 24px;display:flex;justify-content:space-between;align-items:center}
+.nav-brand{display:flex;align-items:center;gap:10px;color:var(--ink)}
+.nav-brand img{height:32px}
+.nav-brand span{font-weight:700;font-size:18px}
+.nav-links{display:flex;gap:24px;align-items:center}
+.nav-links a{color:var(--muted);font-size:14px}
+.nav-cta{background:var(--accent);color:#000!important;padding:8px 18px;border-radius:8px;font-weight:700}
+
+/* Hero */
+.hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:140px 24px 80px;position:relative}
+.hero::after{content:'';position:absolute;top:25%;left:50%;transform:translate(-50%,-50%);width:500px;height:500px;background:radial-gradient(circle,var(--accent-glow),transparent 70%);pointer-events:none}
+.hero-content{position:relative;z-index:1;max-width:800px}
+.hero h1{font-size:clamp(32px,5vw,48px);font-weight:800;line-height:1.15;margin-bottom:20px}
+.hero h1 .accent{color:var(--accent)}
+.hero-sub{font-size:clamp(16px,2vw,20px);color:var(--muted);max-width:600px;margin:0 auto 40px}
+
+/* Badge preview */
+.badge-showcase{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px 40px;display:inline-flex;align-items:center;gap:14px;margin-bottom:48px}
+.badge-shield{position:relative;width:44px;height:44px;flex-shrink:0}
+.badge-shield img{width:44px;height:44px;border-radius:10px;object-fit:cover}
+.badge-shield .dp-star{position:absolute;bottom:-4px;right:-4px;width:18px;height:18px;background:#f59e0b;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;line-height:1;box-shadow:0 0 0 2px var(--bg-card)}
+.badge-text{display:flex;flex-direction:column;line-height:1.15;text-align:left}
+.badge-name{font-size:22px;font-weight:800}
+.badge-label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent)}
+
+/* Sections */
+.section{padding:64px 24px}
+.section-inner{max-width:1000px;margin:0 auto}
+.section-header{text-align:center;margin-bottom:40px}
+.section-header h2{font-size:clamp(24px,3.5vw,36px);font-weight:800;margin-bottom:12px}
+.section-header h2 .accent{color:var(--accent)}
+.section-header p{font-size:17px;color:var(--muted)}
+
+/* How it works steps */
+.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:32px}
+.step-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:28px;text-align:center}
+.step-num{width:48px;height:48px;background:var(--accent-glow);border:2px solid var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;color:var(--accent);margin:0 auto 20px}
+.step-card h3{font-size:16px;font-weight:700;margin-bottom:8px}
+.step-card p{font-size:14px;color:var(--muted);line-height:1.6}
+
+/* Benefits */
+.benefits-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:32px}
+.benefit-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:24px;display:flex;gap:16px;align-items:flex-start}
+.benefit-icon{font-size:28px;flex-shrink:0;width:48px;height:48px;background:var(--accent-glow);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.benefit-card h3{font-size:15px;font-weight:700;margin-bottom:4px}
+.benefit-card p{font-size:14px;color:var(--muted);line-height:1.5}
+
+/* Comparison */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:32px}
+.compare-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:28px}
+.compare-card.verified{border-color:var(--accent);box-shadow:0 0 40px var(--accent-glow)}
+.compare-card h3{font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.compare-card ul{list-style:none}
+.compare-card li{font-size:14px;color:var(--muted);padding:6px 0}
+.compare-card li::before{content:'✓ ';color:var(--accent);font-weight:700}
+.compare-card.basic li::before{content:'• ';color:var(--muted)}
+
+/* CTA */
+.final-cta{text-align:center;padding:80px 24px}
+.final-cta h2{font-size:clamp(28px,4vw,40px);font-weight:800;margin-bottom:16px}
+.final-cta h2 .accent{color:var(--accent)}
+.final-cta p{font-size:18px;color:var(--muted);margin-bottom:32px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:16px 32px;border-radius:12px;font-weight:700;font-size:16px}
+.btn-primary{background:var(--accent);color:#000!important}
+.btn-secondary{background:var(--bg-elevated);color:var(--ink);border:1px solid var(--border)}
+.btn-group{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+
+/* Footer */
+.footer{padding:48px 24px;background:var(--bg-card);border-top:1px solid var(--border)}
+.footer-inner{max-width:1100px;margin:0 auto;text-align:center}
+.footer-links{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;margin-bottom:20px}
+.footer-links a{color:var(--muted);font-size:14px}
+.footer-copy{font-size:13px;color:var(--muted);text-align:center;width:100%;margin-top:24px;padding-top:24px;border-top:1px solid var(--border)}
+
+@media(max-width:768px){
+  .steps-grid,.benefits-grid,.compare-grid{grid-template-columns:1fr}
+  .nav-links a:not(.nav-cta){display:none}
+  .badge-showcase{padding:24px 28px}
+}
+</style>
+
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-P1RM3T3CSX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-P1RM3T3CSX');
+</script>
+</head>
+<body>
+
+<nav class="nav"><div class="nav-inner"><a href="/" class="nav-brand"><img src="/docuproof-logo.png" alt=""><span>docuProof</span></a><div class="nav-links"><a href="/#how">How It Works</a><a href="/#pricing">Pricing</a><a href="/#faq">FAQ</a><a href="/verify">Verify</a><a href="/app.html" class="nav-cta">Generate Proof</a></div></div></nav>
+
+<!-- Hero -->
+<section class="hero">
+<div class="hero-content">
+<h1>Show your clients their documents are <span class="accent">independently verified</span></h1>
+<p class="hero-sub">Earn the docuProof Verified badge — a trust credential that tells your clients, partners, and counterparties that your critical documents are independently timestamped and tamper-proof.</p>
+
+<div class="badge-showcase">
+  <div class="badge-shield"><img src="/docuproof-logo.png" alt="docuProof"><span class="dp-star">★</span></div>
+  <div class="badge-text"><span class="badge-name">docuProof</span><span class="badge-label">Verified ✓</span></div>
+</div>
+
+</div>
+</section>
+
+<!-- What it means -->
+<section class="section">
+<div class="section-inner">
+<div class="section-header">
+<h2>What <span class="accent">Verified</span> means</h2>
+<p>The docuProof Verified badge isn't a marketing sticker anyone can download. It's an earned credential proving that your business actively uses independent document verification.</p>
+</div>
+
+<div class="benefits-grid">
+<div class="benefit-card">
+  <div class="benefit-icon">🛡️</div>
+  <div><h3>Trust signal for clients</h3><p>Like a BBB seal or Norton Secured badge — it tells anyone who sees it that your documents are independently verified and tamper-proof.</p></div>
+</div>
+<div class="benefit-card">
+  <div class="benefit-icon">🔗</div>
+  <div><h3>Clickable verification</h3><p>Every badge links to a live verification page confirming your business is an active, verified docuProof user. Not just a claim — proof.</p></div>
+</div>
+<div class="benefit-card">
+  <div class="benefit-icon">✉️</div>
+  <div><h3>Email signature ready</h3><p>Add the badge to your email signature in Gmail, Outlook, or Apple Mail. Every email you send becomes a quiet trust signal.</p></div>
+</div>
+<div class="benefit-card">
+  <div class="benefit-icon">🌐</div>
+  <div><h3>Website widget</h3><p>Place the badge on your website footer, sidebar, or contact page. Shows visitors that document integrity is part of how you do business.</p></div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- How to earn it -->
+<section class="section" style="background:var(--bg-card);">
+<div class="section-inner">
+<div class="section-header">
+<h2>How to <span class="accent">earn</span> your badge</h2>
+<p>Three simple steps to become docuProof Verified.</p>
+</div>
+
+<div class="steps-grid">
+<div class="step-card">
+  <div class="step-num">1</div>
+  <h3>Timestamp 5 documents</h3>
+  <p>Create blockchain-anchored timestamps for at least 5 documents through docuProof. Any file type counts — contracts, photos, designs, compliance records.</p>
+</div>
+<div class="step-card">
+  <div class="step-num">2</div>
+  <h3>Claim your badge</h3>
+  <p>Once you hit 5 timestamps, you'll receive an email with your Verified badge and a unique verification link for your business.</p>
+</div>
+<div class="step-card">
+  <div class="step-num">3</div>
+  <h3>Display it everywhere</h3>
+  <p>Add the badge to your email signature, website, and social media. Every person who sees it is a potential new user — and every click verifies your business.</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- Verified vs Marketing badges -->
+<section class="section">
+<div class="section-inner">
+<div class="section-header">
+<h2>Two badges, <span class="accent">two purposes</span></h2>
+<p>We offer both marketing badges (for supporters) and Verified badges (for active users).</p>
+</div>
+
+<div class="compare-grid">
+<div class="compare-card basic">
+  <h3>📢 Marketing Badges</h3>
+  <ul>
+    <li>Available to anyone</li>
+    <li>Says "I support docuProof"</li>
+    <li>Links to docuproof.io</li>
+    <li>4 tagline options</li>
+    <li>Great for spreading the word</li>
+  </ul>
+  <div style="margin-top:20px"><a href="/badges.html" class="btn btn-secondary btn-sm" style="padding:10px 20px;font-size:14px;">Get Marketing Badges</a></div>
+</div>
+<div class="compare-card verified">
+  <h3>🛡️ Verified Badge <span style="font-size:12px;background:var(--accent);color:#000;padding:2px 8px;border-radius:4px;font-weight:700;">EARNED</span></h3>
+  <ul>
+    <li>Only for active docuProof users</li>
+    <li>Says "My documents are verified"</li>
+    <li>Links to your verification page</li>
+    <li>Confirms your business is real and active</li>
+    <li>Builds client trust like BBB or Norton</li>
+    <li>Unique to your business</li>
+  </ul>
+  <div style="margin-top:20px"><a href="/app.html" class="btn btn-primary btn-sm" style="padding:10px 20px;font-size:14px;">Start Timestamping →</a></div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- Who it's for -->
+<section class="section" style="background:var(--bg-card);">
+<div class="section-inner">
+<div class="section-header">
+<h2>Who displays the <span class="accent">Verified</span> badge</h2>
+</div>
+
+<div class="steps-grid">
+<div class="step-card">
+  <div style="font-size:32px;margin-bottom:16px">⚖️</div>
+  <h3>Law Firms</h3>
+  <p>Show clients that contracts, evidence, and legal documents are independently timestamped and tamper-proof.</p>
+</div>
+<div class="step-card">
+  <div style="font-size:32px;margin-bottom:16px">🎨</div>
+  <h3>Freelancers & Creatives</h3>
+  <p>Prove to clients that your original work is timestamped before delivery. Protection against IP theft.</p>
+</div>
+<div class="step-card">
+  <div style="font-size:32px;margin-bottom:16px">🏢</div>
+  <h3>Businesses</h3>
+  <p>Signal to partners and customers that your critical documents — contracts, compliance records, financials — are independently verified.</p>
+</div>
+</div>
+</div>
+</section>
+
+<!-- CTA -->
+<section class="final-cta">
+<h2>Every email is a <span class="accent">trust signal</span></h2>
+<p>Start timestamping your documents today. After 5 timestamps, your Verified badge is ready.</p>
+<div class="btn-group">
+<a href="/app.html" class="btn btn-primary">Start Timestamping — $2.89</a>
+<a href="/#how" class="btn btn-secondary">Learn How It Works</a>
+</div>
+</section>
+
+<footer class="footer">
+<div class="footer-inner">
+<div class="footer-links"><a href="/verify">Verify a Proof</a><a href="/app.html">Generate Proof</a><a href="/proof-gallery.html">Proof Gallery</a><a href="/badges.html">Email Badges</a><a href="/commitments.html">Our Commitments</a><a href="/terms.html">Terms</a><a href="/privacy.html">Privacy</a></div>
+</div>
+<div class="footer-copy">© <span id="yr"></span> docuProof.io — Proof of Existence on the blockchain.<br><span style="color:#9ca3af;font-size:14px">docuProof provides cryptographic proof-of-existence only. Not a notary service.</span></div>
+</footer>
+
+<script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
+</body>
+</html>
