@@ -43,6 +43,12 @@
   status = 200
   force = true
 
+[[redirects]]
+  from = "/verified/:slug"
+  to = "/.netlify/functions/verified_check?slug=:slug"
+  status = 200
+  force = true
+
 # Scheduled function to resolve Bitcoin anchors every hour
 [functions."resolve_cron"]
   schedule = "@hourly"
