@@ -44,6 +44,12 @@
   force = true
 
 [[redirects]]
+  from = "/verified/:slug/badge"
+  to = "/.netlify/functions/verified_check?slug=:slug&view=badge"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/verified/:slug"
   to = "/.netlify/functions/verified_check?slug=:slug"
   status = 200

@@ -1,5 +1,6 @@
 // netlify/functions/_db.js
 // Persistence via Netlify Blobs (with safe dynamic import for CJS functions).
+// v2.1.0 — exports getStore for _verified.js (badge auto-unlock)
 // v2.0.0 — FIX: normalizeRecord now preserves extra fields (ripPurchased, etc.)
 //           Previously stripped all fields not in the hardcoded base schema,
 //           so RIP purchase data was silently dropped by saveProof().
@@ -234,4 +235,5 @@ module.exports = {
   getProof,
   setOtsReceipt,
   ping,
+  getStore: getStoreSafe, // used by _verified.js (badge auto-unlock)
 };

@@ -1,5 +1,8 @@
 // netlify/functions/stripe_webhook.js
 // CommonJS runtime (Node 18 on Netlify)
+// v3.1.0 - docuProof Verified: counts timestamps per customer, auto-emails badge at 5
+//           (Starter/Pro subscribers get the badge immediately on subscribing)
+//         - Falls back to customer_details.email when customer_email is empty
 // v3.0.0 - Certificate PDF deferred to resolve_cron (sent after anchoring with block number)
 //         - Writes email to email-prospects store so resolve_cron can find it
 //         - Initial email is receipt-only (no PDF attachment)
@@ -7,6 +10,7 @@ const Stripe = require("stripe");
 const crypto = require("crypto");
 const { sendEmail } = require("./_email");
 const { saveProof, appendToFeeds, getProof } = require("./_db");
+const { trackProofAndMaybeUnlock } = require("./_verified");
 
 // --- helpers ---------------------------------------------------------------
 
@@ -216,7 +220,7 @@ exports.handler = async (event) => {
       };
     }
 
-    const to = obj.customer_email;
+    const to = obj.customer_email || obj.customer_details?.email || null;
     if (!to) throw new Error("Missing customer_email in Stripe session");
 
     // Metadata from create_checkout_session / create_plan_session
@@ -420,6 +424,20 @@ exports.handler = async (event) => {
       console.error("Postmark sendEmail error (non-fatal):", emailErr);
     }
 
+    // --- 5) docuProof Verified: count this timestamp, unlock badge at 5 -----
+    // Only real timestamps (with a hash) count toward 5.
+    // Subscribers (Starter/Pro) unlock immediately, with or without a document.
+    let verifiedResult = null;
+    const isSubscription = obj.mode === "subscription" || planType === "subscription-plan";
+    if (hash || isSubscription) {
+      verifiedResult = await trackProofAndMaybeUnlock({
+        email: to,
+        proofId: hash ? canonicalId : null,
+        createdAt: nowIso,
+        subscription: isSubscription ? { plan: plan || md.planKey || null } : null,
+      });
+    }
+
     // --- response (useful for Stripe dashboard delivery logs) ---------------
     return {
       statusCode: 200,
@@ -429,6 +447,7 @@ exports.handler = async (event) => {
         canonicalId,
         verifyUrl: `${origin}/v/${canonicalId}`,
         livemode: !!obj.livemode,
+        verified: verifiedResult,
       }),
     };
   } catch (err) {
