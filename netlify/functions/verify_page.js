@@ -333,6 +333,20 @@ body {
 .footer-links a:hover { color: #fff; }
 .footer-links a.accent { color: #f59e0b; }
 .footer-links a.accent:hover { color: #fbbf24; }
+
+/* Header nav */
+.header-nav { display: flex; align-items: center; gap: 20px; }
+.header-nav a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+.header-nav a:hover { color: var(--text); }
+.header-nav .nav-cta {
+  background: var(--accent); color: #0a0d10; padding: 8px 18px;
+  border-radius: 999px; font-weight: 700; font-size: 14px;
+}
+.header-nav .nav-cta:hover { background: var(--accent-hover); color: #0a0d10; }
+@media (max-width: 600px) {
+  .header-nav { gap: 12px; }
+  .header-nav a:not(.nav-cta) { display: none; }
+}
 </style>
 <!-- Google Analytics 4 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-P1RM3T3CSX"></script>
@@ -366,6 +380,12 @@ body {
           <div class="logo-sub">Proof you can point to.</div>
         </div>
       </a>
+      <nav class="header-nav">
+        <a href="/#how">How It Works</a>
+        <a href="/#pricing">Pricing</a>
+        <a href="/#faq">FAQ</a>
+        <a href="/app.html" class="nav-cta">Generate Proof</a>
+      </nav>
     </div>
   </div>
 </header>
@@ -397,7 +417,7 @@ body {
             <div id="anchor-state" class="field-value">&mdash;</div>
           </div>
           <div class="field">
-            <div class="field-label">Bitcoin Block</div>
+            <div class="field-label">Blockchain Block</div>
             <div id="bitcoin-block" class="field-value">&mdash;</div>
           </div>
           <div class="field">
@@ -409,7 +429,7 @@ body {
         <div class="explainer" id="explainerBox" style="display:none;">
           <p>
             <strong>What just happened:</strong> We created a unique hash (a SHA-256 code) of your file.
-            This hash &mdash; not your file &mdash; is being anchored to the Bitcoin blockchain.
+            This hash &mdash; not your file &mdash; is being anchored to the blockchain.
           </p>
           <p>
             Think of it like a <strong>permanent seal stamped into the blockchain</strong>: once confirmed, anyone can verify your file existed
@@ -425,7 +445,7 @@ body {
           <div id="emailPaidContent" style="display:${sourcePaid ? 'block' : 'none'};">
             <div style="padding:12px 16px;background:#0d1912;border:1px solid #1e5131;border-radius:10px;">
               <p style="color:#9af3b4;font-size:14px;font-weight:600;margin:0 0 8px;">&#10003; Your PDF Certificate will be emailed once your proof is anchored.</p>
-              <p style="color:#8b949e;font-size:13px;margin:0;">It will include the Bitcoin block number and all details needed for legal verification.</p>
+              <p style="color:#8b949e;font-size:13px;margin:0;">It will include the block number and all details needed for legal verification.</p>
             </div>
             <div style="margin-top:16px;text-align:center;">
               <a href="/proof-gallery.html" target="_blank" rel="noopener" style="color:var(--accent);font-size:14px;font-weight:600;text-decoration:none;">Add your proof to The Proof Gallery &rarr;</a>
@@ -459,7 +479,7 @@ body {
             This hash is unique &mdash; even changing a single pixel or character creates a completely different one.
           </p>
           <p>
-            This hash is anchored into the <strong>Bitcoin blockchain</strong>,
+            This hash is anchored into the <strong>blockchain</strong>,
             the most secure and permanent public ledger in existence. Once confirmed, it can never be altered or removed.
           </p>
           <p>
@@ -478,7 +498,7 @@ body {
             <div class="bv-label">See your proof on the blockchain</div>
             <div id="bvContent">
               <p class="bv-pending">Your proof is being anchored. Once confirmed (1&ndash;3 hours),
-              you&rsquo;ll see a live link here to view it on the Bitcoin blockchain.</p>
+              you&rsquo;ll see a live link here to view it on the blockchain.</p>
             </div>
           </div>
 
@@ -577,7 +597,7 @@ body {
 <footer class="footer">
   <div class="shell">
     <div class="footer-links"><a href="/commitments.html" class="accent">Our Commitments</a> &middot; <a href="/terms.html">Terms</a> &middot; <a href="/privacy.html">Privacy</a></div>
-    &copy; ${yr} docuProof.io &mdash; Bitcoin-anchored proof of existence
+    &copy; ${yr} docuProof.io &mdash; Blockchain-anchored proof of existence
   </div>
 </footer>
 
@@ -612,7 +632,7 @@ body {
     "tech":          "https://docuproof.io/launch.html",
     "general":       "https://docuproof.io/start.html"
   };
-  var shareText = "I just timestamped a file on the Bitcoin blockchain with docuProof \\u2014 permanent, tamper-proof proof of existence.";
+  var shareText = "I just timestamped a file on the blockchain with docuProof \\u2014 permanent, tamper-proof proof of existence.";
 
   window._shareOpen = function(e, action) {
     e.stopPropagation();
@@ -716,12 +736,12 @@ body {
     fieldState.textContent = "Queued for anchoring";
     fieldBlock.innerHTML = "Awaiting confirmation";
     fieldConf.textContent = "\\u2014";
-    bvContent.innerHTML = '<p class="bv-pending">Your proof is being anchored to the Bitcoin blockchain. Once a miner confirms the transaction (typically 1\\u20133 hours), a live link will appear here so you can see it on the actual blockchain.</p>';
+    bvContent.innerHTML = '<p class="bv-pending">Your proof is being anchored to the blockchain. Once confirmed (typically 1\\u20133 hours), a live link will appear here so you can see it on the actual blockchain.</p>';
   }
 
   function showAnchored(d) {
     pill.className = "pill pill-success";
-    pill.textContent = "\\u2713 Anchored on the Bitcoin blockchain";
+    pill.textContent = "\\u2713 Anchored on the blockchain";
     fieldState.textContent = "Confirmed";
     fieldConf.textContent = d.confirmations != null ? d.confirmations : "\\u2014";
 
@@ -733,8 +753,8 @@ body {
 
       bvContent.innerHTML =
         '<a class="bv-link" href="https://mempool.space/block/' + block + '" target="_blank" rel="noopener">' +
-        '\\ud83d\\udd17 View Bitcoin Block #' + block + ' on Mempool.space</a>' +
-        '<p style="margin-top:10px;font-size:12px;color:#8b949e;">This is the actual Bitcoin block where your proof is permanently recorded. Anyone can independently verify it.</p>';
+        '\\ud83d\\udd17 View Block #' + block + ' on Mempool.space</a>' +
+        '<p style="margin-top:10px;font-size:12px;color:#8b949e;">This is the actual blockchain block where your proof is permanently recorded. Anyone can independently verify it.</p>';
 
       // Update cert teaser to show anchored proof info (no personal details)
       var certTeaser = document.getElementById("certTeaser");
@@ -743,7 +763,7 @@ body {
           '<div style="padding:24px 20px;text-align:center;background:#0d1912;border:1px solid #1e5131;">' +
             '<div style="font-size:36px;margin-bottom:10px;">\\u2705</div>' +
             '<div style="font-size:16px;font-weight:700;color:#22c55e;margin-bottom:4px;">Proof Anchored</div>' +
-            '<div style="font-size:13px;color:#8b949e;">Bitcoin Block #' + block + '</div>' +
+            '<div style="font-size:13px;color:#8b949e;">Block #' + block + '</div>' +
           '</div>' +
           '<div style="padding:14px 16px;text-align:center;background:#1a1f24;">' +
             '<a href="https://mempool.space/block/' + block + '" target="_blank" rel="noopener" style="color:#22c55e;font-weight:600;font-size:14px;text-decoration:none;">View on Mempool.space \\u2192</a>' +

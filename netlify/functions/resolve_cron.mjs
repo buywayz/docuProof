@@ -338,7 +338,7 @@ export const handler = async (_event) => {
                       
                       <div style="border-top: 1px solid #21262d; padding-top: 16px; margin-top: 24px; text-align: center;">
                         <p style="color: #6b7280; font-size: 13px; margin: 0;">
-                          docuProof.io — Bitcoin-anchored proof of existence
+                          docuProof.io — Blockchain-anchored proof of existence
                         </p>
                       </div>
                     </div>
