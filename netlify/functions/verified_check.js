@@ -103,7 +103,7 @@ ${business ? `
     </div>
   </div>
 
-  <p class="trust-msg">This business actively verifies their important documents with docuProof — creating permanent, blockchain-anchored proof that their files existed at specific moments in time. Documents verified by docuProof are independently verifiable and cannot be tampered with.</p>
+  <p class="trust-msg">This business actively verifies their important documents with docuProof — creating permanent, blockchain-anchored proof that their files existed at specific moments in time. All verified documents are independently verifiable and tamper-proof.</p>
 
   <div class="cta-section">
     <p>Protect your own documents the same way</p>
