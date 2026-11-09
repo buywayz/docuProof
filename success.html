@@ -735,6 +735,44 @@
   .spread-text {
     color: inherit;
   }
+
+  /* docuProof Verified nudge */
+  .verified-nudge {
+    margin-top: 24px;
+    text-align: center;
+  }
+  .verified-nudge a {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    max-width: 560px;
+    padding: 16px 22px;
+    background: var(--card);
+    border: 1px solid rgba(34, 197, 94, 0.5);
+    border-radius: 12px;
+    text-decoration: none;
+    text-align: left;
+    transition: border-color 0.2s;
+  }
+  .verified-nudge a:hover {
+    border-color: #22c55e;
+  }
+  .verified-nudge img {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+  .verified-nudge strong {
+    display: block;
+    color: #22c55e;
+    font-size: 17px;
+  }
+  .verified-nudge span {
+    color: #9aa3af;
+    font-size: 14px;
+    line-height: 1.45;
+  }
 </style>
 
 <!-- Google Analytics 4 -->
@@ -1105,6 +1143,17 @@
     </div>
   </section>
 
+  <!-- docuProof Verified nudge -->
+  <section class="verified-nudge">
+    <a href="/verified-program.html" target="_blank" rel="noopener">
+      <img src="/docuproof-logo.png" alt="">
+      <div>
+        <strong>Every proof counts toward docuProof Verified ✓</strong>
+        <span>Timestamp 5 documents and we'll email you a Verified badge for your email signature, plus a public verification page for your business. Subscribers get it instantly.</span>
+      </div>
+    </a>
+  </section>
+
   <!-- Spread the Word -->
   <section class="spread-word">
     <a href="/badges.html" target="_blank" rel="noopener" class="spread-link">
@@ -1121,6 +1170,7 @@
     <a href="/verify" style="color:#9aa3af;text-decoration:none;">Verify a Proof</a> · 
     <a href="/proof-gallery.html" style="color:#9aa3af;text-decoration:none;">Proof Gallery</a> · 
     <a href="/badges.html" style="color:#9aa3af;text-decoration:none;">Email Badges</a> · 
+    <a href="/verified-program.html" style="color:#9aa3af;text-decoration:none;">docuProof Verified</a> · 
     <a href="/commitments.html" style="color:#f59e0b;text-decoration:none;">Our Commitments</a> · 
     <a href="/terms.html" style="color:#9aa3af;text-decoration:none;">Terms</a> · 
     <a href="/privacy.html" style="color:#9aa3af;text-decoration:none;">Privacy</a>
