@@ -432,7 +432,7 @@ export const handler = async (_event) => {
                 const emailPayload = {
                   From: process.env.POSTMARK_FROM || "docuProof <no-reply@docuproof.io>",
                   To: recipientEmail,
-                  Subject: `✓ Your proof is anchored — Block #${anchor.blockHeight}`,
+                  Subject: `✓ Proof ${id} is anchored — Block #${anchor.blockHeight}`, // unique per proof so Gmail doesn't group them
                   HtmlBody: `
                     <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; background: #0a0d10; color: #e8eaed; padding: 32px; border-radius: 12px;">
                       <div style="text-align: center; margin-bottom: 24px;">
