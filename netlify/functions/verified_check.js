@@ -1,4 +1,5 @@
 // verified_check.js — Netlify function
+// v2.1.0 — Removed mock test pages (acme-law, test); only real verified records are shown
 // v2.0.0 — Real lookup from Netlify Blobs (store "proofs", key "verified:{slug}")
 //          + one-click badge copy page at /verified/{slug}/badge
 // URL patterns (see netlify.toml):
@@ -7,15 +8,9 @@
 
 const { getVerified, badgeHtml, escapeHtml } = require("./_verified");
 
-// Test fixtures — used only when no real record exists for the slug
-const MOCK_DATA = {
-  "acme-law": { name: "Acme Law Group", since: "October 2026", documents: 47, active: true },
-  "test": { name: "Test Business", since: "November 2026", documents: 5, active: true },
-};
-
 function formatSince(since) {
   if (!since) return "";
-  // Real records store an ISO date; mock data stores "Month YYYY"
+  // Records store an ISO date; also accepts a plain "Month YYYY" string
   if (/^\d{4}-\d{2}-\d{2}/.test(since)) {
     const d = new Date(since);
     if (!isNaN(d)) {
@@ -57,7 +52,6 @@ exports.handler = async (event) => {
   } catch (err) {
     console.error("[verified_check] lookup error:", err);
   }
-  if (!business && MOCK_DATA[slug]) business = MOCK_DATA[slug];
 
   const name = business ? escapeHtml(business.name) : "";
   const since = business ? escapeHtml(formatSince(business.since)) : "";
