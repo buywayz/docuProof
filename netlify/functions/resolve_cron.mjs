@@ -1,4 +1,11 @@
 // netlify/functions/resolve_cron.mjs
+// v6.0.0 - FIX: pending proofs were never checked once >40 anchor records existed.
+//           The batch was the first 40 keys alphabetically (anchored ones included),
+//           so proofs whose IDs start late in the alphabet were starved forever.
+//         - Now: only NOT-anchored records are batched, rotated by lastCheckedAt so
+//           every pending proof gets checked; stops before the 30s scheduled limit.
+//         - SELF-HEAL: recent paid proofs (feed:all) that never got an OTS receipt
+//           (submission failed/timed out) are stamped here, so none stay "not found".
 // v5.1.0 - FIX: Always reads proof record for filename, displayName, ripPurchased
 //         - Previously these were only read in the email fallback path, so paid proofs
 //           (which had email in email-prospects) never got metadata → blank fields + no RIP
@@ -14,7 +21,58 @@
 
 const OTS_SIDECAR_URL = process.env.OTS_SIDECAR_URL;
 const SITE_ORIGIN = process.env.URL || "https://docuproof.io";
-const BATCH_LIMIT = 40;
+const BATCH_LIMIT = 40;          // max pending proofs checked per run
+const HEAL_LIMIT = 5;            // max missing submissions repaired per run
+const TIME_BUDGET_MS = 22000;    // scheduled functions are killed at 30s
+const HEAL_MIN_AGE_MS = 10 * 60 * 1000;          // give the webhook 10 min first
+const HEAL_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // ignore anything older than 30 days
+
+/** Submit a hash to the sidecar and store the receipt + OTS_RECEIPT anchor record. */
+async function stampAndStore(store, { id, hash, createdAt, existing = {} }) {
+  const resp = await fetch(`${OTS_SIDECAR_URL}/stamp-hash`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, hash }),
+  });
+  if (!resp.ok) throw new Error(`stamp-hash ${resp.status}: ${await resp.text().catch(() => "")}`);
+  const j = await resp.json();
+  if (!j.ok || !j.receipt_b64) throw new Error("stamp-hash returned no receipt");
+
+  await store.set(`ots/receipts/${id}.ots`, Buffer.from(j.receipt_b64, "base64"), {
+    contentType: "application/octet-stream",
+  });
+  const nowIso = new Date().toISOString();
+  await store.set(`anchor:${id}.json`, JSON.stringify({
+    ...existing,
+    id,
+    state: "OTS_RECEIPT",
+    hash: String(hash).toLowerCase(),
+    receiptStored: true,
+    createdAt: existing.createdAt || createdAt || nowIso,
+    updatedAt: nowIso,
+    resubmittedBy: "resolve_cron",
+    resubmittedAt: nowIso,
+  }), { contentType: "application/json" });
+}
+
+async function readJsonKey(store, key) {
+  try {
+    const t = await store.get(key, { type: "text" });
+    return t ? JSON.parse(t) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function hasReceipt(store, id) {
+  for (const rk of [`ots/receipts/${id}.ots`, `ots:${id}.receipt`]) {
+    try {
+      const ab = await store.get(rk, { type: "arrayBuffer" });
+      if (ab && ab.byteLength > 0) return true;
+    } catch {}
+  }
+  return false;
+}
 
 function json(status, body) {
   return {
@@ -61,6 +119,8 @@ async function getEmailStore() {
 }
 
 export const handler = async (_event) => {
+  const startedAt = Date.now();
+  const timeLeft = () => TIME_BUDGET_MS - (Date.now() - startedAt);
   try {
     if (!OTS_SIDECAR_URL) {
       return json(500, { ok: false, error: "OTS_SIDECAR_URL not configured" });
@@ -83,18 +143,69 @@ export const handler = async (_event) => {
       return json(500, { ok: false, error: "Failed to list anchor keys", detail: String(listErr) });
     }
 
-    if (anchorKeys.length === 0) {
-      return json(200, { ok: true, processed: 0, note: "no anchor records found" });
+    // ─── Step 1b: SELF-HEAL proofs whose OTS submission never happened ──
+    // Paid proofs are in feed:all. If one has a hash but no anchor record and no
+    // receipt, its submission failed (e.g. a timeout) — stamp it now.
+    let healed = 0;
+    let healErrors = 0;
+    try {
+      const anchorSet = new Set(anchorKeys);
+      const feed = (await readJsonKey(store, "feed:all")) || [];
+      const items = Array.isArray(feed) ? feed : (feed.items || []);
+      for (const it of items) {
+        if (healed + healErrors >= HEAL_LIMIT || timeLeft() < 12000) break;
+        if (!it || !it.id || !it.hash || !/^[0-9a-fA-F]{64}$/.test(it.hash)) continue;
+        const age = Date.now() - Date.parse(it.createdAt || 0);
+        if (!(age > HEAL_MIN_AGE_MS && age < HEAL_MAX_AGE_MS)) continue;
+        const aKey = `anchor:${it.id}.json`;
+        if (anchorSet.has(aKey)) continue;
+        if (await hasReceipt(store, it.id)) continue;
+        try {
+          await stampAndStore(store, { id: it.id, hash: it.hash, createdAt: it.createdAt });
+          anchorKeys.push(aKey);
+          healed++;
+          console.log(`resolve_cron: SELF-HEAL stamped missing proof ${it.id}`);
+        } catch (e) {
+          healErrors++;
+          console.error(`resolve_cron: SELF-HEAL failed for ${it.id}:`, e);
+        }
+      }
+    } catch (healErr) {
+      console.error("resolve_cron: self-heal step failed (non-fatal):", healErr);
     }
 
-    // ─── Step 2: Process each pending anchor ────────────────────────────
-    const batch = anchorKeys.slice(0, BATCH_LIMIT);
+    if (anchorKeys.length === 0) {
+      return json(200, { ok: true, processed: 0, healed, note: "no anchor records found" });
+    }
+
+    // ─── Step 2: Pick pending anchors (not anchored), least-recently-checked first
+    // Previously: anchorKeys.slice(0, 40) — included finished proofs and always the
+    // same alphabetical first 40, so later IDs were never checked.
+    const pendingList = [];
+    let alreadyAnchored = 0;
+    for (let i = 0; i < anchorKeys.length; i += 25) {
+      const chunk = anchorKeys.slice(i, i + 25);
+      const docs = await Promise.all(chunk.map((k) => readJsonKey(store, k)));
+      docs.forEach((doc, j) => {
+        if (!doc) return;
+        if (doc.state === "ANCHORED" && doc.blockHeight > 0) { alreadyAnchored++; return; }
+        pendingList.push({
+          key: chunk[j],
+          last: Date.parse(doc.lastCheckedAt || 0) || 0,
+          created: Date.parse(doc.createdAt || doc.updatedAt || 0) || 0,
+        });
+      });
+    }
+    pendingList.sort((a, b) => a.last - b.last || a.created - b.created);
+    const batch = pendingList.slice(0, BATCH_LIMIT).map((p) => p.key);
     let processed = 0;
     let skipped = 0;
     let upgraded = 0;
     let errors = 0;
 
+    let stoppedForTime = false;
     for (const anchorKey of batch) {
+      if (timeLeft() < 4000) { stoppedForTime = true; break; }
       try {
         // Read anchor status
         const raw = await store.get(anchorKey, { type: "text" });
@@ -119,6 +230,12 @@ export const handler = async (_event) => {
         const id = anchorKey.replace(/^anchor:/, "").replace(/\.json$/, "");
         if (!id) { processed++; continue; }
 
+        // Rotation marker: so the next run starts with proofs not checked recently
+        anchor.lastCheckedAt = new Date().toISOString();
+        try {
+          await store.set(anchorKey, JSON.stringify(anchor), { contentType: "application/json" });
+        } catch {}
+
         // ─── Step 3: Load the .ots receipt ────────────────────────────
         const receiptCandidates = [
           `ots/receipts/${id}.ots`,
@@ -137,7 +254,22 @@ export const handler = async (_event) => {
         }
 
         if (!receiptBytes) {
-          // No receipt found - can't upgrade
+          // No receipt: the original submission failed. Re-stamp if we know the hash.
+          let hash = anchor.hash || null;
+          if (!hash) {
+            const pr = (await readJsonKey(store, `proof:${id}`)) || {};
+            hash = pr.hash || null;
+          }
+          if (hash && /^[0-9a-fA-F]{64}$/.test(hash) && healed < HEAL_LIMIT && timeLeft() > 8000) {
+            try {
+              await stampAndStore(store, { id, hash, existing: anchor });
+              healed++;
+              console.log(`resolve_cron: SELF-HEAL re-stamped ${id} (anchor had no receipt)`);
+            } catch (e) {
+              healErrors++;
+              console.error(`resolve_cron: SELF-HEAL re-stamp failed for ${id}:`, e);
+            }
+          }
           processed++;
           continue;
         }
@@ -390,7 +522,13 @@ export const handler = async (_event) => {
       skipped,
       errors,
       total: anchorKeys.length,
+      alreadyAnchored,
+      pending: pendingList.length,
       batch: batch.length,
+      stoppedForTime,
+      healed,
+      healErrors,
+      ms: Date.now() - startedAt,
     });
   } catch (e) {
     console.error("resolve_cron error:", e);
