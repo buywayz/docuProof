@@ -163,7 +163,7 @@ exports.handler = async (event) => {
                 </div>
                 
                 <p style="color: #c9d2db; line-height: 1.6;">
-                  Your file's unique fingerprint has been submitted for anchoring on the Bitcoin blockchain. 
+                  Your file's unique hash has been submitted for anchoring on the blockchain. 
                   This typically takes 1–3 hours.
                 </p>
                 
@@ -183,7 +183,7 @@ exports.handler = async (event) => {
                 </div>
               </div>
             `,
-            TextBody: `Your docuProof Proof ID: ${proofId}\n\nYour file's fingerprint has been submitted for anchoring on the Bitcoin blockchain.\n\nCheck your proof status: ${verifyUrl}\n\ndocuProof.io — Proof you can point to.`,
+            TextBody: `Your docuProof Proof ID: ${proofId}\n\nYour file's hash has been submitted for anchoring on the blockchain.\n\nCheck your proof status: ${verifyUrl}\n\ndocuProof.io — Proof you can point to.`,
             MessageStream: "outbound",
           }),
         });

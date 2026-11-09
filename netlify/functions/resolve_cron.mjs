@@ -300,7 +300,7 @@ export const handler = async (_event) => {
                 const emailPayload = {
                   From: process.env.POSTMARK_FROM || "docuProof <no-reply@docuproof.io>",
                   To: recipientEmail,
-                  Subject: `✓ Your proof is anchored — Bitcoin Block #${anchor.blockHeight}`,
+                  Subject: `✓ Your proof is anchored — Block #${anchor.blockHeight}`,
                   HtmlBody: `
                     <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; background: #0a0d10; color: #e8eaed; padding: 32px; border-radius: 12px;">
                       <div style="text-align: center; margin-bottom: 24px;">
@@ -316,12 +316,12 @@ export const handler = async (_event) => {
                       <div style="background: #12161c; border: 1px solid #21262d; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
                         <p style="color: #8b949e; font-size: 13px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 0.1em;">Proof ID</p>
                         <p style="font-family: monospace; font-size: 16px; color: #22c55e; margin: 0 0 16px; word-break: break-all;">${id}</p>
-                        <p style="color: #8b949e; font-size: 13px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 0.1em;">Bitcoin Block</p>
+                        <p style="color: #8b949e; font-size: 13px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 0.1em;">Blockchain Block</p>
                         <p style="font-size: 16px; color: #e8eaed; margin: 0;">#${anchor.blockHeight}</p>
                       </div>
                       
                       <p style="color: #c9d2db; line-height: 1.6;">
-                        Your file's unique hash is now permanently recorded on the Bitcoin blockchain. 
+                        Your file's unique hash is now permanently recorded on the blockchain. 
                         It can never be altered or removed. Anyone can independently verify it existed at the moment you timestamped it.
                       </p>
 
@@ -343,7 +343,7 @@ export const handler = async (_event) => {
                       </div>
                     </div>
                   `,
-                  TextBody: `Your proof is anchored!\n\nProof ID: ${id}\nBitcoin Block: #${anchor.blockHeight}\n\nYour file's unique hash is now permanently recorded on the Bitcoin blockchain.\n\n${pdfB64 ? 'Your Certificate of Proof is attached as a PDF.\n\n' : ''}View your proof: ${verifyUrl}\nView on Mempool: ${mempoolUrl}\n\ndocuProof.io — Proof you can point to.`,
+                  TextBody: `Your proof is anchored!\n\nProof ID: ${id}\nBlockchain Block: #${anchor.blockHeight}\n\nYour file's unique hash is now permanently recorded on the blockchain.\n\n${pdfB64 ? 'Your Certificate of Proof is attached as a PDF.\n\n' : ''}View your proof: ${verifyUrl}\nView on Mempool: ${mempoolUrl}\n\ndocuProof.io — Proof you can point to.`,
                   MessageStream: "outbound",
                 };
 

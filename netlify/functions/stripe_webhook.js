@@ -234,7 +234,8 @@ exports.handler = async (event) => {
     // Plan info (set by create_plan_session.js for subscriptions)
     const plan = md.plan || null;           // e.g. "pro_monthly", "pro_annual", "starter_monthly", "starter_annual"
     const planType = md.type || null;       // e.g. "subscription-plan"
-    const isPro = plan && plan.startsWith("pro_");
+    // Pricing-page buttons send "pro_monthly"/"pro_annual"; app.html sends plan "pro" + planKey "pro-monthly"
+    const isPro = /^pro([_-]|$)/.test(String(plan || md.planKey || "").toLowerCase());
 
     // Preserve original createdAt if record already exists; otherwise now.
     const nowIso =
@@ -383,12 +384,12 @@ exports.handler = async (event) => {
             </div>
 
             <p style="color: #c9d2db; line-height: 1.6;">
-              Your file's unique hash has been submitted for anchoring on the Bitcoin blockchain.
+              Your file's unique hash has been submitted for anchoring on the blockchain.
               This typically takes 1–3 hours.
             </p>
             <p style="color: #c9d2db; line-height: 1.6;">
               <strong style="color: #e8eaed;">Your PDF Certificate of Proof</strong> will be emailed to you
-              once your proof is permanently anchored — it will include the Bitcoin block number
+              once your proof is permanently anchored — it will include the block number
               and all the details needed for legal verification.
             </p>
 
@@ -412,7 +413,7 @@ exports.handler = async (event) => {
         textBody:
           `Thanks for using docuProof.io.\n\n` +
           `Your Proof ID: ${canonicalId}\n\n` +
-          `Your file's unique hash has been submitted for anchoring on the Bitcoin blockchain.\n` +
+          `Your file's unique hash has been submitted for anchoring on the blockchain.\n` +
           `This typically takes 1-3 hours.\n\n` +
           `Your PDF Certificate of Proof will be emailed to you once anchoring is complete.\n\n` +
           `Check your proof status: ${verifyUrl}\n\n` +

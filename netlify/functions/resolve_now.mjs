@@ -207,18 +207,18 @@ export const handler = async (event) => {
           // Send email (best-effort)
           await sendEmail({
             to: proof.customerEmail,
-            subject: `docuProof anchored on Bitcoin: ${proof.displayName || "Your proof"}`,
+            subject: `docuProof anchored on the blockchain: ${proof.displayName || "Your proof"}`,
             htmlBody: `
-              <p>Your docuProof has been <strong>anchored on Bitcoin</strong>.</p>
+              <p>Your docuProof has been <strong>anchored on the blockchain</strong>.</p>
               <p><strong>Proof ID:</strong> <code>${id}</code></p>
-              <p><strong>Bitcoin txid:</strong> <code>${txid}</code></p>
+              <p><strong>Transaction ID:</strong> <code>${txid}</code></p>
               <p>Explorer: <a href="${mempoolUrl}">${mempoolUrl}</a></p>
               <p>Verify: <a href="${verifyUrl}">${verifyUrl}</a></p>
             `,
             textBody:
-              `Your docuProof has been anchored on Bitcoin.\n\n` +
+              `Your docuProof has been anchored on the blockchain.\n\n` +
               `Proof ID: ${id}\n` +
-              `Bitcoin txid: ${txid}\n` +
+              `Transaction ID: ${txid}\n` +
               `Explorer: ${mempoolUrl}\n` +
               `Verify: ${verifyUrl}\n`,
             attachments: [],
