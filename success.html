@@ -1232,6 +1232,26 @@
     return { ok: r.ok, status: r.status, json: j, text: txt };
   }
 
+  // Google Ads conversion: report real paid purchases only (not $0 promo checkouts),
+  // once per Stripe session. transaction_id lets Google de-duplicate reloads too.
+  function reportPurchaseConversion(info) {
+    try {
+      if (!info || info.paymentStatus !== "paid") return;
+      const cents = Number(info.amountTotal);
+      if (!(cents > 0)) return;
+      const key = "dp_conv_" + sessionId;
+      try { if (localStorage.getItem(key)) return; } catch (e) {}
+      if (typeof gtag === "function") {
+        gtag("event", "conversion_event_purchase", {
+          value: cents / 100,
+          currency: String(info.currency || "usd").toUpperCase(),
+          transaction_id: sessionId
+        });
+      }
+      try { localStorage.setItem(key, "1"); } catch (e) {}
+    } catch (e) {}
+  }
+
   async function resolveCanonicalId() {
     if (explicitId) return explicitId;
     if (!sessionId) return null;
@@ -1241,6 +1261,7 @@
     if (ok && json && json.canonicalId) {
       // Also try to get the hash from session info
       if (json.hash) proofHash = json.hash;
+      reportPurchaseConversion(json);
       return String(json.canonicalId).trim();
     }
     return null;

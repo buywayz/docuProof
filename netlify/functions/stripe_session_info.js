@@ -1,8 +1,11 @@
 // netlify/functions/stripe_session_info.js
 // Purpose: map Stripe Checkout session_id (cs_live_...) -> canonical proof id
 // Canonical rule: sha256(session_id).slice(0, 12) (must match stripe_webhook.js)
+// v2: also returns amountTotal / currency / paymentStatus / mode so success.html can
+//     report real paid purchases to Google Ads (free promo checkouts are not reported).
 
 const crypto = require("crypto");
+const Stripe = require("stripe");
 
 exports.handler = async (event) => {
   try {
@@ -33,6 +36,21 @@ exports.handler = async (event) => {
       .digest("hex")
       .slice(0, 12);
 
+    // Purchase details for conversion tracking (best-effort; never blocks the page)
+    let amountTotal = null, currency = null, paymentStatus = null, mode = null;
+    try {
+      if (process.env.STRIPE_SECRET_KEY) {
+        const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+        const s = await stripe.checkout.sessions.retrieve(sessionId);
+        amountTotal = typeof s.amount_total === "number" ? s.amount_total : null; // cents
+        currency = s.currency || null;
+        paymentStatus = s.payment_status || null; // "paid" | "no_payment_required" | "unpaid"
+        mode = s.mode || null;                    // "payment" | "subscription"
+      }
+    } catch (stripeErr) {
+      console.error("stripe_session_info: Stripe lookup failed (non-fatal):", stripeErr.message);
+    }
+
     return {
       statusCode: 200,
       headers: { "content-type": "application/json" },
@@ -40,6 +58,10 @@ exports.handler = async (event) => {
         ok: true,
         id: sessionId,
         canonicalId,
+        amountTotal,
+        currency,
+        paymentStatus,
+        mode,
         verifyUrl: `${event.headers["x-forwarded-proto"] || "https"}://${event.headers["x-forwarded-host"] || event.headers.host}/v/${canonicalId}`,
       }),
     };
