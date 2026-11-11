@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prove When a Document Was Created — docuProof</title>
+  <meta name="description" content="Get independent, blockchain-anchored proof of the date any document existed. About 60 seconds, $2.89, and your file never leaves your device.">
+  <link rel="icon" href="/docuproof-logo.png">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #0a0d12;
+      --bg-card: #12171f;
+      --border: #1e2a3a;
+      --text: #e8eaed;
+      --text-muted: #8b95a5;
+      --accent: #22c55e;
+      --accent-glow: rgba(34, 197, 94, 0.15);
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Space Grotesk', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    
+    /* Subtle grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: 
+        linear-gradient(rgba(34, 197, 94, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 197, 94, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    /* Header */
+    header {
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .header-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text);
+    }
+    
+    .logo img {
+      width: 36px;
+      height: 36px;
+    }
+    
+    .logo-text {
+      font-weight: 700;
+      font-size: 20px;
+    }
+    
+    .logo-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+    
+    .nav-cta {
+      background: var(--accent);
+      color: #000;
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .nav-cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+    
+    /* Hero */
+    .hero {
+      padding: 80px 0 30px;
+      text-align: center;
+    }
+    
+    .hero-badge {
+      display: inline-block;
+      background: var(--accent-glow);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: var(--accent);
+      padding: 6px 16px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 24px;
+    }
+    
+    .hero h1 {
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 700;
+      line-height: 1.15;
+      margin-bottom: 20px;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .hero h1 .highlight {
+      color: var(--accent);
+    }
+    
+    .hero-sub {
+      font-size: 20px;
+      color: var(--text-muted);
+      max-width: 650px;
+      margin: 0 auto 16px;
+    }
+    
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin: 32px 0;
+      flex-wrap: wrap;
+    }
+    
+    .stat {
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    
+    /* Problem Section */
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    /* Use Cases */
+    .usecases {
+      padding: 60px 0;
+      border-top: 1px solid var(--border);
+    }
+    
+    .usecases h2 {
+      text-align: center;
+      font-size: 28px;
+      margin-bottom: 40px;
+    }
+    
+    .usecase-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    
+    .usecase-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      transition: border-color 0.2s;
+    }
+    
+    .usecase-item:hover {
+      background: #1a2230;
+    }
+    
+    .usecase-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    
+    .usecase-text h4 {
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+    
+    .usecase-text p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    
+    /* CTA Section */
+    .cta-section {
+      padding: 80px 0;
+      text-align: center;
+      border-top: 1px solid var(--border);
+    }
+    
+    .cta-box {
+      background: var(--bg-card);
+      border: 2px solid var(--accent);
+      border-radius: 20px;
+      padding: 36px;
+      max-width: 600px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .cta-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    
+    .cta-box h2 {
+      font-size: 24px;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    
+    .cta-box p {
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      position: relative;
+    }
+    
+    .promo-code {
+      display: inline-block;
+      background: var(--accent-glow);
+      border: 2px dashed rgba(34, 197, 94, 0.5);
+      color: var(--accent);
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    
+    .promo-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      position: relative;
+    }
+    
+    .cta-button {
+      display: inline-block;
+      background: var(--accent);
+      color: #000;
+      padding: 14px 32px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+    
+    .cta-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+    
+    .cta-note {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 16px;
+      position: relative;
+    }
+    
+    /* Footer */
+    footer {
+      padding: 40px 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+    
+    .footer-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    
+    .footer-logo img {
+      width: 28px;
+      height: 28px;
+    }
+    
+    .footer-logo span {
+      font-weight: 600;
+    }
+    
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+    
+    .footer-links a:hover {
+      color: var(--accent);
+    }
+    
+    .footer-copy {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    
+    /* Mobile */
+    @media (max-width: 600px) {
+      .hero {
+        padding: 50px 0 40px;
+      }
+      
+      .hero-stats {
+        gap: 24px;
+      }
+      
+  
+      
+      .cta-box {
+        padding: 32px 24px;
+      }
+      
+      .promo-code {
+        font-size: 16px;
+        padding: 10px 18px;
+      }
+    }
+  
+    /* New "What actually holds up as proof" section styles */
+    .proof-section {
+      padding: 40px 0 60px;
+    }
+    .proof-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .proof-header h2 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .proof-header p {
+      color: var(--text-muted, #8b949e);
+    }
+    .proof-bad-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .proof-bad-card {
+      background: linear-gradient(180deg, #1a1f26 0%, #14181e 100%);
+      border: 1px solid rgba(220, 38, 38, 0.4);
+      border-radius: 12px;
+      padding: 18px 16px;
+      text-align: center;
+    }
+    .proof-bad-card .proof-icon {
+      font-size: 18px;
+      color: #dc2626;
+      margin-bottom: 12px; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: rgba(220, 38, 38, 0.2); border: 1px solid rgba(220, 38, 38, 0.4); border-radius: 50%;
+      font-weight: bold;
+    }
+    .proof-bad-card h3 {
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: #fff;
+      font-weight: 600;
+    }
+    .proof-bad-card p {
+      font-size: 14px;
+      color: #8b949e;
+      line-height: 1.5;
+    }
+    .proof-good-section {
+      display: grid;
+      grid-template-columns: 1fr 260px;
+      gap: 32px;
+      background: linear-gradient(180deg, #0f1a12 0%, #0c140f 100%);
+      border: 2px solid #22c55e;
+      border-radius: 16px;
+      padding: 32px;
+      align-items: center;
+    }
+    .proof-good-content .proof-icon {
+      font-size: 20px;
+      color: #22c55e;
+      margin-bottom: 12px; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 50%;
+    }
+    .proof-good-content h3 {
+      font-size: 24px;
+      margin-bottom: 12px;
+      color: #fff;
+      font-weight: 700;
+    }
+    .proof-good-content > p {
+      font-size: 15px;
+      color: #b8c5b8;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .proof-features {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .proof-feature {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: #22c55e;
+      font-weight: 500;
+    }
+        .cert-preview-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .cert-preview {
+      width: 210px;
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      padding: 10px;
+    }
+    .cert-inner {
+      border: 2px solid #2a5934;
+      border-radius: 3px;
+      padding: 8px 6px;
+      background: #fff;
+    }
+    .cert-header {
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    .cert-logo-img {
+      width: 28px;
+      height: 28px;
+      margin: 0 auto 4px;
+      background: #0b0f14;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cert-logo-img svg {
+      width: 20px;
+      height: 20px;
+    }
+    .cert-brand {
+      font-size: 9px;
+      font-weight: 700;
+      color: #22c55e;
+    }
+    .cert-tagline {
+      font-size: 5px;
+      color: #888;
+      font-style: italic;
+    }
+    .cert-divider {
+      width: 60%;
+      height: 1px;
+      background: #2a5934;
+      margin: 6px auto;
+      position: relative;
+    }
+    .cert-divider::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 4px;
+      height: 4px;
+      background: #2a5934;
+      border-radius: 50%;
+    }
+    .cert-title-section {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .cert-title-small {
+      font-size: 6px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .cert-title-main {
+      font-size: 9px;
+      font-weight: 700;
+      color: #2a5934;
+      margin-top: 2px;
+    }
+    .cert-subtitle {
+      font-size: 5px;
+      color: #888;
+      margin-top: 2px;
+    }
+    .cert-details-box {
+      background: #f8f9fa;
+      border: 1px solid #e5e5e5;
+      border-radius: 3px;
+      padding: 6px;
+      margin-bottom: 6px;
+      flex: 1;
+    }
+    .cert-details-header {
+      font-size: 5px;
+      font-weight: 700;
+      color: #2a5934;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+    .cert-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 5px;
+      margin-bottom: 3px;
+      line-height: 1.3;
+    }
+    .cert-row .label {
+      color: #666;
+      font-weight: 600;
+    }
+    .cert-row .value {
+      color: #333;
+      text-align: right;
+      max-width: 60%;
+    }
+    .cert-qr-section {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-top: 6px;
+      border-top: 1px solid #eee;
+    }
+    .cert-qr {
+      width: 32px;
+      height: 32px;
+      background: repeating-conic-gradient(#1a1a1a 0% 25%, #fff 0% 50%) 50% / 5px 5px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .cert-qr-text {
+      flex: 1;
+    }
+    .cert-qr-label {
+      font-size: 5px;
+      color: #666;
+      font-weight: 600;
+    }
+    .cert-qr-url {
+      font-size: 4px;
+      color: #888;
+      word-break: break-all;
+    }
+    .cert-footer {
+      text-align: center;
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px solid #2a5934;
+    }
+    .cert-footer-text {
+      font-size: 4px;
+      color: #888;
+    }
+    @media (max-width: 768px) {
+      .proof-bad-row {
+        grid-template-columns: 1fr;
+      }
+      .proof-good-section {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .proof-features {
+        justify-content: center;
+      }
+      .cert-preview-wrapper {
+        margin-top: 24px;
+      }
+    }
+
+  
+    /* New "What actually holds up as proof" section styles */
+    .proof-section {
+      padding: 40px 0 60px;
+    }
+    .proof-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .proof-header h2 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .proof-header p {
+      color: var(--text-muted, #8b949e);
+    }
+    .proof-bad-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .proof-bad-card {
+      background: linear-gradient(180deg, #1a1f26 0%, #14181e 100%);
+      border: 1px solid rgba(220, 38, 38, 0.4);
+      border-radius: 12px;
+      padding: 18px 16px;
+      text-align: center;
+    }
+    .proof-bad-card .proof-icon {
+      font-size: 18px;
+      color: #dc2626;
+      margin-bottom: 12px; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: rgba(220, 38, 38, 0.2); border: 1px solid rgba(220, 38, 38, 0.4); border-radius: 50%;
+      font-weight: bold;
+    }
+    .proof-bad-card h3 {
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: #fff;
+      font-weight: 600;
+    }
+    .proof-bad-card p {
+      font-size: 14px;
+      color: #8b949e;
+      line-height: 1.5;
+    }
+    .proof-good-section {
+      display: grid;
+      grid-template-columns: 1fr 260px;
+      gap: 32px;
+      background: linear-gradient(180deg, #0f1a12 0%, #0c140f 100%);
+      border: 2px solid #22c55e;
+      border-radius: 16px;
+      padding: 32px;
+      align-items: center;
+    }
+    .proof-good-content .proof-icon {
+      font-size: 20px;
+      color: #22c55e;
+      margin-bottom: 12px; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 50%;
+    }
+    .proof-good-content h3 {
+      font-size: 24px;
+      margin-bottom: 12px;
+      color: #fff;
+      font-weight: 700;
+    }
+    .proof-good-content > p {
+      font-size: 15px;
+      color: #b8c5b8;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .proof-features {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .proof-feature {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: #22c55e;
+      font-weight: 500;
+    }
+    .cert-preview-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .cert-preview {
+      width: 210px;
+      background: #fff;
+      border-radius: 6px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      padding: 10px;
+    }
+    .cert-inner {
+      border: 2px solid #2a5934;
+      border-radius: 3px;
+      padding: 8px 6px;
+      background: #fff;
+    }
+    .cert-header {
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    .cert-logo-img {
+      width: 28px;
+      height: 28px;
+      margin: 0 auto 4px;
+      background: #0b0f14;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cert-logo-img svg {
+      width: 20px;
+      height: 20px;
+    }
+    .cert-brand {
+      font-size: 9px;
+      font-weight: 700;
+      color: #22c55e;
+    }
+    .cert-tagline {
+      font-size: 5px;
+      color: #888;
+      font-style: italic;
+    }
+    .cert-divider {
+      width: 60%;
+      height: 1px;
+      background: #2a5934;
+      margin: 6px auto;
+      position: relative;
+    }
+    .cert-divider::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 4px;
+      height: 4px;
+      background: #2a5934;
+      border-radius: 50%;
+    }
+    .cert-title-section {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .cert-title-small {
+      font-size: 6px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .cert-title-main {
+      font-size: 9px;
+      font-weight: 700;
+      color: #2a5934;
+      margin-top: 2px;
+    }
+    .cert-subtitle {
+      font-size: 5px;
+      color: #888;
+      margin-top: 2px;
+    }
+    .cert-details-box {
+      background: #f8f9fa;
+      border: 1px solid #e5e5e5;
+      border-radius: 3px;
+      padding: 6px;
+      margin-bottom: 6px;
+      flex: 1;
+    }
+    .cert-details-header {
+      font-size: 5px;
+      font-weight: 700;
+      color: #2a5934;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+    .cert-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 5px;
+      margin-bottom: 3px;
+      line-height: 1.3;
+    }
+    .cert-row .label {
+      color: #666;
+      font-weight: 600;
+    }
+    .cert-row .value {
+      color: #333;
+      text-align: right;
+      max-width: 60%;
+    }
+    .cert-qr-section {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-top: 6px;
+      border-top: 1px solid #eee;
+    }
+    .cert-qr {
+      width: 32px;
+      height: 32px;
+      background: repeating-conic-gradient(#1a1a1a 0% 25%, #fff 0% 50%) 50% / 5px 5px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .cert-qr-text {
+      flex: 1;
+    }
+    .cert-qr-label {
+      font-size: 5px;
+      color: #666;
+      font-weight: 600;
+    }
+    .cert-qr-url {
+      font-size: 4px;
+      color: #888;
+      word-break: break-all;
+    }
+    .cert-footer {
+      text-align: center;
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px solid #2a5934;
+    }
+    .cert-footer-text {
+      font-size: 4px;
+      color: #888;
+    }
+    @media (max-width: 768px) {
+      .proof-bad-row {
+        grid-template-columns: 1fr;
+      }
+      .proof-good-section {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .proof-features {
+        justify-content: center;
+      }
+      .cert-preview-wrapper {
+        margin-top: 24px;
+      }
+    }
+
+    /* ===== Free Proof Section ===== */
+    .free-proof-section {
+      padding: 80px 24px;
+      background: linear-gradient(180deg, var(--bg) 0%, var(--bg-card) 100%);
+      border-top: 1px solid var(--border);
+    }
+    .free-proof-section .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .free-proof-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .free-proof-badge {
+      display: inline-block;
+      background: #22c55e;
+      color: #000;
+      padding: 6px 16px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+    .free-proof-header h2 {
+      font-size: clamp(28px, 5vw, 40px);
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+    .free-proof-header p {
+      font-size: 18px;
+      color: var(--text-muted, #8b949e);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .free-proof-compact {
+      max-width: 740px;
+      margin: 0 auto;
+    }
+    .free-proof-options-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .free-opt {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 20px 12px;
+      background: linear-gradient(180deg, #151b22 0%, #0f1318 100%);
+      border: 1px solid var(--border, #21262d);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #fff;
+      text-align: center;
+      font-family: inherit;
+    }
+    .free-opt:hover {
+      border-color: #22c55e;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.15);
+    }
+    .free-opt-icon { font-size: 28px; }
+    .free-opt-label { font-size: 14px; font-weight: 700; line-height: 1.3; }
+    .free-opt-sub { font-size: 11px; color: var(--muted, #8b949e); line-height: 1.4; }
+    .free-proof-compact-note {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #6b7280;
+    }
+    @media (max-width: 768px) {
+      .free-proof-options-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+    }
+    @media (max-width: 480px) {
+      .free-opt { padding: 16px 10px; }
+    }
+      font-style: italic;
+      margin-bottom: 12px;
+    }
+    
+</style>
+
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-P1RM3T3CSX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-P1RM3T3CSX');
+</script>
+
+<!-- Microsoft Clarity -->
+<script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "vftp1ivzr9");
+</script>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="header-inner">
+      <a href="/" class="logo">
+        <img src="/docuproof-logo.png" alt="docuProof">
+        <div>
+          <div class="logo-text">docuProof</div>
+          <div class="logo-sub">Proof you can point to</div>
+        </div>
+      </a>
+      <a href="/start.html" class="nav-cta">Get Started →</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="container">
+      <div class="hero-badge">📅 Prove a document's date</div>
+      <h1>Prove When Your Document Was Created. <span class="highlight">$2.89.</span></h1>
+      <p class="hero-sub">File dates can be changed in seconds. A docuProof timestamp records your document's unique hash on the blockchain — independent proof of the date it existed that anyone can verify.</p>
+      <p style="margin:8px 0 32px"><a href="/app.html" class="cta-button">Timestamp a Document — $2.89 →</a></p>
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-value">$2.89</div>
+          <div class="stat-label">Per file</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">~60 sec</div>
+          <div class="stat-label">To timestamp a file</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">Forever</div>
+          <div class="stat-label">Independently verifiable</div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <section class="proof-section">
+    <div class="container">
+      <div class="proof-header">
+        <h2>Why your file's date isn't proof</h2>
+        <p>Anyone can change it.</p>
+      </div>
+      
+      <div class="proof-bad-row">
+        <div class="proof-bad-card">
+          <div class="proof-icon">✕</div>
+          <h3>Screenshots</h3>
+          <p>Can be faked in 30 seconds with any image editor. Zero credibility in disputes.</p>
+        </div>
+        <div class="proof-bad-card">
+          <div class="proof-icon">✕</div>
+          <h3>File Metadata</h3>
+          <p>"Date Created" can be changed with a single command. Not evidence.</p>
+        </div>
+        <div class="proof-bad-card">
+          <div class="proof-icon">✕</div>
+          <h3>Email Timestamps</h3>
+          <p>Headers can be manipulated. "I emailed it to myself" doesn't prove anything.</p>
+        </div>
+      </div>
+      
+      <div class="proof-good-section">
+        <div class="proof-good-content">
+          <div class="proof-icon">✓</div>
+          <h3>docuProof Certificate</h3>
+          <p>Anchored to an immutable blockchain. Cryptographic proof that can't be disputed, altered, or faked. Independently verifiable forever.</p>
+          <div class="proof-features">
+            <span class="proof-feature">✓ Court-ready PDF</span>
+            <span class="proof-feature">✓ QR verification</span>
+            <span class="proof-feature">✓ Blockchain anchor</span>
+          </div>
+        </div>
+        <div class="cert-preview-wrapper">
+          <img src="/docuProof-Certificate-Screenshot.png" alt="docuProof Certificate of Proof of Existence" style="width:100%;max-width:240px;border-radius:6px;box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <section class="usecases">
+    <div class="container">
+      <h2>Documents people date-stamp</h2>
+      <div class="usecase-grid">
+        <div class="usecase-item">
+          <div class="usecase-icon">📝</div>
+          <div class="usecase-text">
+            <h4>Contracts &amp; NDAs</h4>
+            <p>Lock in the exact version</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">📚</div>
+          <div class="usecase-text">
+            <h4>Manuscripts &amp; scripts</h4>
+            <p>Before you send them out</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">💼</div>
+          <div class="usecase-text">
+            <h4>Business plans &amp; decks</h4>
+            <p>Before sharing with investors</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">💡</div>
+          <div class="usecase-text">
+            <h4>Ideas &amp; research notes</h4>
+            <p>Record when an idea existed</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">🎨</div>
+          <div class="usecase-text">
+            <h4>Designs &amp; source code</h4>
+            <p>Before client or team review</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">✅</div>
+          <div class="usecase-text">
+            <h4>Meeting notes &amp; approvals</h4>
+            <p>What was agreed, and when</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">📋</div>
+          <div class="usecase-text">
+            <h4>Personal records</h4>
+            <p>Prove the version and the date</p>
+          </div>
+        </div>
+        <div class="usecase-item">
+          <div class="usecase-icon">📸</div>
+          <div class="usecase-text">
+            <h4>Screenshots &amp; evidence</h4>
+            <p>Capture it before it changes</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  
+  <!-- Try It Free Section -->
+  <section class="free-proof-section" id="try-free">
+    <div class="container">
+      <div class="free-proof-header">
+        <span class="free-proof-badge">✨ No account needed</span>
+        <h2>See It In Action</h2>
+        <p>Pick any option below to instantly timestamp a file on the blockchain — free, no sign-up required.</p>
+      </div>
+      
+      <div class="free-proof-compact">
+        <div class="free-proof-options-row">
+          <button class="free-opt" onclick="openCamera('moment')">
+            <span class="free-opt-icon">📍</span>
+            <span class="free-opt-label">Take a Photo</span>
+            <span class="free-opt-sub">Snap and timestamp it instantly</span>
+          </button>
+          <button class="free-opt" onclick="openCamera('selfie')">
+            <span class="free-opt-icon">🤳</span>
+            <span class="free-opt-label">Take a Selfie</span>
+            <span class="free-opt-sub">Proof you existed right now</span>
+          </button>
+          <button class="free-opt" onclick="downloadAndPromptHeadline()">
+            <span class="free-opt-icon">📰</span>
+            <span class="free-opt-label">Download Today's Headlines</span>
+            <span class="free-opt-sub">A throwaway file to try risk-free</span>
+          </button>
+          <button class="free-opt" onclick="openFreeProof('upload')">
+            <span class="free-opt-icon">📄</span>
+            <span class="free-opt-label">Upload Any File</span>
+            <span class="free-opt-sub">Document, image, anything</span>
+          </button>
+        </div>
+
+        <p class="free-proof-compact-note">🔒 Your file never leaves your device — only a unique numeric code is recorded.</p>
+      </div>
+
+    </div>
+  </section>
+
+<script>
+function downloadAndPromptHeadline() {
+  var link = document.createElement('a');
+  link.href = '/.netlify/functions/daily_headline';
+  link.download = '';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(function() {
+    showDocuModal({
+      icon: '📰',
+      title: 'Headlines PDF downloaded!',
+      message: 'Check your <strong style="color:#e8eaed;">Downloads folder</strong> to view it.<br><br>When you\'re ready, come back here and click the button below to upload it and create a free blockchain timestamp.',
+      confirmText: 'I\'ve Seen It — Upload & Timestamp →',
+      cancelText: 'I\'ll Come Back Later',
+      onConfirm: function() {
+        openFreeProof('headlines');
+      }
+    });
+  }, 1500);
+}
+</script>
+
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-box">
+        <h2>Prove your document's date today</h2>
+        <p>Upload any file and get a PDF Certificate of Proof with the date, the block number and a QR code anyone can use to verify it.</p>
+        <a href="/app.html" class="cta-button">Timestamp a Document — $2.89 →</a>
+        <p class="cta-note">🔒 Your file never leaves your device. Only its hash — a unique code derived from the file — is recorded on the blockchain.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-logo">
+      <img src="/docuproof-logo.png" alt="docuProof">
+      <span>docuProof</span>
+    </div>
+    <div class="footer-links">
+      <a href="/start.html">Get Started</a>
+      <a href="/verify">Verify a Proof</a>
+      <a href="/proof-gallery.html">Proof Gallery</a>
+      <a href="/badges.html">Email Badges</a>
+      <a href="/verified-program.html">docuProof Verified</a>
+      <a href="/commitments.html">Our Commitments</a>
+      <a href="/start.html#faq">FAQ</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/privacy.html">Privacy</a>
+    </div>
+    <p class="footer-copy">© 2026 docuProof.io — Blockchain-anchored proof of existence</p>
+  </div>
+</footer>
+
+
+<script src="/docuproof-common.js?v=1.1.0"></script>
+</body>
+</html>
