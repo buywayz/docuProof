@@ -621,12 +621,9 @@ a{color:var(--accent);text-decoration:none}
 <p class="hero-sub">docuProof creates a permanent, blockchain-anchored timestamp for any file in 60 seconds. It can never be faked, altered, or destroyed — not by us, not by anyone.</p>
 <p class="hero-tagline">Your file never leaves your device. Only a unique numeric code is recorded. The proof lives forever. $2.89.</p>
 
-<div class="scenario-preview">
-  <a href="/individual-scenarios.html" target="_blank" class="scenario-cta-banner">
-    <span class="scenario-cta-text">
-      <strong>Not sure you need this?</strong> See 9 real scenarios where a $2.89 timestamp could save you thousands →
-    </span>
-  </a>
+<div class="hero-cta" style="margin-bottom:8px">
+  <a href="/app.html" class="btn btn-primary">Timestamp a file: $2.89 &rarr;</a>
+  <a href="#try-free" class="btn btn-secondary">Try one free</a>
 </div>
 
 </div>
@@ -646,6 +643,54 @@ a{color:var(--accent);text-decoration:none}
           <img src="/docuProof-Certificate-Screenshot.png" alt="docuProof Certificate of Proof of Existence" style="width:100%;max-width:240px;border-radius:6px;box-shadow:0 8px 32px rgba(0,0,0,0.4);">
         </div>
       </div>
+<div style="max-width:800px;margin:32px auto 0;padding:0 24px;">
+<div class="scenario-preview">
+  <a href="/individual-scenarios.html" target="_blank" class="scenario-cta-banner">
+    <span class="scenario-cta-text">
+      <strong>Not sure you need this?</strong> See 9 real scenarios where a $2.89 timestamp could save you thousands →
+    </span>
+  </a>
+</div>
+</div>
+</section>
+
+<!-- Try It Free Section -->
+<section class="free-proof-section" id="try-free">
+  <div class="container">
+    <div class="free-proof-header">
+      <span class="free-proof-badge">✨ No account needed</span>
+      <h2>See It In Action</h2>
+      <p>Pick any option below to instantly timestamp a file on the blockchain — free, no sign-up required.</p>
+    </div>
+    
+    <div class="free-proof-compact">
+      <div class="free-proof-options-row">
+        <button class="free-opt" onclick="openCamera('moment')">
+          <span class="free-opt-icon">📍</span>
+          <span class="free-opt-label">Take a Photo</span>
+          <span class="free-opt-sub">Snap and timestamp it instantly</span>
+        </button>
+        <button class="free-opt" onclick="openCamera('selfie')">
+          <span class="free-opt-icon">🤳</span>
+          <span class="free-opt-label">Take a Selfie</span>
+          <span class="free-opt-sub">Proof you existed right now</span>
+        </button>
+        <button class="free-opt" onclick="downloadAndPromptHeadline()">
+          <span class="free-opt-icon">📰</span>
+          <span class="free-opt-label">Download Today's Headlines</span>
+          <span class="free-opt-sub">A throwaway file to try risk-free</span>
+        </button>
+        <button class="free-opt" onclick="openFreeProof('upload')">
+          <span class="free-opt-icon">📄</span>
+          <span class="free-opt-label">Upload Any File</span>
+          <span class="free-opt-sub">Document, image, anything</span>
+        </button>
+      </div>
+
+      <p class="free-proof-compact-note">🔒 Your file never leaves your device — only a unique numeric code is recorded.</p>
+    </div>
+
+  </div>
 </section>
 
 <section class="section" style="background:linear-gradient(var(--bg),var(--bg-card))">
@@ -788,44 +833,6 @@ a{color:var(--accent);text-decoration:none}
 </section>
 
 
-<!-- Try It Free Section -->
-<section class="free-proof-section" id="try-free">
-  <div class="container">
-    <div class="free-proof-header">
-      <span class="free-proof-badge">✨ No account needed</span>
-      <h2>See It In Action</h2>
-      <p>Pick any option below to instantly timestamp a file on the blockchain — free, no sign-up required.</p>
-    </div>
-    
-    <div class="free-proof-compact">
-      <div class="free-proof-options-row">
-        <button class="free-opt" onclick="openCamera('moment')">
-          <span class="free-opt-icon">📍</span>
-          <span class="free-opt-label">Take a Photo</span>
-          <span class="free-opt-sub">Snap and timestamp it instantly</span>
-        </button>
-        <button class="free-opt" onclick="openCamera('selfie')">
-          <span class="free-opt-icon">🤳</span>
-          <span class="free-opt-label">Take a Selfie</span>
-          <span class="free-opt-sub">Proof you existed right now</span>
-        </button>
-        <button class="free-opt" onclick="downloadAndPromptHeadline()">
-          <span class="free-opt-icon">📰</span>
-          <span class="free-opt-label">Download Today's Headlines</span>
-          <span class="free-opt-sub">A throwaway file to try risk-free</span>
-        </button>
-        <button class="free-opt" onclick="openFreeProof('upload')">
-          <span class="free-opt-icon">📄</span>
-          <span class="free-opt-label">Upload Any File</span>
-          <span class="free-opt-sub">Document, image, anything</span>
-        </button>
-      </div>
-
-      <p class="free-proof-compact-note">🔒 Your file never leaves your device — only a unique numeric code is recorded.</p>
-    </div>
-
-  </div>
-</section>
 
 <script>
 function downloadAndPromptHeadline() {
