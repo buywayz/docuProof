@@ -321,6 +321,40 @@ exports.handler = async (event) => {
       console.error("[stripe_webhook] email-prospects write error (non-fatal):", epErr);
     }
 
+    // --- 2c) Called It: save monthly reminder signup (opt-in only) ---
+    if (md.calledItRemind === "yes") {
+      try {
+        const blobMod = await import("@netlify/blobs");
+        const gs = blobMod.getStore || (blobMod.default && blobMod.default.getStore);
+        let rStore;
+        try {
+          rStore = gs("called-it-reminders");
+        } catch {
+          rStore = gs({
+            name: "called-it-reminders",
+            siteID: process.env.NETLIFY_SITE_ID || process.env.SITE_ID,
+            token: process.env.NETLIFY_BLOBS_TOKEN || process.env.NETLIFY_API_TOKEN,
+          });
+        }
+        const key = `r:${canonicalId}`;
+        const already = await rStore.get(key);
+        if (!already) {
+          const token = require("crypto").randomBytes(16).toString("hex");
+          await rStore.set(key, JSON.stringify({
+            email: to,
+            proofId: canonicalId,
+            sealedAt: new Date().toISOString(),
+            unsubscribed: false,
+            token,
+            sent: [],
+          }));
+          console.log(`[stripe_webhook] Called It reminder signup saved for ${canonicalId}`);
+        }
+      } catch (crErr) {
+        console.error("[stripe_webhook] called-it reminder save error (non-fatal):", crErr);
+      }
+    }
+
     // --- 3) AWAIT anchoring job via submit_proof ---
     // CRITICAL FIX: must await this call. Fire-and-forget gets killed
     // when the Netlify function returns, so the OTS submission never completes.

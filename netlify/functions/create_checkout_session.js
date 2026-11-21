@@ -58,7 +58,12 @@ async function createStripeSession(payload) {
     displayName = '',
     plan = 'one-time',
     billing = 'none',
+    remind = 'no',
   } = payload;
+
+  // Called It: only Called It files can sign up for monthly reminders
+  const calledItRemind =
+    /^called-it-/.test(String(filename)) && remind === 'yes' ? 'yes' : undefined;
 
   // Will throw a useful error if plan/billing is not recognized
   const { priceId, isSubscription, key: planKey } = resolvePriceId(plan, billing);
@@ -86,6 +91,7 @@ async function createStripeSession(payload) {
       filename,
       displayName,
       shortId,
+      calledItRemind,
     },
   });
 
